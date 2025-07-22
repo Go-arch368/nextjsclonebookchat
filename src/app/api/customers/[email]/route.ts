@@ -1,11 +1,12 @@
 // src/app/api/customers/[email]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/dbConnect';
+import dbConnect from '../../../../lib/dbConnect';
 import Customer from '@/lib/Customer';
-export async function DELETE(request: NextRequest, { params }: { params: { email: string } }) {
+
+export async function DELETE(request: NextRequest, context: any) {
   try {
     await dbConnect();
-    const customer = await Customer.findOneAndDelete({ email: params.email });
+    const customer = await Customer.findOneAndDelete({ email: context.params.email });
     if (!customer) {
       return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
     }
