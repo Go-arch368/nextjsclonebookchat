@@ -1,5 +1,5 @@
 // src/app/(app)/eye-catcher/page.tsx
-import EyecatcherClient from "@/components/EyeCatcherClient";
+import EyecatcherClient from "@/components/EyecatcherClient";
 
 export default function EyeCatcherPage() {
   return (
