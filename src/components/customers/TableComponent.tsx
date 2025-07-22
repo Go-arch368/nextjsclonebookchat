@@ -40,7 +40,6 @@ export default function TableComponent() {
   const [error, setError] = useState<string | null>(null);
   const itemsPerPage = 5;
 
-  // Fetch data from API
   useEffect(() => {
     async function fetchData() {
       try {
@@ -54,13 +53,12 @@ export default function TableComponent() {
       } catch (err: any) {
         setError(err.message);
       } finally {
-        setIsLoading(false); // Corrected from true to false
+        setIsLoading(false);
       }
     }
     fetchData();
   }, []);
 
-  // Handle sorting
   const handleSort = (column: keyof Customer) => {
     const newDirection = sortDirection[column] === "asc" ? "desc" : "asc";
     setSortDirection((prev) => ({ ...prev, [column]: newDirection }));
@@ -79,7 +77,6 @@ export default function TableComponent() {
     setData(sortedData);
   };
 
-  // Handle delete
   const handleDelete = async (email: string) => {
     try {
       const response = await fetch(`/api/customers/${encodeURIComponent(email)}`, {
@@ -95,7 +92,6 @@ export default function TableComponent() {
     }
   };
 
-  // Get sort icon
   const getSortIcon = (column: string) => {
     const direction = sortDirection[column];
     if (direction === "asc") return <ArrowUp className="h-4 w-4 ml-2" />;
@@ -103,11 +99,10 @@ export default function TableComponent() {
     return null;
   };
 
-  // Pagination
-  const indexOfLastItem = currentPage * itemsPerPage; //1 * 5 = 5
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage; // 5-5 = 0 
-  const currentData = data.slice(indexOfFirstItem, indexOfLastItem); // 0,5  01234
-  const totalPages = Math.ceil(data.length / itemsPerPage);//3
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentData = data.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(data.length / itemsPerPage);
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
