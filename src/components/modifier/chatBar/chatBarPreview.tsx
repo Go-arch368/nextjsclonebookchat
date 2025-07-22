@@ -1,58 +1,41 @@
-'use client';
-import { useState, useEffect } from 'react';
-import { useTheme } from 'next-themes';
-import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
+import Skeleton,{SkeletonTheme} from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
-import { useSettingsStore } from '@/stores/settingsStore';
 import defaultConfig from '../../../../data/modifier.json';
 import { ChatbarSettings } from '@/types/Modifier';
 import BubbleIcon from '@/components/icons/BubbleIcon';
 
 interface ChatBarPreviewProps {
-  settings?: ChatbarSettings;
+  settings?: Partial<ChatbarSettings>;
   loading?: boolean;
+  isDarkMode?: boolean;
+  isHovered?: boolean;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }
 
-export default function ChatBarPreview({ settings, loading: propLoading }: ChatBarPreviewProps) {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const { resolvedTheme } = useTheme();
-  const { settings: storeSettings, loading: storeLoading, fetchSettings } = useSettingsStore();
+const defaultSettings: ChatbarSettings = {
+  text: defaultConfig.chatBar.text || 'Chat with us',
+  bgColor: defaultConfig.chatBar.bgColor || '#007bff',
+  textColor: defaultConfig.chatBar.textColor || '#ffffff',
+  iconColor: defaultConfig.chatBar.iconColor || defaultConfig.chatBar.textColor || '#ffffff',
+  bubbleBgColor: defaultConfig.chatBar.bubbleBgColor || defaultConfig.chatBar.bgColor || '#007bff',
+  dotsColor: defaultConfig.chatBar.dotsColor || defaultConfig.chatBar.textColor || '#ffffff',
+};
 
-  const defaultSettings: ChatbarSettings = {
-    text: defaultConfig.chatBar.text || 'Chat with us',
-    bgColor: defaultConfig.chatBar.bgColor || '#007bff',
-    textColor: defaultConfig.chatBar.textColor || '#ffffff',
-    iconColor: defaultConfig.chatBar.iconColor || defaultConfig.chatBar.textColor || '#ffffff',
-    bubbleBgColor: defaultConfig.chatBar.bubbleBgColor || defaultConfig.chatBar.bgColor || '#007bff',
-    dotsColor: defaultConfig.chatBar.dotsColor || defaultConfig.chatBar.textColor || '#ffffff',
-  };
-
+export default function ChatBarPreview({
+  settings = {},
+  loading = false,
+  isDarkMode = false,
+  isHovered = false,
+  onMouseEnter = () => {},
+  onMouseLeave = () => {},
+}: ChatBarPreviewProps) {
   const chatbarSettings: ChatbarSettings = {
     ...defaultSettings,
-    ...(settings || storeSettings.chatBar),
+    ...settings,
   };
 
-  useEffect(() => {
-    setMounted(true);
-    if (!settings) {
-      console.log('Fetching chatbar settings...');
-      fetchSettings('chatBar', defaultSettings);
-    }
-  }, [fetchSettings, settings]);
-
-  useEffect(() => {
-    if (mounted) {
-      setIsDarkMode(resolvedTheme === 'dark');
-    }
-  }, [mounted, resolvedTheme]);
-
-  console.log('ChatBarPreview settings:', chatbarSettings);
-
-  if (!mounted) return null;
-
-  if (propLoading || (!settings && storeLoading)) {
+  if (loading) {
     return (
       <SkeletonTheme
         baseColor={isDarkMode ? '#2a2a2a' : '#e0e0e0'}
@@ -74,8 +57,8 @@ export default function ChatBarPreview({ settings, loading: propLoading }: ChatB
           backgroundColor: chatbarSettings.bgColor || '#007bff',
           color: chatbarSettings.textColor || '#ffffff',
         }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
       >
         <span data-testid="chatbar-text" className="font-medium">
           {chatbarSettings.text || 'Chat with us'}
@@ -89,6 +72,7 @@ export default function ChatBarPreview({ settings, loading: propLoading }: ChatB
             width={20}
             height={20}
           />
+          
         </span>
       </div>
     </div>

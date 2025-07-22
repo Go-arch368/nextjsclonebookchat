@@ -1,6 +1,8 @@
 export type Message = {
   text: string;
   isUser: boolean;
+  timestamp?: Date; // Make optional if not always required
+
 };
 
 export type ChatWidgetSettings = {
@@ -15,6 +17,17 @@ export type ChatWidgetSettings = {
   logoUrl: string;
   chatTitle: string;
   messages: Message[];
+  userMsgTextColor?: string;
+  botMsgTextColor?: string;
+  inputBgColor?: string;
+  inputTextColor?: string;
+  inputBorderColor?: string;
+  typingText?: string;
+  [key: string]: any; // Adjust based on actual settings
+  bgColor?: string;
+  textColor?: string;
+
+  
 };
 
 export type ChatWidgetContactSettings = {
@@ -83,3 +96,4 @@ export type AppSettings = {
   chatWidgetContact: ChatWidgetContactSettings;
   greeting: GreetingSettings;
 };
+

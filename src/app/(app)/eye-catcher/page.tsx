@@ -1,9 +1,5 @@
-'use client';
-import { useEffect, useState } from 'react';
-import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
+import Skeleton,{SkeletonTheme} from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
-import { useTheme } from 'next-themes';
-import { useSettingsStore } from '@/stores/settingsStore';
 import defaultConfig from '../../../../data/modifier.json';
 
 export type EyecatcherSettings = {
@@ -15,32 +11,21 @@ export type EyecatcherSettings = {
 
 const defaultSettings: EyecatcherSettings = defaultConfig.eyeCatcher;
 
-export default function EyecatcherPreview() {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const { resolvedTheme } = useTheme();
-  const { settings, loading, fetchSettings } = useSettingsStore();
+interface EyecatcherPreviewProps {
+  isDarkMode?: boolean;
+  loading?: boolean;
+  settings?: Partial<EyecatcherSettings>;
+}
 
-  useEffect(() => {
-    setMounted(true);
-    console.log('Fetching eyecatcher settings...');
-    fetchSettings('eyeCatcher', defaultSettings);
-  }, [fetchSettings]);
-
-  useEffect(() => {
-    if (mounted) {
-      setIsDarkMode(resolvedTheme === 'dark');
-    }
-  }, [mounted, resolvedTheme]);
-
+export default function EyecatcherPreview({
+  isDarkMode = false,
+  loading = false,
+  settings = {},
+}: EyecatcherPreviewProps) {
   const eyeCatcherSettings: EyecatcherSettings = {
     ...defaultSettings,
-    ...settings.eyeCatcher,
+    ...settings,
   };
-
-  console.log('EyecatcherPreview settings:', eyeCatcherSettings);
-
-  if (!mounted) return null;
 
   if (loading) {
     return (

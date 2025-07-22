@@ -1,12 +1,17 @@
-import ChatWidgetPreview from '@/components/chat-widget-open/ChatWidgetPreview'
-import React from 'react'
+// src/app/chat-widget/page.tsx
+import { ChatWidgetSettings } from '@/types/Modifier';
+import ChatWidgetPreview from '@/components/chat-widget-open/ChatWidgetPreview';
+import defaultConfig from '../../../../data/modifier.json';
 
-function page() {
+export default function ChatWidgetPage() {
+  const chatSettings: ChatWidgetSettings = defaultConfig.chatWidget;
+
   return (
-    <div>
-      <ChatWidgetPreview/>
+    <div className="p-6">
+      <ChatWidgetPreview 
+        initialSettings={chatSettings}
+        initialMessages={chatSettings.messages || []}
+      />
     </div>
-  )
+  );
 }
-
-export default page

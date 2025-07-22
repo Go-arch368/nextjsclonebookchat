@@ -1,19 +1,17 @@
+// components/modifier/chat-widget/ChatFooter.tsx
 import { ChatWidgetSettings } from '@/types/Modifier';
 
-type Props = {
+interface ChatFooterProps {
   settings: ChatWidgetSettings;
-};
+}
 
-export default function ChatFooter({ settings }: Props) {
+export default function ChatFooter({ settings }: ChatFooterProps) {
   return (
     <div
-      className="p-1 text-center text-xs border-t"
-      style={{
-        backgroundColor: settings.footerBgColor,
-        color: settings.footerTextColor,
-      }}
+      className="p-1 border-t text-center text-sm"
+      style={{ color: settings.textColor || '#000000', backgroundColor: settings.bgColor || '#ffffff' }}
     >
-      {settings.footerText}
+      Powered by LiveChat
     </div>
   );
 }

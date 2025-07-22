@@ -1,42 +1,32 @@
-'use client';
-import { useState, useEffect } from 'react';
-import { useTheme } from 'next-themes';
-import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
+import Skeleton,{SkeletonTheme} from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
-import { useSettingsStore } from '@/stores/settingsStore';
 import defaultConfig from '../../../../data/modifier.json';
 import { BubbleSettings } from '@/types/Modifier';
 import BubbleIcon from '@/components/icons/BubbleIcon';
 
-export default function Bubble() {
-  const [isHovered, setIsHovered] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const { resolvedTheme } = useTheme();
-  const { settings, loading, fetchSettings } = useSettingsStore();
+interface BubbleProps {
+  isDarkMode?: boolean;
+  loading?: boolean;
+  settings?: Partial<BubbleSettings>;
+  isHovered?: boolean;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
+}
 
-  const defaultSettings: BubbleSettings = defaultConfig.bubble;
+const defaultSettings: BubbleSettings = defaultConfig.bubble;
 
-  useEffect(() => {
-    setMounted(true);
-    console.log('Fetching bubble settings...');
-    fetchSettings('bubble', defaultSettings);
-  }, [fetchSettings]);
-
-  useEffect(() => {
-    if (mounted) {
-      setIsDarkMode(resolvedTheme === 'dark');
-    }
-  }, [mounted, resolvedTheme]);
-
+export default function Bubble({
+  isDarkMode = false,
+  loading = false,
+  settings = {},
+  isHovered = false,
+  onMouseEnter = () => {},
+  onMouseLeave = () => {},
+}: BubbleProps) {
   const bubbleSettings: BubbleSettings = {
     ...defaultSettings,
-    ...settings.bubble,
+    ...settings,
   };
-
-  console.log('Bubble settings:', bubbleSettings);
-
-  if (!mounted) return null;
 
   if (loading) {
     return (
@@ -60,8 +50,8 @@ export default function Bubble() {
           data-testid="bubble-container"
           className="relative flex items-center justify-center rounded-full w-16 h-16 transition-colors duration-300 cursor-pointer"
           style={{ backgroundColor: bubbleSettings.bgColor || '#ff5101' }}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
         >
           <BubbleIcon
             iconColor={bubbleSettings.iconColor}
