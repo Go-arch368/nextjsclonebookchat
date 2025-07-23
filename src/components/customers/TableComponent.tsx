@@ -11,7 +11,8 @@ import {
   TableRow,
 } from "@/ui/table";
 import { Button } from "@/ui/button";
-import { ArrowUp, ArrowDown, Trash2 } from "lucide-react";
+import { Skeleton } from "@/ui/skeleton";
+import { ArrowUp, ArrowDown, Trash2, Plus } from "lucide-react";
 import { useState } from "react";
 
 interface Customer {
@@ -28,9 +29,10 @@ interface Customer {
 interface TableComponentProps {
   customers: Customer[];
   setCustomers: React.Dispatch<React.SetStateAction<Customer[]>>;
+  openAddCustomerForm: () => void;
 }
 
-export default function TableComponent({ customers, setCustomers }: TableComponentProps) {
+export default function TableComponent({ customers, setCustomers, openAddCustomerForm }: TableComponentProps) {
   const [sortDirection, setSortDirection] = useState<Record<string, "asc" | "desc" | null>>({
     name: null,
     email: null,
@@ -41,7 +43,10 @@ export default function TableComponent({ customers, setCustomers }: TableCompone
     details: null,
   });
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Simulate initial loading (remove if parent handles loading state)
+  setTimeout(() => setIsLoading(false), 1000);
 
   const handleSort = (column: keyof Customer) => {
     const newDirection = sortDirection[column] === "asc" ? "desc" : "asc";
@@ -69,7 +74,13 @@ export default function TableComponent({ customers, setCustomers }: TableCompone
       if (!response.ok) {
         throw new Error("Failed to delete customer");
       }
-      setCustomers((prevData) => prevData.filter((item) => item.email !== email));
+      setCustomers((prevData) => {
+        const newData = prevData.filter((item) => item.email !== email);
+        if (newData.length <= (currentPage - 1) * 5) {
+          setCurrentPage((prev) => Math.max(1, prev - 1));
+        }
+        return newData;
+      });
       toast.success("Customer deleted successfully!");
     } catch (err: any) {
       toast.error(err.message || "Failed to delete customer");
@@ -83,6 +94,7 @@ export default function TableComponent({ customers, setCustomers }: TableCompone
     return null;
   };
 
+  const itemsPerPage = 5;
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentData = customers.slice(indexOfFirstItem, indexOfLastItem);
@@ -91,9 +103,20 @@ export default function TableComponent({ customers, setCustomers }: TableCompone
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   return (
-    <div className="w-full max-w-full overflow-x-hidden">
-      {customers.length === 0 ? (
-        <div>No customers found.</div>
+    <div className="w-full max-w-full overflow-x-hidden p-6">
+      {isLoading ? (
+        <div className="space-y-2">
+          {[...Array(5)].map((_, index) => (
+            <Skeleton key={index} className="h-12 w-full" />
+          ))}
+        </div>
+      ) : customers.length === 0 ? (
+        <div className="flex justify-center items-center h-64">
+          <Button onClick={openAddCustomerForm}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Customer
+          </Button>
+        </div>
       ) : (
         <>
           <Table className="border border-gray-200 w-full">

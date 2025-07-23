@@ -18,6 +18,7 @@ interface Customer {
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [isAddFormOpen, setIsAddFormOpen] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -35,8 +36,12 @@ export default function CustomersPage() {
 
   return (
     <div className="container mx-auto">
-      <Header setCustomers={setCustomers} />
-      <TableComponent customers={customers} setCustomers={setCustomers} />
+      <Header setCustomers={setCustomers} isAddFormOpen={isAddFormOpen} setIsAddFormOpen={setIsAddFormOpen} />
+      <TableComponent
+        customers={customers}
+        setCustomers={setCustomers}
+        openAddCustomerForm={() => setIsAddFormOpen(true)}
+      />
     </div>
   );
 }

@@ -40,10 +40,11 @@ interface CustomerFormData {
 
 interface AddCustomerFormProps {
   onSubmit: (data: CustomerFormData) => void;
+  isOpen: boolean;
+  setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export default function AddCustomerForm({ onSubmit }: AddCustomerFormProps) {
-  const [isFormOpen, setIsFormOpen] = useState(false);
+export default function AddCustomerForm({ onSubmit, isOpen, setIsOpen }: AddCustomerFormProps) {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [formData, setFormData] = useState<CustomerFormData>({
     name: "",
@@ -74,7 +75,7 @@ export default function AddCustomerForm({ onSubmit }: AddCustomerFormProps) {
   };
 
   const handleFormSubmit = () => {
-    setIsFormOpen(false);
+    setIsOpen(false);
     setIsConfirmOpen(true);
   };
 
@@ -114,7 +115,7 @@ export default function AddCustomerForm({ onSubmit }: AddCustomerFormProps) {
   return (
     <>
       {/* Form Dialog */}
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
           <Button>
             <Plus className="mr-2 h-4 w-4" />
@@ -235,7 +236,7 @@ export default function AddCustomerForm({ onSubmit }: AddCustomerFormProps) {
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setIsFormOpen(false)}>
+            <Button variant="outline" onClick={() => setIsOpen(false)}>
               Cancel
             </Button>
             <Button onClick={handleFormSubmit} disabled={isSubmitting}>

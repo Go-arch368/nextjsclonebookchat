@@ -17,7 +17,15 @@ interface Customer {
   details?: string;
 }
 
-export default function Header({ setCustomers }: { setCustomers: React.Dispatch<React.SetStateAction<Customer[]>> }) {
+export default function Header({
+  setCustomers,
+  isAddFormOpen,
+  setIsAddFormOpen,
+}: {
+  setCustomers: React.Dispatch<React.SetStateAction<Customer[]>>;
+  isAddFormOpen: boolean;
+  setIsAddFormOpen: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
   const handleFormSubmit = async (data: Customer) => {
     setCustomers((prev) => [...prev, { ...data, _id: Date.now().toString() }]); // Optimistic update
     try {
@@ -42,7 +50,7 @@ export default function Header({ setCustomers }: { setCustomers: React.Dispatch<
             className="w-full pl-10"
           />
         </div>
-        <AddCustomerForm onSubmit={handleFormSubmit} />
+        <AddCustomerForm onSubmit={handleFormSubmit} isOpen={isAddFormOpen} setIsOpen={setIsAddFormOpen} />
       </div>
     </header>
   );
