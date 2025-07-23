@@ -31,7 +31,9 @@ import {
   Send,
   BadgeDollarSign,
   Server,
-  Users
+  Users,
+  Briefcase,
+  UserLock
 } from 'lucide-react';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -71,7 +73,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     { href: '/archived-chats', icon: MessageCircle, label: 'Archived Chats' },
     { href: '/billing', icon: BadgeDollarSign, label: 'Billing' },
     {href:'/serverComponent',icon:Server,label:'Server Component'},
-    {href:'/customers',icon:Users,label:"Customers"}
+    {href:'/customers',icon:Users,label:"Customers"},
+    {href:'/websites',icon:Briefcase,label:"Websites"},
+    {href:'/users',icon:UserLock,label:"Users"}
   ];
 
   return (

@@ -1,0 +1,79 @@
+[
+  {
+    "First Name": "test",
+    "Last Name": "test",
+    "Role": "ADMIN",
+    "Email": "testadmin@gmail.com",
+    "Job Title": "IT",
+    "Department": "IT",
+    "Company": "Nicram IT",
+    "Date Added": "19/06/2024",
+    "Details": "<Edit className='h-4 w-4 text-gray-500 cursor-pointer' /> <Trash2 className='h-4 w-4 text-gray-500 cursor-pointer' />"
+  },
+  {
+    "First Name": "test",
+    "Last Name": "Agent",
+    "Role": "AGENT",
+    "Email": "testagent@gmail.com",
+    "Job Title": "IT",
+    "Department": "IT",
+    "Company": "ZOTLY",
+    "Date Added": "14/05/2024",
+    "Details": "<Edit className='h-4 w-4 text-gray-500 cursor-pointer' /> <Trash2 className='h-4 w-4 text-gray-500 cursor-pointer' />"
+  },
+  {
+    "First Name": "test",
+    "Last Name": "test",
+    "Role": "ADMIN",
+    "Email": "test@gmail.com",
+    "Job Title": "test com",
+    "Department": "test com",
+    "Company": "",
+    "Date Added": "09/05/2024",
+    "Details": "<Edit className='h-4 w-4 text-gray-500 cursor-pointer' /> <Trash2 className='h-4 w-4 text-gray-500 cursor-pointer' />"
+  },
+  {
+    "First Name": "Admin",
+    "Last Name": "admin",
+    "Role": "ADMIN",
+    "Email": "Admin@gmail.com",
+    "Job Title": "",
+    "Department": "",
+    "Company": "ZOTLY",
+    "Date Added": "12/05/2024",
+    "Details": "<Edit className='h-4 w-4 text-gray-500 cursor-pointer' /> <Trash2 className='h-4 w-4 text-gray-500 cursor-pointer' />"
+  },
+  {
+    "First Name": "Terry",
+    "Last Name": "Wilson",
+    "Role": "ADMIN",
+    "Email": "terrywilson@gmail.com",
+    "Job Title": "TW Test",
+    "Department": "",
+    "Company": "",
+    "Date Added": "07/05/2024",
+    "Details": "<Edit className='h-4 w-4 text-gray-500 cursor-pointer' /> <Trash2 className='h-4 w-4 text-gray-500 cursor-pointer' />"
+  },
+  {
+    "First Name": "Bhargav",
+    "Last Name": "sai",
+    "Role": "ADMIN",
+    "Email": "1291505026@gnm.in",
+    "Job Title": "",
+    "Department": "",
+    "Company": "chemartics",
+    "Date Added": "19/05/2024",
+    "Details": "<Edit className='h-4 w-4 text-gray-500 cursor-pointer' /> <Trash2 className='h-4 w-4 text-gray-500 cursor-pointer' />"
+  },
+  {
+    "First Name": "Sai",
+    "Last Name": "sai",
+    "Role": "ADMIN",
+    "Email": "1291505026@gnm.in",
+    "Job Title": "",
+    "Department": "",
+    "Company": "chemartics",
+    "Date Added": "19/05/2024",
+    "Details": "<Edit className='h-4 w-4 text-gray-500 cursor-pointer' /> <Trash2 className='h-4 w-4 text-gray-500 cursor-pointer' />"
+  }
+]
