@@ -26,8 +26,7 @@ import {
   PopoverTrigger,
 } from "@/ui/popover";
 import { Calendar } from "@/ui/calendar";
-import { Plus, Lock, Mail, MapPin, Link, Star,Calendar1Icon} from "lucide-react";
-import { DayPicker } from "react-day-picker";
+import { Plus, Lock, Mail, MapPin, Link, Star, CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 
 interface CustomerFormData {
@@ -127,7 +126,6 @@ export default function AddCustomerForm({ onSubmit }: AddCustomerFormProps) {
             <DialogTitle>Add a new customer</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            {/* Name Field */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
                 Name
@@ -144,8 +142,6 @@ export default function AddCustomerForm({ onSubmit }: AddCustomerFormProps) {
                 />
               </div>
             </div>
-
-            {/* Email Field */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="email" className="text-right">
                 Email
@@ -163,8 +159,6 @@ export default function AddCustomerForm({ onSubmit }: AddCustomerFormProps) {
                 />
               </div>
             </div>
-
-            {/* Country Field */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="country" className="text-right">
                 Country
@@ -181,8 +175,6 @@ export default function AddCustomerForm({ onSubmit }: AddCustomerFormProps) {
                 />
               </div>
             </div>
-
-            {/* Date Field (Date Picker) */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="date" className="text-right">
                 Date
@@ -194,7 +186,7 @@ export default function AddCustomerForm({ onSubmit }: AddCustomerFormProps) {
                       variant="outline"
                       className="w-full justify-start text-left font-normal"
                     >
-                      <Calendar1Icon className="mr-2 h-4 w-4" />
+                      <CalendarIcon className="mr-2 h-4 w-4" />
                       {selectedDate ? format(selectedDate, "dd/MM/yyyy") : <span>Pick a date</span>}
                     </Button>
                   </PopoverTrigger>
@@ -209,8 +201,6 @@ export default function AddCustomerForm({ onSubmit }: AddCustomerFormProps) {
                 </Popover>
               </div>
             </div>
-
-            {/* Integrations Field */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="integrations" className="text-right">
                 Integrations
@@ -227,8 +217,6 @@ export default function AddCustomerForm({ onSubmit }: AddCustomerFormProps) {
                 />
               </div>
             </div>
-
-            {/* Plan Field */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="plan" className="text-right">
                 Plan

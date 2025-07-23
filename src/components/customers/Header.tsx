@@ -6,10 +6,28 @@ import { Button } from "@/ui/button";
 import { Plus, Search } from "lucide-react";
 import AddCustomerForm from "./AddCustomerForm";
 
-export default function Header() {
-  const handleFormSubmit = (data: any) => {
-    console.log("New customer added:", data);
-    // Add logic to update data (e.g., via state or API)
+interface Customer {
+  _id?: string;
+  name?: string;
+  email?: string;
+  country?: string;
+  date?: string;
+  integrations?: string;
+  plan?: string;
+  details?: string;
+}
+
+export default function Header({ setCustomers }: { setCustomers: React.Dispatch<React.SetStateAction<Customer[]>> }) {
+  const handleFormSubmit = async (data: Customer) => {
+    setCustomers((prev) => [...prev, { ...data, _id: Date.now().toString() }]); // Optimistic update
+    try {
+      const response = await fetch("/api/customers");
+      if (!response.ok) throw new Error("Failed to fetch customers");
+      const updatedCustomers = await response.json();
+      setCustomers(updatedCustomers); // Sync with DB
+    } catch (error) {
+      console.error("Error fetching customers:", error);
+    }
   };
 
   return (

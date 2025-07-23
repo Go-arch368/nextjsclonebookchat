@@ -1,6 +1,7 @@
-// src/app/components/TableComponent.tsx
+// src/components/TableComponent.tsx
 "use client";
 
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -11,7 +12,7 @@ import {
 } from "@/ui/table";
 import { Button } from "@/ui/button";
 import { ArrowUp, ArrowDown, Trash2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 interface Customer {
   _id?: string;
@@ -24,7 +25,12 @@ interface Customer {
   details?: string;
 }
 
-export default function TableComponent() {
+interface TableComponentProps {
+  customers: Customer[];
+  setCustomers: React.Dispatch<React.SetStateAction<Customer[]>>;
+}
+
+export default function TableComponent({ customers, setCustomers }: TableComponentProps) {
   const [sortDirection, setSortDirection] = useState<Record<string, "asc" | "desc" | null>>({
     name: null,
     email: null,
@@ -34,35 +40,13 @@ export default function TableComponent() {
     plan: null,
     details: null,
   });
-  const [data, setData] = useState<Customer[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const itemsPerPage = 5;
-
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        setIsLoading(true);
-        const response = await fetch('/api/customers');
-        if (!response.ok) {
-          throw new Error('Failed to fetch customers');
-        }
-        const customers = await response.json();
-        setData(customers);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchData();
-  }, []);
 
   const handleSort = (column: keyof Customer) => {
     const newDirection = sortDirection[column] === "asc" ? "desc" : "asc";
     setSortDirection((prev) => ({ ...prev, [column]: newDirection }));
-    const sortedData = [...data].sort((a, b) => {
+    const sortedData = [...customers].sort((a, b) => {
       const aValue = a[column] || "";
       const bValue = b[column] || "";
       if (column === "date") {
@@ -74,21 +58,21 @@ export default function TableComponent() {
         ? aValue.toString().localeCompare(bValue.toString())
         : bValue.toString().localeCompare(aValue.toString());
     });
-    setData(sortedData);
+    setCustomers(sortedData);
   };
 
   const handleDelete = async (email: string) => {
     try {
       const response = await fetch(`/api/customers/${encodeURIComponent(email)}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
       if (!response.ok) {
-        throw new Error('Failed to delete customer');
+        throw new Error("Failed to delete customer");
       }
-      setData((prevData) => prevData.filter((item) => item.email !== email));
+      setCustomers((prevData) => prevData.filter((item) => item.email !== email));
+      toast.success("Customer deleted successfully!");
     } catch (err: any) {
-      console.error('Delete error:', err.message);
-      setError(err.message);
+      toast.error(err.message || "Failed to delete customer");
     }
   };
 
@@ -101,17 +85,15 @@ export default function TableComponent() {
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentData = data.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(data.length / itemsPerPage);
+  const currentData = customers.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(customers.length / itemsPerPage);
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   return (
     <div className="w-full max-w-full overflow-x-hidden">
-      {isLoading ? (
-        <div>Loading...</div>
-      ) : error ? (
-        <div>Error: {error}</div>
+      {customers.length === 0 ? (
+        <div>No customers found.</div>
       ) : (
         <>
           <Table className="border border-gray-200 w-full">
@@ -157,12 +139,12 @@ export default function TableComponent() {
             <TableBody>
               {currentData.map((item, index) => (
                 <TableRow key={item._id || index} className="hover:bg-gray-100">
-                  <TableCell className="px-2 py-3 w-1/7 truncate text-center">{item.name || ''}</TableCell>
-                  <TableCell className="px-2 py-3 w-2/7 truncate text-center">{item.email || ''}</TableCell>
-                  <TableCell className="px-2 py-3 w-1/7 truncate text-center">{item.country || ''}</TableCell>
-                  <TableCell className="px-2 py-3 w-1/7 truncate text-center">{item.date || ''}</TableCell>
-                  <TableCell className="px-2 py-3 w-1/7 truncate text-center">{item.integrations || ''}</TableCell>
-                  <TableCell className="px-2 py-3 w-1/7 truncate text-center">{item.plan || ''}</TableCell>
+                  <TableCell className="px-2 py-3 w-1/7 truncate text-center">{item.name || ""}</TableCell>
+                  <TableCell className="px-2 py-3 w-2/7 truncate text-center">{item.email || ""}</TableCell>
+                  <TableCell className="px-2 py-3 w-1/7 truncate text-center">{item.country || ""}</TableCell>
+                  <TableCell className="px-2 py-3 w-1/7 truncate text-center">{item.date || ""}</TableCell>
+                  <TableCell className="px-2 py-3 w-1/7 truncate text-center">{item.integrations || ""}</TableCell>
+                  <TableCell className="px-2 py-3 w-1/7 truncate text-center">{item.plan || ""}</TableCell>
                   <TableCell className="px-2 py-3 w-1/7 truncate text-center">
                     <div className="flex justify-center space-x-2">
                       <Button
@@ -174,7 +156,7 @@ export default function TableComponent() {
                         <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
                       <Button variant="ghost" className="bg-white p-1 rounded">
-                        {item.details || '>'}
+                        {item.details || ">"}
                       </Button>
                     </div>
                   </TableCell>
