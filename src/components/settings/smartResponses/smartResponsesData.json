@@ -1,0 +1,83 @@
+
+[
+  {
+    "id": 1,
+    "shortcuts": ["thanks", "grateful"],
+    "response": "Thanks for visiting our website. How can we help you?",
+    "createdBy": "Pal Sidhu",
+    "company": "Chat Metrics",
+    "createdAt": "09/03/2022 04:50"
+  },
+  {
+    "id": 2,
+    "shortcuts": ["welcome"],
+    "response": "Hello there, welcome to Zotly. I hope you are having a great day. How can I help you?",
+    "createdBy": "Pal Sidhu",
+    "company": "Oxnia",
+    "createdAt": "26/10/2022 05:28"
+  },
+  {
+    "id": 3,
+    "shortcuts": ["bye"],
+    "response": "Bye for now and have a wonderful day.",
+    "createdBy": "Pal Sidhu",
+    "company": "Oxnia",
+    "createdAt": "26/10/2022 05:29"
+  },
+  {
+    "id": 4,
+    "shortcuts": ["competitor", "favoring", "transparency"],
+    "response": "Your \"chat\" information is streamed directly to your individual dashboard to which only you, and those that you approve, have access to. You will get to see every single chat with full transcript irrespective of whether they are leads or not. We also have built-in systematic protocols that protect client data and contact information. Full encryption ensures that your data is safe and sound.",
+    "createdBy": "Paris Test",
+    "company": "Chat Metrics",
+    "createdAt": "12/01/2024 18:44"
+  },
+  {
+    "id": 5,
+    "shortcuts": ["help", "installation", "technical help", "loading the code", "snippet"],
+    "response": "No worries Our friendly technical team is always readily available to assist you with any technical issues in loading the code. This is a complimentary service.",
+    "createdBy": "Paris Test",
+    "company": "Chat Metrics",
+    "createdAt": "12/01/2024 18:44"
+  },
+  {
+    "id": 6,
+    "shortcuts": ["existing customer install.", "code", "activate"],
+    "response": "If you are an existing customer, please login to your Chat Metrics dashboard and click on Settings. You will find the code to be installed here.",
+    "createdBy": "Paris Test",
+    "company": "Chat Metrics",
+    "createdAt": "12/01/2024 18:44"
+  },
+  {
+    "id": 7,
+    "shortcuts": ["contact us"],
+    "response": "You can chat with us here now, I can book you in for a call or send us an e-mail to team@chatmetrics.com",
+    "createdBy": "Paris Test",
+    "company": "Chat Metrics",
+    "createdAt": "12/01/2024 18:44"
+  },
+  {
+    "id": 8,
+    "shortcuts": ["pricing", "how much.", "sign up", "subscription", "monthly", "amount", "price"],
+    "response": "Pricing depends on a number of factors like the amount of qualification required, the tech, is integration required. Pricing is purely pay per lead (per your qualification criteria) so it's best if we get you on a quick call with one of our team so we can understand what you need. How does that sound? If pushed: We do have a minimum per month of $2000 so if doubling your current web-generated pipeline is not worth at least $2k - probably best we don't waste your time :)",
+    "createdBy": "Paris Test",
+    "company": "Chat Metrics",
+    "createdAt": "12/01/2024 18:44"
+  },
+  {
+    "id": 9,
+    "shortcuts": ["CaaS", "Conversation as a Service.", "Conversational Marketing"],
+    "response": "We offer CaaS (Conversation as a Service) that provides a human to human solution to your website visitors via live chat software. Our Online SDRs nurture your website visitors to your website's objective like booking demos, signing up for free trials, obtaining sales qualified leads etc.",
+    "createdBy": "Paris Test",
+    "company": "Chat Metrics",
+    "createdAt": "12/01/2024 18:44"
+  },
+  {
+    "id": 10,
+    "shortcuts": ["choose us", "why us", "why chat metrics"],
+    "response": "It really comes down to three main ingredients, (Visitor name); 1) Low risk - we offer a money back guarantee and no ongoing lock in contracts 2. Low Effort - we prepare all the FAQ's Scripting and do all the training and do all the work - it's fully automated for you. 3). High Reward - We guarantee a minimum increase of 25% of website conversions in the first 30 days.",
+    "createdBy": "Paris Test",
+    "company": "Chat Metrics",
+    "createdAt": "12/01/2024 18:44"
+  }
+]

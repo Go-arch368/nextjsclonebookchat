@@ -1,0 +1,56 @@
+[
+  {
+    "id": 1,
+    "title": "Welcome Message",
+    "greeting": "Hello, welcome to our platform!",
+    "type": "Welcome",
+    "languages": ["English", "Spanish"],
+    "createdBy": "John Doe",
+    "company": "Acme Corp"
+  },
+  {
+    "id": 2,
+    "title": "Beta Testing",
+    "greeting": "Join our beta testing program!",
+    "type": "Announcement",
+    "languages": ["English"],
+    "createdBy": "Jane Smith",
+    "company": "Zotly Inc"
+  },
+  {
+    "id": 3,
+    "title": "Holiday Greeting",
+    "greeting": "Happy Holidays from our team!",
+    "type": "Holiday",
+    "languages": ["English", "French"],
+    "createdBy": "Alice Johnson",
+    "company": "Global Tech"
+  },
+  {
+    "id": 4,
+    "title": "New Feature Launch",
+    "greeting": "Explore our latest features today!",
+    "type": "Announcement",
+    "languages": ["English", "German"],
+    "createdBy": "Bob Wilson",
+    "company": "TechTrend Innovations"
+  },
+  {
+    "id": 5,
+    "title": "Customer Support Update",
+    "greeting": "Our support team is here for you 24/7!",
+    "type": "Support",
+    "languages": ["English", "Spanish", "French"],
+    "createdBy": "Emma Brown",
+    "company": "ServicePlus"
+  },
+  {
+    "id": 6,
+    "title": "Annual Event Invite",
+    "greeting": "Join us for our annual tech conference!",
+    "type": "Event",
+    "languages": ["English"],
+    "createdBy": "Michael Lee",
+    "company": "EventCorp"
+  }
+]

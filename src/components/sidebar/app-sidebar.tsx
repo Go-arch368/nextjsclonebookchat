@@ -33,7 +33,8 @@ import {
   Server,
   Users,
   Briefcase,
-  UserLock
+  UserLock,
+  Settings
 } from 'lucide-react';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -75,7 +76,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     {href:'/serverComponent',icon:Server,label:'Server Component'},
     {href:'/customers',icon:Users,label:"Customers"},
     {href:'/websites',icon:Briefcase,label:"Websites"},
-    {href:'/users',icon:UserLock,label:"Users"}
+    {href:'/users',icon:UserLock,label:"Users"},
+    {href:'/settings',icon:Settings,label:"Settings"}
   ];
 
   return (

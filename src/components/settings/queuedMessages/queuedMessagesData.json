@@ -1,0 +1,44 @@
+[
+  {
+    "id": 1,
+    "message": "Due to inactivity from your side you can back in the queue. You are number %number% in the queue. Please be patient, we'll be with you asap.",
+    "createdBy": "Pal Sidhu",
+    "company": "Chat Metrics"
+  },
+  {
+    "id": 2,
+    "message": "Hello dear, you are number %number% in the queue. Please be patient.",
+    "createdBy": "Pal Sidhu",
+    "company": "Oxnia"
+  },
+  {
+    "id": 3,
+    "message": "Hello dear, you are number %number% in the queue. Please be patient.",
+    "createdBy": "Mariya Mudryk",
+    "company": "Fox"
+  },
+  {
+    "id": 4,
+    "message": "Hello dear, you are number %number% in the queue. Please be patient.",
+    "createdBy": "Pal Sidhu",
+    "company": "Test customer"
+  },
+  {
+    "id": 5,
+    "message": "Testing a queued Message we will be with you in %minutes% (You are %number% in the queue)",
+    "createdBy": "Terry Wilson",
+    "company": "faust-it"
+  },
+  {
+    "id": 6,
+    "message": "Thank you for waiting! You are currently %number% in the queue. We'll assist you shortly.",
+    "createdBy": "Mariya Mudryk",
+    "company": "Chat Metrics"
+  },
+  {
+    "id": 7,
+    "message": "You're in the queue at position %number%. Please hold on, our team will reach you soon.",
+    "createdBy": "Terry Wilson",
+    "company": "Oxnia"
+  }
+]
