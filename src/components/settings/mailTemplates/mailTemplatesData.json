@@ -1,0 +1,82 @@
+[
+  {
+    "id": 1,
+    "name": "Chat Starts template",
+    "useCase": "Chat Starts",
+    "active": true,
+    "createdBy": { "name": "Pal Sidhu", "dateTime": "25/01/2022 00:25" },
+    "modifiedBy": { "name": "Pal Sidhu", "dateTime": "18/12/2023 09:01" }
+  },
+  {
+    "id": 2,
+    "name": "Service Chat Starts template",
+    "useCase": "Service Chat Starts",
+    "active": true,
+    "createdBy": { "name": "Pal Sidhu", "dateTime": "25/01/2022 00:25" },
+    "modifiedBy": { "name": "Pal Sidhu", "dateTime": "18/12/2023 09:02" }
+  },
+  {
+    "id": 3,
+    "name": "Chat Converted To Lead template",
+    "useCase": "Chat Converted To Lead",
+    "active": true,
+    "createdBy": { "name": "Pal Sidhu", "dateTime": "25/01/2022 00:25" },
+    "modifiedBy": { "name": "Pal Sidhu", "dateTime": "18/12/2023 09:03" }
+  },
+  {
+    "id": 4,
+    "name": "New Customer template",
+    "useCase": "New Customer",
+    "active": true,
+    "createdBy": { "name": "Pal Sidhu", "dateTime": "25/01/2022 00:25" },
+    "modifiedBy": { "name": "Pal Sidhu", "dateTime": "18/12/2023 09:03" }
+  },
+  {
+    "id": 5,
+    "name": "New Employee template",
+    "useCase": "New Employee",
+    "active": true,
+    "createdBy": { "name": "Pal Sidhu", "dateTime": "25/01/2022 00:25" },
+    "modifiedBy": { "name": "Pal Sidhu", "dateTime": "18/12/2023 09:03" }
+  },
+  {
+    "id": 6,
+    "name": "Restore Password template",
+    "useCase": "Restore Password",
+    "active": true,
+    "createdBy": { "name": "Pal Sidhu", "dateTime": "25/01/2022 00:25" },
+    "modifiedBy": { "name": "Pal Sidhu", "dateTime": "21/12/2023 04:00" }
+  },
+  {
+    "id": 7,
+    "name": "New Invoice template",
+    "useCase": "New Invoice",
+    "active": true,
+    "createdBy": { "name": "Pal Sidhu", "dateTime": "25/01/2022 00:25" },
+    "modifiedBy": { "name": "Pal Sidhu", "dateTime": "18/12/2023 09:04" }
+  },
+  {
+    "id": 8,
+    "name": "New Payment template",
+    "useCase": "New Payment",
+    "active": true,
+    "createdBy": { "name": "Pal Sidhu", "dateTime": "25/01/2022 00:25" },
+    "modifiedBy": { "name": "Pal Sidhu", "dateTime": "18/12/2023 09:04" }
+  },
+  {
+    "id": 9,
+    "name": "Chat Widget Installation template",
+    "useCase": "Chat Widget Installation",
+    "active": true,
+    "createdBy": { "name": "Pal Sidhu", "dateTime": "25/01/2022 00:25" },
+    "modifiedBy": { "name": "Pal Sidhu", "dateTime": "18/12/2023 09:04" }
+  },
+  {
+    "id": 10,
+    "name": "Chat Transcript template",
+    "useCase": "Chat Transcript",
+    "active": true,
+    "createdBy": { "name": "Pal Sidhu", "dateTime": "25/01/2022 00:25" },
+    "modifiedBy": { "name": "Pal Sidhu", "dateTime": "18/12/2023 09:04" }
+  }
+]

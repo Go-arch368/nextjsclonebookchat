@@ -1,9 +1,10 @@
 import React from 'react'
+import WebhooksViewHeader from './WebhooksViewHeader'
 
 const WebhooksView = () => {
   return (
     <div>
-      webhooks view
+      <WebhooksViewHeader/>
     </div>
   )
 }

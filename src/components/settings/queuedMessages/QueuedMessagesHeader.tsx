@@ -17,7 +17,17 @@ interface QueuedMessage {
   company: string;
 }
 
-const QueuedMessagesHeader: React.FC = () => {
+interface QueuedMessagesHeaderProps {
+  onAddClick: () => void;
+  onAddQueuedMessage: (queuedMessage: any) => void; // Use any to handle interface mismatch
+  queuedMessages: any[]; // Use any to accept new QueuedMessage interface
+}
+
+const QueuedMessagesHeader: React.FC<QueuedMessagesHeaderProps> = ({
+  onAddClick,
+  onAddQueuedMessage,
+  queuedMessages,
+}) => {
   const [tableData, setTableData] = useState<QueuedMessage[]>(queuedMessagesData);
   const [sortDirection, setSortDirection] = useState<Record<string, 'asc' | 'desc' | null>>({
     message: null,
@@ -26,6 +36,20 @@ const QueuedMessagesHeader: React.FC = () => {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Normalize incoming queuedMessages to match legacy interface
+  const normalizeQueuedMessage = (item: any): QueuedMessage => ({
+    id: item.id || Date.now(),
+    message: item.message || item.title || '',
+    createdBy: item.createdBy || item.text || 'Unknown',
+    company: item.company || item.backgroundColor || 'N/A',
+  });
+
+  // Initialize tableData
+  useEffect(() => {
+    const normalizedData = [...queuedMessagesData, ...queuedMessages].map(normalizeQueuedMessage);
+    setTableData(normalizedData);
+  }, [queuedMessages]);
 
   // Simulate loading state
   useEffect(() => {
@@ -77,17 +101,16 @@ const QueuedMessagesHeader: React.FC = () => {
         <h2 className="text-4xl font-bold text-gray-800">Queued Messages</h2>
         <div className="flex items-center gap-6">
           <div className="relative w-[350px] mx-auto">
-           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
-           <Input
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+            <Input
               type="text"
-              placeholder="Search greetings"
+              placeholder="Search queued messages" // Updated placeholder
               className="w-full pl-10 py-2 text-black focus:outline-none rounded-md border border-gray-300"
-             />
-           </div>
-
+            />
+          </div>
           <Button
             className="px-6 py-3 bg-blue-500 text-white hover:bg-blue-600 flex items-center gap-3 rounded-lg"
-            onClick={() => console.log('Add clicked')}
+            onClick={onAddClick}
           >
             <Plus className="h-5 w-5" />
             <span>Add</span>
@@ -102,7 +125,7 @@ const QueuedMessagesHeader: React.FC = () => {
         </div>
       ) : tableData.length === 0 ? (
         <div className="flex justify-center items-center h-64">
-          <Button onClick={() => console.log('Add clicked')}>
+          <Button onClick={onAddClick}>
             <Plus className="mr-2 h-4 w-4" />
             Add Queued Message
           </Button>

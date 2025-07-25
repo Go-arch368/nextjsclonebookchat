@@ -1,0 +1,47 @@
+[
+  {
+    "id": 1,
+    "event": "Chat Starts",
+    "email": "pal.sidhu@oxnia.com",
+    "targetUrl": "https://hooks.zapier.com/hooks/catch/2878532/39aip4g/",
+    "createdBy": "Pal Sidhu",
+    "company": "Oxnia",
+    "dateTime": "16/08/2023 10:45"
+  },
+  {
+    "id": 2,
+    "event": "Chat activates/verify website",
+    "email": "pal.sidhu@oxnia.com",
+    "targetUrl": "https://hooks.zapier.com/hooks/catch/2878532/3riqlob/",
+    "createdBy": "Pal Sidhu",
+    "company": "Oxnia",
+    "dateTime": "19/09/2023 06:49"
+  },
+  {
+    "id": 3,
+    "event": "Chat activates/verify website",
+    "email": "wojciech.bernat@treative.com",
+    "targetUrl": "https://hooks.zapier.com/hooks/catch/15670557/3s7m49h/",
+    "createdBy": "Wojciech Bernat",
+    "company": "Treative",
+    "dateTime": "18/10/2023 11:42"
+  },
+  {
+    "id": 4,
+    "event": "Chat activates/verify website",
+    "email": "wojciech.bernat@chatmetrics.com",
+    "targetUrl": "https://hooks.zapier.com/hooks/catch/15670557/3empk3t/",
+    "createdBy": "Wojciech Bernat",
+    "company": "Chat Metrics",
+    "dateTime": "19/02/2024 15:08"
+  },
+  {
+    "id": 5,
+    "event": "Chat activates/verify website",
+    "email": "shubham.shukla@swastechnologies.com",
+    "targetUrl": "https://hooks.zapier.com/hooks/catch/18358779/3xw5nc9/",
+    "createdBy": "Shubham Shukla",
+    "company": "swastechnolgies pvt ltd",
+    "dateTime": "26/03/2024 09:25"
+  }
+]

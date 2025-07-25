@@ -1,9 +1,10 @@
 import React from 'react'
+import TemplatesHeader from './TemplatesHeader'
 
 const TemplatesView = () => {
   return (
     <div>
-      templateview
+     <TemplatesHeader/>
     </div>
   )
 }

@@ -1,9 +1,10 @@
 import React from 'react'
+import IPAddressesHeader from './IPAddressesHeader'
 
 const IPAddressesView = () => {
   return (
     <div>
-      ipaddress
+      <IPAddressesHeader/>
     </div>
   )
 }

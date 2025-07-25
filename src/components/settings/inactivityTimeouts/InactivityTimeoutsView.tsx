@@ -1,9 +1,10 @@
 import React from 'react'
+import InactivityTimeoutsHeader from './inactivityTimeoutsHeader'
 
 const InactivityTimeoutsView = () => {
   return (
     <div>
-      inactivitytimeouts
+     <InactivityTimeoutsHeader/>
     </div>
   )
 }

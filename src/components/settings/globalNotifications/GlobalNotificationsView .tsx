@@ -1,9 +1,10 @@
 import React from 'react'
+import GlobalNotificationsHeader from './GlobalNotificationsHeader'
 
 const GlobalNotificationsView  = () => {
   return (
     <div>
-      globalnotificationsview
+      <GlobalNotificationsHeader/>
     </div>
   )
 }

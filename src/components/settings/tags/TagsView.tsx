@@ -1,9 +1,10 @@
 import React from 'react'
+import TagsViewHeader from './TagsViewHeader'
 
 const TagsView = () => {
   return (
     <div>
-      TagsView
+      <TagsViewHeader/>
     </div>
   )
 }

@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "userRole": "ADMIN"
+  },
+  {
+    "id": 2,
+    "userRole": "AGENT"
+  },
+  {
+    "id": 3,
+    "userRole": "MANAGER"
+  },
+  {
+    "id": 4,
+    "userRole": "ROOT"
+  },
+  {
+    "id": 5,
+    "userRole": "SUPERVISOR"
+  }
+]

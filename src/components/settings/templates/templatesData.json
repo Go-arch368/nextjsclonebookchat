@@ -1,0 +1,51 @@
+[
+  {
+    "id": 1,
+    "businessCategory": "Ecommerce",
+    "businessSubcategory": "Esty",
+    "createdBy": "System",
+    "dateTime": "16/10/2023 17:14"
+  },
+  {
+    "id": 2,
+    "businessCategory": "Saas",
+    "businessSubcategory": "",
+    "createdBy": "System",
+    "dateTime": "16/10/2023 17:14"
+  },
+  {
+    "id": 3,
+    "businessCategory": "Ecommerce",
+    "businessSubcategory": "Shopify",
+    "createdBy": "System",
+    "dateTime": "16/10/2023 17:14"
+  },
+  {
+    "id": 4,
+    "businessCategory": "Ecommerce",
+    "businessSubcategory": "Ebay",
+    "createdBy": "System",
+    "dateTime": "16/10/2023 17:14"
+  },
+  {
+    "id": 5,
+    "businessCategory": "Technology",
+    "businessSubcategory": "",
+    "createdBy": "System",
+    "dateTime": "16/10/2023 17:14"
+  },
+  {
+    "id": 6,
+    "businessCategory": "Ecommerce",
+    "businessSubcategory": "Big Commence",
+    "createdBy": "System",
+    "dateTime": "16/10/2023 17:14"
+  },
+  {
+    "id": 7,
+    "businessCategory": "Others",
+    "businessSubcategory": "",
+    "createdBy": "System",
+    "dateTime": "16/10/2023 17:14"
+  }
+]

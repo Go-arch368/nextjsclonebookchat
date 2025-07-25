@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "questionTitle": "What is an IP address",
+    "answerInformation": "a unique string of characters that identifies each computer using the Internet Protocol to communicate over a network.",
+    "keywords": "ip"
+  },
+  {
+    "id": 2,
+    "questionTitle": "What is DNS",
+    "answerInformation": "The Domain Name System translates domain names to IP addresses so browsers can load Internet resources.",
+    "keywords": "dns, domain"
+  },
+  {
+    "id": 3,
+    "questionTitle": "What is HTTP",
+    "answerInformation": "Hypertext Transfer Protocol is an application protocol for distributed, collaborative, hypermedia information systems.",
+    "keywords": "http, protocol"
+  },
+  {
+    "id": 4,
+    "questionTitle": "What is a firewall",
+    "answerInformation": "A network security system that monitors and controls incoming and outgoing network traffic based on predetermined security rules.",
+    "keywords": "firewall, security"
+  },
+  {
+    "id": 5,
+    "questionTitle": "What is VPN",
+    "answerInformation": "A Virtual Private Network extends a private network across a public network, enabling secure data transmission.",
+    "keywords": "vpn, security"
+  },
+  {
+    "id": 6,
+    "questionTitle": "What is SSL",
+    "answerInformation": "Secure Sockets Layer is a standard security technology for establishing an encrypted link between a server and a client.",
+    "keywords": "ssl, encryption"
+  }
+]
