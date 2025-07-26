@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from 'react';
@@ -8,7 +7,7 @@ import AddWebhookForm from './AddWebhookForm';
 // TypeScript interface for the webhook
 interface Webhook {
   id: number;
-  events: string[];
+  event: string; // Changed from events: string[] to event: string
   dataTypes: string[];
   targetUrl: string;
 }
