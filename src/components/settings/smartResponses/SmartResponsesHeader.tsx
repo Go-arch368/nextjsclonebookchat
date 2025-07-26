@@ -125,7 +125,7 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
             Import
           </Button>
           <Button className="bg-gray-800">
-            <Download className="h-4 w-4 mr-2" />
+            <Download className="h-4 w-4 " />
           </Button>
         </div>
       </div>
