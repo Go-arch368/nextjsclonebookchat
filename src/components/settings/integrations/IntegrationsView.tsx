@@ -1,9 +1,11 @@
 import React from 'react'
+import IntegrationsHeader from './IntegrationsHeader'
 
 const IntegrationsView = () => {
   return (
     <div>
-      integrationsview
+     <IntegrationsHeader/>
+    
     </div>
   )
 }

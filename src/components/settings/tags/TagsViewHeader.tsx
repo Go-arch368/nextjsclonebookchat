@@ -18,7 +18,17 @@ interface TagData {
   dateTime: string;
 }
 
-const TagsViewHeader: React.FC = () => {
+interface TagsViewHeaderProps {
+  onAddClick: () => void;
+  onAddTag: (tag: any) => void;
+  tags: any[];
+}
+
+const TagsViewHeader: React.FC<TagsViewHeaderProps> = ({
+  onAddClick,
+  onAddTag,
+  tags,
+}) => {
   const [tableData, setTableData] = useState<TagData[]>(tagsViewData);
   const [sortDirection, setSortDirection] = useState<Record<string, 'asc' | 'desc' | null>>({
     tag: null,
@@ -27,6 +37,21 @@ const TagsViewHeader: React.FC = () => {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Normalize incoming tags to match legacy interface
+  const normalizeTag = (item: any): TagData => ({
+    id: item.id || Date.now(),
+    tag: item.tag || '',
+    createdBy: item.createdBy || (item.isDefault ? 'Default' : 'Not Default'),
+    company: item.company || 'N/A',
+    dateTime: item.dateTime || new Date().toISOString(),
+  });
+
+  // Initialize tableData
+  useEffect(() => {
+    const normalizedData = [...tagsViewData, ...tags].map(normalizeTag);
+    setTableData(normalizedData);
+  }, [tags]);
 
   // Simulate loading state
   useEffect(() => {
@@ -50,7 +75,7 @@ const TagsViewHeader: React.FC = () => {
   const handleDelete = (id: number) => {
     setTableData((prevData) => {
       const newData = prevData.filter((item) => item.id !== id);
-      if (newData.length <= (currentPage - 1) * 10) {
+      if (newData.length <= (currentPage - 1) * 4) {
         setCurrentPage((prev) => Math.max(1, prev - 1));
       }
       return newData;
@@ -78,17 +103,16 @@ const TagsViewHeader: React.FC = () => {
         <h2 className="text-4xl font-bold text-gray-800">Tags</h2>
         <div className="flex items-center gap-6">
           <div className="relative w-[350px] mx-auto">
-  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
-  <Input
-    type="text"
-    placeholder="Search tags"
-    className="w-full pl-10 py-2 text-black focus:outline-none rounded-md border border-gray-300"
-  />
-</div>
-
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+            <Input
+              type="text"
+              placeholder="Search tags"
+              className="w-full pl-10 py-2 text-black focus:outline-none rounded-md border border-gray-300"
+            />
+          </div>
           <Button
             className="px-6 py-3 bg-blue-500 text-white hover:bg-blue-600 flex items-center gap-3 rounded-lg"
-            onClick={() => console.log('Add clicked')}
+            onClick={onAddClick}
           >
             <Plus className="h-5 w-5" />
             <span>Add</span>
@@ -103,7 +127,7 @@ const TagsViewHeader: React.FC = () => {
         </div>
       ) : tableData.length === 0 ? (
         <div className="flex justify-center items-center h-64">
-          <Button onClick={() => console.log('Add clicked')}>
+          <Button onClick={onAddClick}>
             <Plus className="mr-2 h-4 w-4" />
             Add Tag
           </Button>

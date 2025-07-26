@@ -19,7 +19,17 @@ interface TemplateData {
   modifiedBy: { name: string; dateTime: string };
 }
 
-const MailTemplatesHeader: React.FC = () => {
+interface MailTemplatesHeaderProps {
+  onAddClick: () => void;
+  onAddTemplate: (template: any) => void;
+  templates: any[];
+}
+
+const MailTemplatesHeader: React.FC<MailTemplatesHeaderProps> = ({
+  onAddClick,
+  onAddTemplate,
+  templates,
+}) => {
   const [tableData, setTableData] = useState<TemplateData[]>(mailTemplatesData);
   const [sortDirection, setSortDirection] = useState<Record<string, 'asc' | 'desc' | null>>({
     name: null,
@@ -29,6 +39,22 @@ const MailTemplatesHeader: React.FC = () => {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Normalize incoming templates to match legacy interface
+  const normalizeTemplate = (item: any): TemplateData => ({
+    id: item.id || Date.now(),
+    name: item.name || '',
+    useCase: item.useCase || '',
+    active: item.active !== undefined ? item.active : true,
+    createdBy: item.createdBy || { name: 'Current User', dateTime: new Date().toISOString() },
+    modifiedBy: item.modifiedBy || { name: 'Current User', dateTime: new Date().toISOString() },
+  });
+
+  // Initialize tableData
+  useEffect(() => {
+    const normalizedData = [...mailTemplatesData, ...templates].map(normalizeTemplate);
+    setTableData(normalizedData);
+  }, [templates]);
 
   // Simulate loading state
   useEffect(() => {
@@ -86,21 +112,20 @@ const MailTemplatesHeader: React.FC = () => {
       <div className="flex flex-col gap-4">
         <h1 className="text-4xl font-bold text-gray-800">Mail Templates</h1>
         <div className="flex justify-end items-center gap-4">
-         <div className="relative w-[850px] mx-auto">
-  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
-  <Input
-    type="text"
-    placeholder="Search MailTemPlates"
-    className="w-full pl-10 py-2 text-black focus:outline-none rounded-md border border-gray-300"
-  />
-</div>
-
+          <div className="relative w-[850px] mx-auto">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+            <Input
+              type="text"
+              placeholder="Search Mail Templates"
+              className="w-full pl-10 py-2 text-black focus:outline-none rounded-md border border-gray-300"
+            />
+          </div>
           <Button
             className="px-6 py-3 bg-blue-500 text-white hover:bg-blue-600 rounded-lg flex items-center gap-2"
-            onClick={() => console.log('Save clicked')}
+            onClick={onAddClick}
           >
             <Plus className="h-5 w-5" />
-            <span>Save</span>
+            <span>Add</span>
           </Button>
         </div>
       </div>
@@ -113,7 +138,7 @@ const MailTemplatesHeader: React.FC = () => {
           </div>
         ) : tableData.length === 0 ? (
           <div className="flex justify-center items-center h-64">
-            <Button onClick={() => console.log('Save clicked')}>
+            <Button onClick={onAddClick}>
               <Plus className="mr-2 h-4 w-4" />
               Add Template
             </Button>
@@ -181,7 +206,7 @@ const MailTemplatesHeader: React.FC = () => {
                     </TableCell>
                     <TableCell className="px-4 py-3 w-1/6 text-center">
                       <div className="flex flex-col items-center gap-1">
-                        {/* <span>{item.createdBy.name}</span> */}
+                        <span>{item.createdBy.name}</span>
                         <span className="text-sm text-gray-600">{item.createdBy.dateTime}</span>
                       </div>
                     </TableCell>

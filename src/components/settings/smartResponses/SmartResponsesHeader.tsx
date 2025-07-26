@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, ArrowUp, ArrowDown, Search,Download,Upload } from 'lucide-react';
+import { Plus, Pencil, Trash2, ArrowUp, ArrowDown, Search, Download, Upload } from 'lucide-react';
 import { Input } from '@/ui/input';
 import { Button } from '@/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table';
@@ -19,7 +19,17 @@ interface SmartResponse {
   createdAt: string;
 }
 
-const SmartResponsesHeader: React.FC = () => {
+interface SmartResponsesHeaderProps {
+  onAddClick: () => void;
+  onAddSmartResponse: (smartResponse: any) => void;
+  smartResponses: any[];
+}
+
+const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
+  onAddClick,
+  onAddSmartResponse,
+  smartResponses,
+}) => {
   const [tableData, setTableData] = useState<SmartResponse[]>(smartResponsesData);
   const [sortDirection, setSortDirection] = useState<Record<string, 'asc' | 'desc' | null>>({
     shortcuts: null,
@@ -29,6 +39,22 @@ const SmartResponsesHeader: React.FC = () => {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Normalize incoming smartResponses to match legacy interface
+  const normalizeSmartResponse = (item: any): SmartResponse => ({
+    id: item.id || Date.now(),
+    shortcuts: item.shortcuts || [],
+    response: item.response || '',
+    createdBy: item.createdBy || item.websites?.join(', ') || 'Unknown',
+    company: item.company || 'N/A',
+    createdAt: item.createdAt || new Date().toISOString(),
+  });
+
+  // Initialize tableData
+  useEffect(() => {
+    const normalizedData = [...smartResponsesData, ...smartResponses].map(normalizeSmartResponse);
+    setTableData(normalizedData);
+  }, [smartResponses]);
 
   // Simulate loading state
   useEffect(() => {
@@ -80,30 +106,27 @@ const SmartResponsesHeader: React.FC = () => {
         <h2 className="text-4xl font-bold text-gray-800">Smart Responses</h2>
         <div className="flex items-center gap-6">
           <div className="relative w-[350px] mx-auto">
-  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
-  <Input
-    type="text"
-    placeholder="Search greetings"
-    className="w-full pl-10 py-2 text-black focus:outline-none rounded-md border border-gray-300"
-  />
-</div>
-
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+            <Input
+              type="text"
+              placeholder="Search smart responses"
+              className="w-full pl-10 py-2 text-black focus:outline-none rounded-md border border-gray-300"
+            />
+          </div>
           <Button
             className="px-6 py-3 bg-blue-500 text-white hover:bg-blue-600 flex items-center gap-3 rounded-lg"
-            onClick={() => console.log('Add clicked')}
+            onClick={onAddClick}
           >
             <Plus className="h-5 w-5" />
             <span>Add</span>
           </Button>
-
-           <Button className="bg-gray-800">
-          <Upload className="h-4 w-4 mr-2" />
-          Import
-        </Button>
-        <Button className="bg-gray-800">
-          <Download className="h-1 w-1" size={8}/>
-        </Button>
-
+          <Button className="bg-gray-800">
+            <Upload className="h-4 w-4 mr-2" />
+            Import
+          </Button>
+          <Button className="bg-gray-800">
+            <Download className="h-4 w-4 mr-2" />
+          </Button>
         </div>
       </div>
       {isLoading ? (
@@ -114,7 +137,7 @@ const SmartResponsesHeader: React.FC = () => {
         </div>
       ) : tableData.length === 0 ? (
         <div className="flex justify-center items-center h-64">
-          <Button onClick={() => console.log('Add clicked')}>
+          <Button onClick={onAddClick}>
             <Plus className="mr-2 h-4 w-4" />
             Add Smart Response
           </Button>
@@ -182,11 +205,15 @@ const SmartResponsesHeader: React.FC = () => {
                   <TableCell className="px-4 py-3 w-1/5 text-left">
                     <div className="flex flex-col gap-1">
                       {item.shortcuts.map((shortcut, index) => (
-                        <span key={index} className='bg-gray-400 rounded-full p-2'>#{shortcut}</span>
+                        <span key={index} className="bg-gray-400 rounded-full p-2">
+                          #{shortcut}
+                        </span>
                       ))}
                     </div>
                   </TableCell>
-                  <TableCell className="px-4 py-3 w-1/5 text-left text-ellipsis overflow-hidden max-w-0">{item.response}</TableCell>
+                  <TableCell className="px-4 py-3 w-1/5 text-left text-ellipsis overflow-hidden max-w-0">
+                    {item.response}
+                  </TableCell>
                   <TableCell className="px-4 py-3 w-1/5 truncate text-center">{item.createdBy}</TableCell>
                   <TableCell className="px-4 py-3 w-1/5 truncate text-center">{item.company}</TableCell>
                   <TableCell className="px-4 py-3 w-1/5 truncate text-center">

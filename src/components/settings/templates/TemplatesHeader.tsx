@@ -18,7 +18,17 @@ interface TemplateData {
   dateTime: string;
 }
 
-const TemplatesHeader: React.FC = () => {
+interface TemplatesHeaderProps {
+  onAddClick: () => void;
+  onAddTemplate: (template: any) => void;
+  templates: any[];
+}
+
+const TemplatesHeader: React.FC<TemplatesHeaderProps> = ({
+  onAddClick,
+  onAddTemplate,
+  templates,
+}) => {
   const [tableData, setTableData] = useState<TemplateData[]>(templatesData);
   const [sortDirection, setSortDirection] = useState<Record<string, 'asc' | 'desc' | null>>({
     businessCategory: null,
@@ -27,6 +37,21 @@ const TemplatesHeader: React.FC = () => {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Normalize incoming templates to match legacy interface
+  const normalizeTemplate = (item: any): TemplateData => ({
+    id: item.id || Date.now(),
+    businessCategory: item.businessCategory || '',
+    businessSubcategory: item.businessSubcategory || '',
+    createdBy: item.createdBy || 'Current User',
+    dateTime: item.dateTime || new Date().toISOString(),
+  });
+
+  // Initialize tableData
+  useEffect(() => {
+    const normalizedData = [...templatesData, ...templates].map(normalizeTemplate);
+    setTableData(normalizedData);
+  }, [templates]);
 
   // Simulate loading state
   useEffect(() => {
@@ -77,18 +102,17 @@ const TemplatesHeader: React.FC = () => {
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-4xl font-bold text-gray-800">Templates</h2>
         <div className="flex items-center gap-6">
-         <div className="relative w-[350px] mx-auto">
-  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
-  <Input
-    type="text"
-    placeholder="Search templates"
-    className="w-full pl-10 py-2 text-black focus:outline-none rounded-md border border-gray-300"
-  />
-</div>
-
+          <div className="relative w-[350px] mx-auto">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+            <Input
+              type="text"
+              placeholder="Search templates"
+              className="w-full pl-10 py-2 text-black focus:outline-none rounded-md border border-gray-300"
+            />
+          </div>
           <Button
             className="px-6 py-3 bg-blue-500 text-white hover:bg-blue-600 flex items-center gap-3 rounded-lg"
-            onClick={() => console.log('Add clicked')}
+            onClick={onAddClick}
           >
             <Plus className="h-5 w-5" />
             <span>Add</span>
@@ -103,7 +127,7 @@ const TemplatesHeader: React.FC = () => {
         </div>
       ) : tableData.length === 0 ? (
         <div className="flex justify-center items-center h-64">
-          <Button onClick={() => console.log('Add clicked')}>
+          <Button onClick={onAddClick}>
             <Plus className="mr-2 h-4 w-4" />
             Add Template
           </Button>

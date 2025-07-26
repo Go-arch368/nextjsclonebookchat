@@ -18,7 +18,17 @@ interface KnowledgeBaseData {
   keywords: string;
 }
 
-const KnowledgeBaseHeader: React.FC = () => {
+interface KnowledgeBaseHeaderProps {
+  onAddClick: () => void;
+  onAddRecord: (record: any) => void;
+  records: any[];
+}
+
+const KnowledgeBaseHeader: React.FC<KnowledgeBaseHeaderProps> = ({
+  onAddClick,
+  onAddRecord,
+  records,
+}) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedUrls, setSelectedUrls] = useState<string[]>([]);
   const [tableData, setTableData] = useState<KnowledgeBaseData[]>(knowledgeBaseData);
@@ -87,6 +97,20 @@ const KnowledgeBaseHeader: React.FC = () => {
     'https://zotlychattest.mobirisesite.com/',
   ];
 
+  // Normalize incoming records to match legacy interface
+  const normalizeRecord = (item: any): KnowledgeBaseData => ({
+    id: item.id || Date.now(),
+    questionTitle: item.questionTitle || '',
+    answerInformation: item.answerInformation || '',
+    keywords: item.keywords || '',
+  });
+
+  // Initialize tableData
+  useEffect(() => {
+    const normalizedData = [...knowledgeBaseData, ...records].map(normalizeRecord);
+    setTableData(normalizedData);
+  }, [records]);
+
   // Simulate loading state
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1000);
@@ -151,7 +175,7 @@ const KnowledgeBaseHeader: React.FC = () => {
         <div className="flex justify-end items-center gap-4">
           <Button
             className="px-6 py-3 bg-blue-500 text-white hover:bg-blue-600 rounded-lg flex items-center gap-2"
-            onClick={() => console.log('Add clicked')}
+            onClick={onAddClick}
           >
             <Plus className="h-5 w-5" />
             <span>Add</span>
@@ -164,7 +188,7 @@ const KnowledgeBaseHeader: React.FC = () => {
             <span>Import</span>
           </Button>
           <Button
-            className="px-6 py-3 bg-gray-800 text-white  rounded-lg flex items-center gap-2"
+            className="px-6 py-3 bg-gray-800 text-white rounded-lg flex items-center gap-2"
             onClick={() => console.log('Download template clicked')}
           >
             <Download className="h-5 w-5" />
@@ -218,7 +242,7 @@ const KnowledgeBaseHeader: React.FC = () => {
           </div>
         ) : tableData.length === 0 ? (
           <div className="flex justify-center items-center h-64">
-            <Button onClick={() => console.log('Add Entry clicked')}>
+            <Button onClick={onAddClick}>
               <Plus className="mr-2 h-4 w-4" />
               Add Entry
             </Button>
