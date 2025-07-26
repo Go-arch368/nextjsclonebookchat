@@ -38,7 +38,7 @@ const OpenAiChatBots: React.FC = () => {
           {isOpen && (
             <div className="mt-2 p-6 bg-green-100 shadow-lg rounded-lg text-center">
               <p>Integration has been configured</p>
-              <p>OpenAI API key: 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</p>
+              <p>OpenAI API key: YOURS API KEY</p>
               <p>
                 Click{' '}
                 <button
