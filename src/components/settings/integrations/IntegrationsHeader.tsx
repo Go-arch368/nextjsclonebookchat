@@ -9,7 +9,6 @@ const IntegrationsHeader = () => {
          <hr className='mt-10'/>
            <Zapier/>
             <Drift/>
-         
     </div>
   )
 }
