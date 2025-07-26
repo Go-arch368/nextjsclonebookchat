@@ -1,7 +1,7 @@
 import React from 'react'
 import Zapier from './Zapier'
 import Drift from "./Drift"
-import OpenAiChatBots from './OpenAiChatBots'
+// import OpenAiChatBots from './OpenAiChatBots'
 const IntegrationsHeader = () => {
   return (
     <div className="p-12 bg-white rounded-xl shadow-lg border border-gray-200">
@@ -9,7 +9,7 @@ const IntegrationsHeader = () => {
          <hr className='mt-10'/>
            <Zapier/>
             <Drift/>
-            <OpenAiChatBots/>
+            {/* <OpenAiChatBots/> */}
     </div>
   )
 }
