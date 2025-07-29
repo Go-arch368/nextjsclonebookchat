@@ -1,92 +1,128 @@
+// src/components/billing/PaymentsTable.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Card } from '@/ui/card';
+import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table';
-import Pagination from '../Pagination';
-import { Payment } from '@/types/Billing'; 
-export default function PaymentsTable({ mockPayments }: { mockPayments: Payment[] }) {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(5);
+import { Button } from '@/ui/button';
+import { Edit, Trash2 } from 'lucide-react';
+import { Payment } from '@/types/Billing';
+import { useBillingStore } from '@/stores/useBillingStore';
+import { toast } from 'sonner';
 
-  const totalPages = Math.ceil(mockPayments.length / itemsPerPage);
+interface PaymentsTableProps {
+  payments: Payment[];
+  onEdit: (payment: Payment) => void;
+}
 
-  const paginatedPayments = mockPayments.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+export default function PaymentsTable({ payments, onEdit }: PaymentsTableProps) {
+  const { deletePayment } = useBillingStore();
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [itemsPerPage]);
+  const handleDelete = async (id: number) => {
+    if (confirm('Are you sure you want to delete this payment?')) {
+      try {
+        await deletePayment(id);
+        toast.success('Payment deleted successfully!');
+      } catch (error: any) {
+        toast.error(error.response?.data?.message || 'Failed to delete payment');
+      }
+    }
+  };
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-6">
-      <div className='border border-gray-200 dark:border-gray-700 rounded-xl p-4 mb-4 bg-white dark:bg-gray-800 shadow-sm'>
-        <h1 className="text-3xl text-center font-bold text-gray-800 dark:text-white">Payments</h1>
-      </div>
-      <div className='border border-gray-200 dark:border-gray-700 rounded-xl p-4 mb-4 bg-white dark:bg-gray-800 shadow-sm'>
-        <Card className="overflow-auto rounded-2xl shadow-sm">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Created At</TableHead>
-                <TableHead>Updated At</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Currency</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Cancellation Time</TableHead>
-                <TableHead>Cancellation Reason</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedPayments.length > 0 ? (
-                paginatedPayments.map((payment, idx) => (
-                  <TableRow key={idx}>
-                    <TableCell>{new Date(payment.createdAt).toLocaleString()}</TableCell>
-                    <TableCell>{new Date(payment.updatedAt).toLocaleString()}</TableCell>
-                    <TableCell>${payment.price}</TableCell>
-                    <TableCell>{payment.currency}</TableCell>
-                    <TableCell>
-                      <span
-                        className={`px-2 py-1 text-xs rounded-full ${payment.status === 'Completed'
-                          ? 'bg-green-100 text-green-700'
-                          : payment.status === 'Pending'
-                            ? 'bg-yellow-100 text-yellow-700'
-                            : 'bg-red-100 text-red-700'
-                          }`}
-                      >
-                        {payment.status}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      {payment.cancellationTime
-                        ? new Date(payment.cancellationTime).toLocaleString()
-                        : '-'}
-                    </TableCell>
-                    <TableCell>{payment.cancellationReason || '-'}</TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center text-gray-500">
-                    No payments found.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </Card>
-
-        {/* Pagination */}
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          itemsPerPage={itemsPerPage}
-          onPageChange={setCurrentPage}
-          onItemsPerPageChange={setItemsPerPage}
-        />
-      </div>
-    </div>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Created At</TableHead>
+          <TableHead>Updated At</TableHead>
+          <TableHead>Amount</TableHead>
+          <TableHead>Currency</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead>Cancellation Time</TableHead>
+          <TableHead>Cancellation Reason</TableHead>
+          <TableHead>Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {payments.length > 0 ? (
+          payments.map((payment) => (
+            <TableRow key={payment.id}>
+              <TableCell>
+                {payment.createdAt
+                  ? new Date(payment.createdAt).toLocaleString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
+                  : 'N/A'}
+              </TableCell>
+              <TableCell>
+                {payment.updatedAt
+                  ? new Date(payment.updatedAt).toLocaleString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
+                  : 'N/A'}
+              </TableCell>
+              <TableCell>${payment.amount.toFixed(2)}</TableCell>
+              <TableCell>{payment.currency || 'N/A'}</TableCell>
+              <TableCell>
+                <span
+                  className={`px-2 py-1 text-xs rounded-full ${
+                    payment.status === 'Completed'
+                      ? 'bg-green-100 text-green-700'
+                      : payment.status === 'Refunded'
+                      ? 'bg-yellow-100 text-yellow-700'
+                      : 'bg-red-100 text-red-700'
+                  }`}
+                >
+                  {payment.status || 'Unknown'}
+                </span>
+              </TableCell>
+              <TableCell>
+                {payment.status === 'Refunded' && payment.cancellationTime
+                  ? new Date(payment.cancellationTime).toLocaleString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
+                  : '-'}
+              </TableCell>
+              <TableCell>
+                {payment.status === 'Refunded' && payment.cancellationReason
+                  ? payment.cancellationReason
+                  : '-'}
+              </TableCell>
+              <TableCell>
+                <div className="flex justify-center space-x-2">
+                  <Button variant="ghost" onClick={() => onEdit(payment)}>
+                    <Edit className="h-4 w-4 text-gray-500" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => payment.id && handleDelete(payment.id)}
+                    disabled={!payment.id}
+                  >
+                    <Trash2 className="h-4 w-4 text-gray-500" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))
+        ) : (
+          <TableRow>
+            <TableCell colSpan={8} className="text-center text-gray-500">
+              No payments found.
+            </TableCell>
+          </TableRow>
+        )}
+      </TableBody>
+    </Table>
   );
 }

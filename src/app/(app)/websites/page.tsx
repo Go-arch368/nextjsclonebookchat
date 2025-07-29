@@ -1,26 +1,34 @@
+// app/websites/page.tsx
 "use client";
 
-import React, { useState } from 'react';
-import Header from '@/components/websites/Header';
-import TableComponent from '@/components/websites/TableComponent';
+import { useState, useEffect } from "react";
+import axios from "axios";
+import Header from "@/components/websites/Header";
+import TableComponent from "@/components/websites/TableComponent";
+import { Website } from "@/types/website";
 
-interface Website {
-  _id?: string;
-  protocol?: string;
-  domain?: string;
-  company?: string;
-  category?: string;
-}
-
-const Page = () => {
+export default function WebsitesPage() {
   const [websites, setWebsites] = useState<Website[]>([]);
+  const API_BASE_URL = "https://zotly.onrender.com/websites";
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/list`);
+        console.log("GET /list response:", response.data); // Debug log
+        setWebsites(response.data || []);
+      } catch (error: any) {
+        console.error("Error fetching websites:", error.message);
+        setWebsites([]);
+      }
+    }
+    fetchData();
+  }, []);
 
   return (
-    <div>
-      <Header setWebsites={setWebsites} />
-      <TableComponent/>
+    <div className="container mx-auto">
+      <Header setWebsites={setWebsites} websites={websites} />
+      <TableComponent websites={websites} setWebsites={setWebsites} />
     </div>
   );
-};
-
-export default Page;
+}

@@ -1,24 +1,18 @@
-// src/app/(app)/users/page.tsx or src/pages/users.tsx
+// src/app/(app)/users/page.tsx
 "use client";
 
 import React, { useState } from 'react';
 import Header from '@/components/users/Header';
 import TableComponent from '@/components/users/TableComponent';
-
-interface User {
-  _id?: string;
-  name?: string;
-  email?: string;
-  role?: string;
-}
+import { User } from '@/types/user';
 
 const Page = () => {
   const [users, setUsers] = useState<User[]>([]);
 
   return (
     <div>
-      <Header setUsers={setUsers} />
-      <TableComponent  />
+      <Header setUsers={setUsers} users={users} />
+      <TableComponent users={users} setUsers={setUsers} />
     </div>
   );
 };

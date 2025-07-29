@@ -20,14 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/ui/popover";
-import { Calendar } from "@/ui/calendar";
-import { Plus, Lock, Mail, MapPin, Link, Star, CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
+import { Plus, Lock, Mail, MapPin, Link, Star } from "lucide-react";
 import axios from "axios";
 import { Customer } from "@/types/customer";
 
@@ -50,7 +43,6 @@ export default function AddCustomerForm({ onSubmit, isOpen, setIsOpen }: AddCust
     createdAt: new Date().toISOString().slice(0, 19),
     updatedAt: new Date().toISOString().slice(0, 19),
   });
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const API_BASE_URL = "https://zotly.onrender.com/customers";
@@ -73,18 +65,18 @@ export default function AddCustomerForm({ onSubmit, isOpen, setIsOpen }: AddCust
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleDateSelect = (date: Date | undefined) => {
-    setSelectedDate(date);
-    setFormData((prev) => ({
-      ...prev,
-      dateAdded: date ? format(date, "yyyy-MM-dd'T'HH:mm:ss") : "",
-    }));
-  };
-
   const handleFormSubmit = () => {
     if (!formData.name) {
       toast.error("Name is required");
       return;
+    }
+    // Validate dateAdded format (yyyy-MM-dd'T'HH:mm:ss)
+    if (formData.dateAdded) {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/;
+      if (!dateRegex.test(formData.dateAdded)) {
+        toast.error("Date Added must be in format YYYY-MM-DDTHH:mm:ss");
+        return;
+      }
     }
     setIsOpen(false);
     setIsConfirmOpen(true);
@@ -98,7 +90,9 @@ export default function AddCustomerForm({ onSubmit, isOpen, setIsOpen }: AddCust
         createdAt: formData.createdAt || new Date().toISOString().slice(0, 19),
         updatedAt: formData.updatedAt || new Date().toISOString().slice(0, 19),
       };
-      await axios.post(`${API_BASE_URL}/save`, payload);
+      console.log("POST /save payload:", payload); // Debug log
+      const response = await axios.post(`${API_BASE_URL}/save`, payload);
+      console.log("POST /save response:", response.data); // Debug log
       toast.success("Customer added successfully!");
       onSubmit(payload);
       setFormData({
@@ -112,10 +106,12 @@ export default function AddCustomerForm({ onSubmit, isOpen, setIsOpen }: AddCust
         createdAt: new Date().toISOString().slice(0, 19),
         updatedAt: new Date().toISOString().slice(0, 19),
       });
-      setSelectedDate(undefined);
       setIsConfirmOpen(false);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to add customer");
+      const errorMessage =
+        error.response?.data?.message || error.message || "Failed to add customer";
+      console.error("Error adding customer:", errorMessage, error.response?.status); // Debug log
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -189,26 +185,15 @@ export default function AddCustomerForm({ onSubmit, isOpen, setIsOpen }: AddCust
               <Label htmlFor="dateAdded" className="text-right">
                 Date Added
               </Label>
-              <div className="col-span-3">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal"
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {selectedDate ? format(selectedDate, "yyyy-MM-dd") : <span>Pick a date</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={handleDateSelect}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+              <div className="relative col-span-3">
+                <Input
+                  id="dateAdded"
+                  name="dateAdded"
+                  value={formData.dateAdded}
+                  onChange={handleInputChange}
+                  className="pl-9"
+                  placeholder="YYYY-MM-DDTHH:mm:ss (e.g., 2025-07-29T09:44:00)"
+                />
               </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">

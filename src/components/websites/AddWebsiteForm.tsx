@@ -1,4 +1,4 @@
-// src/components/AddWebsiteForm.tsx
+// components/websites/AddWebsiteForm.tsx
 "use client";
 
 import { useState } from "react";
@@ -8,7 +8,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
+  DialogTrigger,
 } from "@/ui/dialog";
 import { Input } from "@/ui/input";
 import { Label } from "@/ui/label";
@@ -20,61 +20,100 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/ui/select";
-import { Globe,Plus } from "lucide-react";
-
-interface WebsiteFormData {
-  protocol?: string;
-  domain?: string;
-  company?: string;
-  category?: string;
-}
+import { Globe, Plus } from "lucide-react";
+import axios from "axios";
+import { Website } from "@/types/website";
 
 interface AddWebsiteFormProps {
-  onSubmit: (data: WebsiteFormData) => void;
+  onSubmit: (data: Website) => void;
   isOpen: boolean;
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const AddWebsiteForm: React.FC<AddWebsiteFormProps> = ({ onSubmit, isOpen, setIsOpen }) => {
-  const [formData, setFormData] = useState<WebsiteFormData>({
+export default function AddWebsiteForm({ onSubmit, isOpen, setIsOpen }: AddWebsiteFormProps) {
+  const [formData, setFormData] = useState<Website>({
     protocol: "HTTPS",
     domain: "",
-    company: "",
-    category: "",
+    companyId: 0,
+    businessCategory: "",
+    dateAdded: "",
+    isActive: false,
+    isVerified: false,
+    createdAt: new Date().toISOString().slice(0, 19),
+    updatedAt: new Date().toISOString().slice(0, 19),
   });
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [showErrors, setShowErrors] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showErrors, setShowErrors] = useState(false);
+
+  const API_BASE_URL = "https://zotly.onrender.com/websites";
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === "companyId" ? parseInt(value) || 0 : value,
+    }));
   };
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = () => {
-    if (!formData.domain || !formData.company || !formData.category) {
+  const handleCheckboxChange = (name: string, checked: boolean) => {
+    setFormData((prev) => ({ ...prev, [name]: checked }));
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.domain || !formData.companyId || !formData.businessCategory || !formData.dateAdded) {
       setShowErrors(true);
+      toast.error("Please fill all required fields");
+      return;
+    }
+    const dateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/;
+    if (!dateRegex.test(formData.dateAdded)) {
+      setShowErrors(true);
+      toast.error("Date Added must be in format YYYY-MM-DDTHH:mm:ss");
       return;
     }
     setIsSubmitting(true);
     try {
+      const payload = {
+        ...formData,
+        createdAt: formData.createdAt || new Date().toISOString().slice(0, 19),
+        updatedAt: formData.updatedAt || new Date().toISOString().slice(0, 19),
+      };
+      console.log("POST /save payload:", payload); // Debug log
+      const response = await axios.post(`${API_BASE_URL}/save`, payload);
+      console.log("POST /save response:", response.data); // Debug log
       toast.success("Website added successfully!");
-      onSubmit(formData);
-      setFormData({ protocol: "HTTPS", domain: "", company: "", category: "" });
+      onSubmit(payload);
+      setFormData({
+        protocol: "HTTPS",
+        domain: "",
+        companyId: 0,
+        businessCategory: "",
+        dateAdded: "",
+        isActive: false,
+        isVerified: false,
+        createdAt: new Date().toISOString().slice(0, 19),
+        updatedAt: new Date().toISOString().slice(0, 19),
+      });
       setIsOpen(false);
     } catch (error: any) {
-      toast.error(error.message || "An error occurred");
+      const errorMessage =
+        error.response?.data?.message || error.message || "Failed to add website";
+      console.error("Error adding website:", errorMessage, error.response?.status); // Debug log
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
       setShowErrors(false);
     }
   };
 
-  const isFieldInvalid = (field: keyof WebsiteFormData) => {
-    return showErrors && !formData[field] && field !== "protocol";
+  const isFieldInvalid = (field: keyof Website) => {
+    if (field === "companyId") return showErrors && formData[field] === 0;
+    if (field === "protocol" || field === "isActive" || field === "isVerified") return false;
+    return showErrors && !formData[field];
   };
 
   return (
@@ -97,7 +136,6 @@ const AddWebsiteForm: React.FC<AddWebsiteFormProps> = ({ onSubmit, isOpen, setIs
             <Select
               onValueChange={(value) => handleSelectChange("protocol", value)}
               value={formData.protocol}
-              // className="w-full"
             >
               <SelectTrigger className="w-full border border-gray-300 rounded-md">
                 <SelectValue placeholder="Select Protocol" />
@@ -125,63 +163,74 @@ const AddWebsiteForm: React.FC<AddWebsiteFormProps> = ({ onSubmit, isOpen, setIs
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="company" className="text-blue-700 block">
-              Company *
+            <Label htmlFor="companyId" className="text-blue-700 block">
+              Company ID *
             </Label>
-            <Select
-              onValueChange={(value) => handleSelectChange("company", value)}
-              value={formData.company}
-              // className={`w-full border border-gray-300 rounded-md ${isFieldInvalid("company") ? "border-red-500" : ""}`}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select Company" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="CDP Resolution">CDP Resolution</SelectItem>
-                <SelectItem value="CISCO">CISCO</SelectItem>
-                <SelectItem value="Chat Metrics">Chat Metrics</SelectItem>
-                <SelectItem value="Chat Metrics Client Test">Chat Metrics Client Test</SelectItem>
-                <SelectItem value="Chat Metrics Tester">Chat Metrics Tester</SelectItem>
-                <SelectItem value="Chatmetrics test account #2">Chatmetrics test account #2</SelectItem>
-                <SelectItem value="Delivr">Delivr</SelectItem>
-                <SelectItem value="Dev test">Dev test</SelectItem>
-                <SelectItem value="Fox">Fox</SelectItem>
-                <SelectItem value="Nicram It Solutions">Nicram It Solutions</SelectItem>
-                <SelectItem value="NicramFaust">NicramFaust</SelectItem>
-                <SelectItem value="Oxnia">Oxnia</SelectItem>
-                <SelectItem value="TW Test - Training Sanghamitra">TW Test - Training Sanghamitra</SelectItem>
-                <SelectItem value="Test company">Test company</SelectItem>
-                <SelectItem value="Test customer">Test customer</SelectItem>
-                <SelectItem value="Treative">Treative</SelectItem>
-                <SelectItem value="ZOTLY">ZOTLY</SelectItem>
-                <SelectItem value="Zotly">Zotly</SelectItem>
-                <SelectItem value="chatmetrics">chatmetrics</SelectItem>
-                <SelectItem value="faust-it">faust-it</SelectItem>
-                <SelectItem value="swastechnolgies pvt ltd">swastechnolgies pvt ltd</SelectItem>
-                <SelectItem value="test company xyz">test company xyz</SelectItem>
-                <SelectItem value="test.com">test.com</SelectItem>
-              </SelectContent>
-            </Select>
+            <Input
+              id="companyId"
+              name="companyId"
+              type="number"
+              value={formData.companyId || ""}
+              onChange={handleInputChange}
+              className={`w-full border border-gray-300 rounded-md ${isFieldInvalid("companyId") ? "border-red-500" : ""}`}
+              placeholder="Enter company ID"
+            />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="category" className="text-blue-700 block">
+            <Label htmlFor="businessCategory" className="text-blue-700 block">
               Business Category *
             </Label>
             <Select
-              onValueChange={(value) => handleSelectChange("category", value)}
-              value={formData.category}
-              // className={`w-full border border-gray-300 rounded-md ${isFieldInvalid("category") ? "border-red-500" : ""}`}
+              onValueChange={(value) => handleSelectChange("businessCategory", value)}
+              value={formData.businessCategory}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full border border-gray-300 rounded-md">
                 <SelectValue placeholder="Select Category" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="Retail">Retail</SelectItem>
                 <SelectItem value="Ecommerce">Ecommerce</SelectItem>
                 <SelectItem value="Saas">Saas</SelectItem>
                 <SelectItem value="Technology">Technology</SelectItem>
                 <SelectItem value="Others">Others</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="dateAdded" className="text-blue-700 block">
+              Date Added *
+            </Label>
+            <Input
+              id="dateAdded"
+              name="dateAdded"
+              value={formData.dateAdded}
+              onChange={handleInputChange}
+              className={`w-full border border-gray-300 rounded-md ${isFieldInvalid("dateAdded") ? "border-red-500" : ""}`}
+              placeholder="YYYY-MM-DDTHH:mm:ss (e.g., 2025-07-29T09:44:00)"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-blue-700 block">Status</Label>
+            <div className="flex gap-4">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={formData.isActive}
+                  onChange={(e) => handleCheckboxChange("isActive", e.target.checked)}
+                  className="mr-2"
+                />
+                Active
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={formData.isVerified}
+                  onChange={(e) => handleCheckboxChange("isVerified", e.target.checked)}
+                  className="mr-2"
+                />
+                Verified
+              </label>
+            </div>
           </div>
         </div>
         <div className="flex justify-end gap-2">
@@ -195,6 +244,4 @@ const AddWebsiteForm: React.FC<AddWebsiteFormProps> = ({ onSubmit, isOpen, setIs
       </DialogContent>
     </Dialog>
   );
-};
-
-export default AddWebsiteForm;
+}

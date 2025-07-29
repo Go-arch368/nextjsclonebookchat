@@ -1,4 +1,4 @@
-// src/components/AddUsersForm.tsx
+// src/components/users/AddUsersForm.tsx
 "use client";
 
 import React, { useState } from 'react';
@@ -21,20 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/ui/select";
-
-interface User {
-  _id?: string;
-  email?: string;
-  role?: string;
-  password?: string;
-  confirmPassword?: string;
-  firstName?: string;
-  lastName?: string;
-  jobTitle?: string;
-  department?: string;
-  company?: string;
-  simultaneousChatLimit?: number;
-}
+import { User } from '@/types/user';
 
 interface AddUsersFormProps {
   onSubmit: (data: User) => void;
@@ -42,61 +29,34 @@ interface AddUsersFormProps {
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const ROLES = [
-  "Administrator",
-  "Manager",
-  "Supervisor",
-  "Agent"
-];
-
-const COMPANIES = [
-  "CDP Resolution",
-  "CISCO",
-  "Chat Metrics",
-  "Chat Metrics Client Test",
-  "Chat Metrics Tester",
-  "Chatmetrics test account #2",
-  "Delivr",
-  "Dev test",
-  "Fox",
-  "Nicram It Solutions",
-  "NicramFaust",
-  "Oxnia",
-  "TW Test - Training Sanghamitra",
-  "Test company",
-  "Test customer",
-  "Treative",
-  "ZOTLY",
-  "Zotly",
-  "chatmetrics",
-  "faust-it",
-  "swastechnolgies pvt ltd",
-  "test company xyz",
-  "test.com"
-];
+const ROLES = ["ADMIN", "MANAGER", "SUPERVISOR", "AGENT"];
 
 const AddUsersForm: React.FC<AddUsersFormProps> = ({ onSubmit, isOpen, setIsOpen }) => {
   const [formData, setFormData] = useState<User>({
     email: "",
     role: "",
-    password: "",
-    confirmPassword: "",
+    passwordHash: "",
     firstName: "",
     lastName: "",
     jobTitle: "",
     department: "",
-    company: "",
-    simultaneousChatLimit: undefined,
+    companyId: 0,
+    simultaneousChatLimit: 0,
   });
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [showErrors, setShowErrors] = useState<boolean>(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showErrors, setShowErrors] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: name === "simultaneousChatLimit" ? (value ? parseInt(value) : undefined) : value,
-    }));
+    if (name === "confirmPassword") {
+      setConfirmPassword(value);
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: name === "companyId" || name === "simultaneousChatLimit" ? (value ? parseInt(value) : 0) : value,
+      }));
+    }
   };
 
   const handleSelectChange = (name: keyof User, value: string) => {
@@ -107,31 +67,31 @@ const AddUsersForm: React.FC<AddUsersFormProps> = ({ onSubmit, isOpen, setIsOpen
   };
 
   const handleSubmit = () => {
-    const requiredFields = ["email", "role", "password", "confirmPassword", "firstName", "lastName", "company", "simultaneousChatLimit"];
-    if (requiredFields.some(field => !formData[field as keyof User])) {
+    const requiredFields: (keyof User)[] = ["email", "role", "passwordHash", "firstName", "lastName", "companyId", "simultaneousChatLimit"];
+    if (requiredFields.some(field => !formData[field] && formData[field] !== 0)) {
       setShowErrors(true);
+      toast.error("All required fields must be filled");
       return;
     }
-    if (formData.password !== formData.confirmPassword) {
+    if (formData.passwordHash !== confirmPassword) {
       toast.error("Passwords do not match!");
       return;
     }
     setIsSubmitting(true);
     try {
       onSubmit(formData);
-      toast.success("User added successfully!");
       setFormData({
         email: "",
         role: "",
-        password: "",
-        confirmPassword: "",
+        passwordHash: "",
         firstName: "",
         lastName: "",
         jobTitle: "",
         department: "",
-        company: "",
-        simultaneousChatLimit: undefined,
+        companyId: 0,
+        simultaneousChatLimit: 0,
       });
+      setConfirmPassword("");
       setIsOpen(false);
     } catch (error: any) {
       toast.error(error.message || "An error occurred");
@@ -142,7 +102,7 @@ const AddUsersForm: React.FC<AddUsersFormProps> = ({ onSubmit, isOpen, setIsOpen
   };
 
   const isFieldInvalid = (field: keyof User) => {
-    return showErrors && !formData[field] && ["email", "role", "password", "confirmPassword", "firstName", "lastName", "company", "simultaneousChatLimit"].includes(field);
+    return showErrors && (!formData[field] && formData[field] !== 0) && ["email", "role", "passwordHash", "firstName", "lastName", "companyId", "simultaneousChatLimit"].includes(field);
   };
 
   return (
@@ -172,8 +132,6 @@ const AddUsersForm: React.FC<AddUsersFormProps> = ({ onSubmit, isOpen, setIsOpen
               placeholder="Enter email"
             />
           </div>
-          
-          {/* Role Dropdown */}
           <div className="space-y-2">
             <Label htmlFor="role" className="text-blue-700 block">
               Role *
@@ -194,18 +152,17 @@ const AddUsersForm: React.FC<AddUsersFormProps> = ({ onSubmit, isOpen, setIsOpen
               </SelectContent>
             </Select>
           </div>
-
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-blue-700 block">
+            <Label htmlFor="passwordHash" className="text-blue-700 block">
               Password *
             </Label>
             <Input
-              id="password"
-              name="password"
+              id="passwordHash"
+              name="passwordHash"
               type="password"
-              value={formData.password || ""}
+              value={formData.passwordHash || ""}
               onChange={handleInputChange}
-              className={`w-full border border-gray-300 rounded-md ${isFieldInvalid("password") ? "border-red-500" : ""}`}
+              className={`w-full border border-gray-300 rounded-md ${isFieldInvalid("passwordHash") ? "border-red-500" : ""}`}
               placeholder="Enter password"
             />
           </div>
@@ -217,9 +174,9 @@ const AddUsersForm: React.FC<AddUsersFormProps> = ({ onSubmit, isOpen, setIsOpen
               id="confirmPassword"
               name="confirmPassword"
               type="password"
-              value={formData.confirmPassword || ""}
+              value={confirmPassword || ""}
               onChange={handleInputChange}
-              className={`w-full border border-gray-300 rounded-md ${isFieldInvalid("confirmPassword") ? "border-red-500" : ""}`}
+              className={`w-full border border-gray-300 rounded-md ${showErrors && !confirmPassword ? "border-red-500" : ""}`}
               placeholder="Confirm password"
             />
           </div>
@@ -275,29 +232,20 @@ const AddUsersForm: React.FC<AddUsersFormProps> = ({ onSubmit, isOpen, setIsOpen
               placeholder="Enter department"
             />
           </div>
-          
-          {/* Company Dropdown */}
           <div className="space-y-2">
-            <Label htmlFor="company" className="text-blue-700 block">
-              Company *
+            <Label htmlFor="companyId" className="text-blue-700 block">
+              Company ID *
             </Label>
-            <Select
-              value={formData.company || ""}
-              onValueChange={(value) => handleSelectChange("company", value)}
-            >
-              <SelectTrigger className={`w-full ${isFieldInvalid("company") ? "border-red-500" : ""}`}>
-                <SelectValue placeholder="Select a company" />
-              </SelectTrigger>
-              <SelectContent>
-                {COMPANIES.map((company) => (
-                  <SelectItem key={company} value={company}>
-                    {company}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Input
+              id="companyId"
+              name="companyId"
+              type="number"
+              value={formData.companyId ?? 0}
+              onChange={handleInputChange}
+              className={`w-full border border-gray-300 rounded-md ${isFieldInvalid("companyId") ? "border-red-500" : ""}`}
+              placeholder="Enter company ID"
+            />
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="simultaneousChatLimit" className="text-blue-700 block">
               Simultaneous Chat Limit *
@@ -306,7 +254,7 @@ const AddUsersForm: React.FC<AddUsersFormProps> = ({ onSubmit, isOpen, setIsOpen
               id="simultaneousChatLimit"
               name="simultaneousChatLimit"
               type="number"
-              value={formData.simultaneousChatLimit || ""}
+              value={formData.simultaneousChatLimit ?? 0}
               onChange={handleInputChange}
               className={`w-full border border-gray-300 rounded-md ${isFieldInvalid("simultaneousChatLimit") ? "border-red-500" : ""}`}
               placeholder="Enter limit"
@@ -314,7 +262,21 @@ const AddUsersForm: React.FC<AddUsersFormProps> = ({ onSubmit, isOpen, setIsOpen
           </div>
         </div>
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => setIsOpen(false)}>
+          <Button variant="outline" onClick={() => {
+            setIsOpen(false);
+            setFormData({
+              email: "",
+              role: "",
+              passwordHash: "",
+              firstName: "",
+              lastName: "",
+              jobTitle: "",
+              department: "",
+              companyId: 0,
+              simultaneousChatLimit: 0,
+            });
+            setConfirmPassword("");
+          }}>
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={isSubmitting}>

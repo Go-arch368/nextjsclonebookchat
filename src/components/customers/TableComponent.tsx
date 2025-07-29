@@ -133,7 +133,7 @@ export default function TableComponent({ customers, setCustomers, openAddCustome
     return null;
   };
 
-  const itemsPerPage = 5;
+  const itemsPerPage = 3;
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentData = customers.slice(indexOfFirstItem, indexOfLastItem);

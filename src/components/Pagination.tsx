@@ -1,15 +1,16 @@
+// src/components/Pagination.tsx
 'use client';
 
-import { Button } from "@/ui/button";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/ui/select";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import React from 'react';
+import { Button } from '@/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select';
 
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
   itemsPerPage: number;
   onPageChange: (page: number) => void;
-  onItemsPerPageChange: (count: number) => void;
+  onItemsPerPageChange: (itemsPerPage: number) => void;
 }
 
 export default function Pagination({
@@ -19,47 +20,47 @@ export default function Pagination({
   onPageChange,
   onItemsPerPageChange,
 }: PaginationProps) {
+  console.log('Pagination state:', { currentPage, totalPages, itemsPerPage });
+
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
-      {/* Items per page */}
+    <div className="flex flex-col sm:flex-row items-center justify-between p-4">
       <div className="flex items-center gap-2">
-        <span className="text-sm text-gray-600">Items per page:</span>
-        <Select value={itemsPerPage.toString()} onValueChange={(value) => onItemsPerPageChange(Number(value))}>
-          <SelectTrigger className="w-20 h-8">
+        <span className="text-sm text-gray-700 dark:text-gray-300">
+          Items per page:
+        </span>
+        <Select
+          value={itemsPerPage.toString()}
+          onValueChange={(value) => onItemsPerPageChange(Number(value))}
+        >
+          <SelectTrigger className="w-20">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {[5, 10, 20, 50].map((count) => (
-              <SelectItem key={count} value={count.toString()}>
-                {count}
+            {[5, 10, 20].map((size) => (
+              <SelectItem key={size} value={size.toString()}>
+                {size}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
-
-      {/* Page controls */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 mt-2 sm:mt-0">
         <Button
           variant="outline"
-          size="sm"
           onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 1}
+          disabled={currentPage <= 1}
         >
-          <ChevronLeft className="h-4 w-4" />
-          Prev
+          Previous
         </Button>
-        <span className="text-sm text-gray-600">
+        <span className="text-sm text-gray-700 dark:text-gray-300">
           Page {currentPage} of {totalPages}
         </span>
         <Button
           variant="outline"
-          size="sm"
           onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
+          disabled={currentPage >= totalPages}
         >
           Next
-          <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
     </div>

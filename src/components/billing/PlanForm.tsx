@@ -1,3 +1,4 @@
+// src/components/billing/PlanForm.tsx
 'use client';
 
 import React, { useState } from 'react';
@@ -6,43 +7,102 @@ import { Textarea } from '@/ui/textarea';
 import { Label } from '@/ui/label';
 import { Switch } from '@/ui/switch';
 import { Button } from '@/ui/button';
+import { useBillingStore } from '@/stores/useBillingStore';
+import { PricePlan } from '@/types/Billing';
+import { toast } from 'react-toastify';
 
-export default function CreatePlanForm() {
+interface CreatePlanFormProps {
+  plan?: PricePlan;
+  isEdit?: boolean;
+  onClose?: () => void;
+}
+
+export default function CreatePlanForm({ plan, isEdit = false, onClose }: CreatePlanFormProps) {
+  const { createPricePlan, updatePricePlan } = useBillingStore();
   const [form, setForm] = useState({
-    planName: '',
-    planDescription: '',
-    isFree: false,
-    priceMonthly: '',
-    priceAnnually: '',
-    isActive: true,
-    isDefault: false,
-    unlimitedChat: false,
-    numChats: '',
-    extraChatAmount: '',
-    unlimitedHistory: false,
-    historyDuration: '',
-    historyExtraCost: '',
-    unlimitedUsers: false,
-    NumberOfUsers: '',
-    ExtraUsersAmount: '',
-    NumberOfWebsites: '',
-    ExtraWebsitesAmount: '',
-    ChatTakeover: false,
-    ChatTagging: false,
-    ChatTranscript: false,
-    ChatbotFromOpenAiIncluded: false,
-    managedAccount: false,
-    customPlan: false,
+    planName: plan?.planName || '',
+    planDescription: plan?.planDescription || '',
+    freePlan: plan?.freePlan || false,
+    priceMonthly: plan?.priceMonthly?.toString() || '',
+    priceAnnually: plan?.priceAnnually?.toString() || '',
+    status: plan?.status || 'active',
+    defaultPlan: plan?.defaultPlan || false,
+    unlimitedChat: plan?.unlimitedChat || false,
+    numberOfChats: plan?.numberOfChats?.toString() || '',
+    extraChatAmount: plan?.extraChatAmount?.toString() || '',
+    unlimitedChatHistoryStorage: plan?.unlimitedChatHistoryStorage || false,
+    chatHistoryDurationDays: plan?.chatHistoryDurationDays?.toString() || '',
+    costPerExtraDayOfStorage: plan?.costPerExtraDayOfStorage?.toString() || '',
+    unlimitedUsers: plan?.unlimitedUsers || false,
+    numberOfUsers: plan?.numberOfUsers?.toString() || '',
+    extraUserCost: plan?.extraUserCost?.toString() || '',
+    numberOfWebsites: plan?.numberOfWebsites?.toString() || '',
+    extraWebsiteCost: plan?.extraWebsiteCost?.toString() || '',
+    chatTakeover: plan?.chatTakeover || false,
+    chatTagging: plan?.chatTagging || false,
+    chatTranscript: plan?.chatTranscript || false,
+    chatbotOpenaiIncluded: plan?.chatbotOpenaiIncluded || false,
+    managedAccount: plan?.managedAccount || false,
+    customPlan: plan?.customPlan || false,
+    type: plan?.type || 'public',
+    createdAt: plan?.createdAt || new Date().toISOString().slice(0, 19),
+    dateAdded: plan?.dateAdded || new Date().toISOString().slice(0, 19),
   });
 
   const handleChange = (field: string, value: any) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Plan Submitted:', form);
-    // TODO: Send form data to API
+    try {
+      const payload: PricePlan = {
+        id: plan?.id || 0,
+        planName: form.planName,
+        planDescription: form.planDescription,
+        freePlan: form.freePlan,
+        priceMonthly: form.freePlan ? 0 : parseFloat(form.priceMonthly) || 0,
+        priceAnnually: form.freePlan ? 0 : parseFloat(form.priceAnnually) || 0,
+        status: form.status,
+        defaultPlan: form.defaultPlan,
+        unlimitedChat: form.unlimitedChat,
+        numberOfChats: form.unlimitedChat ? 0 : parseInt(form.numberOfChats) || 0,
+        extraChatAmount: form.unlimitedChat ? 0 : parseFloat(form.extraChatAmount) || 0,
+        unlimitedChatHistoryStorage: form.unlimitedChatHistoryStorage,
+        chatHistoryDurationDays: form.unlimitedChatHistoryStorage
+          ? 0
+          : parseInt(form.chatHistoryDurationDays) || 0,
+        costPerExtraDayOfStorage: form.unlimitedChatHistoryStorage
+          ? 0
+          : parseFloat(form.costPerExtraDayOfStorage) || 0,
+        unlimitedUsers: form.unlimitedUsers,
+        numberOfUsers: form.unlimitedUsers ? 0 : parseInt(form.numberOfUsers) || 0,
+        extraUserCost: form.unlimitedUsers ? 0 : parseFloat(form.extraUserCost) || 0,
+        numberOfWebsites: parseInt(form.numberOfWebsites) || 0,
+        extraWebsiteCost: parseFloat(form.extraWebsiteCost) || 0,
+        chatTakeover: form.chatTakeover,
+        chatTagging: form.chatTagging,
+        chatTranscript: form.chatTranscript,
+        chatbotOpenaiIncluded: form.chatbotOpenaiIncluded,
+        managedAccount: form.managedAccount,
+        customPlan: form.customPlan,
+        type: form.type,
+        createdAt: form.createdAt,
+        updatedAt: new Date().toISOString().slice(0, 19),
+        dateAdded: form.dateAdded,
+      };
+
+      if (isEdit && plan?.id) {
+        await updatePricePlan(payload);
+      } else {
+        const { id, createdAt, updatedAt, dateAdded, ...createPayload } = payload;
+        await createPricePlan(createPayload);
+      }
+      onClose?.();
+    } catch (error) {
+      console.error('Failed to save price plan:', error);
+      toast.error('Failed to save price plan');
+    }
   };
 
   return (
@@ -57,7 +117,6 @@ export default function CreatePlanForm() {
             required
           />
         </div>
-
         <div className="flex flex-col space-y-1">
           <Label htmlFor="planDescription">Plan Description</Label>
           <Textarea
@@ -66,21 +125,20 @@ export default function CreatePlanForm() {
             onChange={(e) => handleChange('planDescription', e.target.value)}
           />
         </div>
-
         <div className="flex items-center justify-between gap-x-4">
           <Label>Free Plan</Label>
           <Switch
-            checked={form.isFree}
-            onCheckedChange={(val) => handleChange('isFree', val)}
+            checked={form.freePlan}
+            onCheckedChange={(val) => handleChange('freePlan', val)}
           />
         </div>
-
-        {!form.isFree && (
+        {!form.freePlan && (
           <>
             <div className="flex flex-col space-y-1">
               <Label>Price Monthly ($)</Label>
               <Input
                 type="number"
+                step="0.01"
                 value={form.priceMonthly}
                 onChange={(e) => handleChange('priceMonthly', e.target.value)}
               />
@@ -89,29 +147,27 @@ export default function CreatePlanForm() {
               <Label>Price Annually ($)</Label>
               <Input
                 type="number"
+                step="0.01"
                 value={form.priceAnnually}
                 onChange={(e) => handleChange('priceAnnually', e.target.value)}
               />
             </div>
           </>
         )}
-
         <div className="flex items-center justify-between gap-x-4">
           <Label>Active Plan</Label>
           <Switch
-            checked={form.isActive}
-            onCheckedChange={(val) => handleChange('isActive', val)}
+            checked={form.status === 'active'}
+            onCheckedChange={(val) => handleChange('status', val ? 'active' : 'inactive')}
           />
         </div>
-
         <div className="flex items-center justify-between gap-x-4">
           <Label>Default Plan</Label>
           <Switch
-            checked={form.isDefault}
-            onCheckedChange={(val) => handleChange('isDefault', val)}
+            checked={form.defaultPlan}
+            onCheckedChange={(val) => handleChange('defaultPlan', val)}
           />
         </div>
-
         <div className="flex items-center justify-between gap-x-4">
           <Label>Unlimited Chat</Label>
           <Switch
@@ -119,57 +175,55 @@ export default function CreatePlanForm() {
             onCheckedChange={(val) => handleChange('unlimitedChat', val)}
           />
         </div>
-
         {!form.unlimitedChat && (
           <>
             <div className="flex flex-col space-y-1">
               <Label>Number of Chats</Label>
               <Input
                 type="number"
-                value={form.numChats}
-                onChange={(e) => handleChange('numChats', e.target.value)}
+                value={form.numberOfChats}
+                onChange={(e) => handleChange('numberOfChats', e.target.value)}
               />
             </div>
             <div className="flex flex-col space-y-1">
               <Label>Extra Chat Amount ($)</Label>
               <Input
                 type="number"
+                step="0.01"
                 value={form.extraChatAmount}
                 onChange={(e) => handleChange('extraChatAmount', e.target.value)}
               />
             </div>
           </>
         )}
-
         <div className="flex items-center justify-between gap-x-4">
           <Label>Unlimited Chat History Storage</Label>
           <Switch
-            checked={form.unlimitedHistory}
-            onCheckedChange={(val) => handleChange('unlimitedHistory', val)}
+            checked={form.unlimitedChatHistoryStorage}
+            onCheckedChange={(val) => handleChange('unlimitedChatHistoryStorage', val)}
           />
         </div>
-
-        {!form.unlimitedHistory && (
+        {!form.unlimitedChatHistoryStorage && (
           <>
             <div className="flex flex-col space-y-1">
               <Label>Chat History Duration (in days)</Label>
               <Input
                 type="number"
-                value={form.historyDuration}
-                onChange={(e) => handleChange('historyDuration', e.target.value)}
+                value={form.chatHistoryDurationDays}
+                onChange={(e) => handleChange('chatHistoryDurationDays', e.target.value)}
               />
             </div>
             <div className="flex flex-col space-y-1">
               <Label>Cost per Extra Day of Storage ($)</Label>
               <Input
                 type="number"
-                value={form.historyExtraCost}
-                onChange={(e) => handleChange('historyExtraCost', e.target.value)}
+                step="0.01"
+                value={form.costPerExtraDayOfStorage}
+                onChange={(e) => handleChange('costPerExtraDayOfStorage', e.target.value)}
               />
             </div>
           </>
         )}
-
         <div className="flex items-center justify-between gap-x-4">
           <Label>Unlimited Users</Label>
           <Switch
@@ -177,79 +231,72 @@ export default function CreatePlanForm() {
             onCheckedChange={(val) => handleChange('unlimitedUsers', val)}
           />
         </div>
-
         {!form.unlimitedUsers && (
           <>
             <div className="flex flex-col space-y-1">
               <Label>Number of Users</Label>
               <Input
                 type="number"
-                value={form.NumberOfUsers}
-                onChange={(e) => handleChange('NumberOfUsers', e.target.value)}
+                value={form.numberOfUsers}
+                onChange={(e) => handleChange('numberOfUsers', e.target.value)}
               />
             </div>
             <div className="flex flex-col space-y-1">
               <Label>Extra User Cost ($)</Label>
               <Input
                 type="number"
-                value={form.ExtraUsersAmount}
-                onChange={(e) => handleChange('ExtraUsersAmount', e.target.value)}
+                step="0.01"
+                value={form.extraUserCost}
+                onChange={(e) => handleChange('extraUserCost', e.target.value)}
               />
             </div>
           </>
         )}
-
         <div className="flex flex-col space-y-1">
           <Label>Number of Websites</Label>
           <Input
             type="number"
-            value={form.NumberOfWebsites}
-            onChange={(e) => handleChange('NumberOfWebsites', e.target.value)}
+            value={form.numberOfWebsites}
+            onChange={(e) => handleChange('numberOfWebsites', e.target.value)}
           />
         </div>
-
         <div className="flex flex-col space-y-1">
           <Label>Extra Website Cost ($)</Label>
           <Input
             type="number"
-            value={form.ExtraWebsitesAmount}
-            onChange={(e) => handleChange('ExtraWebsitesAmount', e.target.value)}
+            step="0.01"
+            value={form.extraWebsiteCost}
+            onChange={(e) => handleChange('extraWebsiteCost', e.target.value)}
           />
         </div>
-
         <div className="flex items-center justify-between gap-x-4">
           <Label>Chat Takeover</Label>
           <Switch
-            checked={form.ChatTakeover}
-            onCheckedChange={(val) => handleChange('ChatTakeover', val)}
+            checked={form.chatTakeover}
+            onCheckedChange={(val) => handleChange('chatTakeover', val)}
           />
         </div>
-
         <div className="flex items-center justify-between gap-x-4">
           <Label>Chat Tagging</Label>
           <Switch
-            checked={form.ChatTagging}
-            onCheckedChange={(val) => handleChange('ChatTagging', val)}
+            checked={form.chatTagging}
+            onCheckedChange={(val) => handleChange('chatTagging', val)}
           />
         </div>
-
         <div className="flex items-center justify-between gap-x-4">
           <Label>Chat Transcript</Label>
           <Switch
-            checked={form.ChatTranscript}
-            onCheckedChange={(val) => handleChange('ChatTranscript', val)}
+            checked={form.chatTranscript}
+            onCheckedChange={(val) => handleChange('chatTranscript', val)}
           />
         </div>
-
         <div className="flex items-center justify-between gap-x-4">
           <Label>Chatbot (OpenAI Included)</Label>
           <Switch
-            checked={form.ChatbotFromOpenAiIncluded}
-            onCheckedChange={(val) => handleChange('ChatbotFromOpenAiIncluded', val)}
+            checked={form.chatbotOpenaiIncluded}
+            onCheckedChange={(val) => handleChange('chatbotOpenaiIncluded', val)}
           />
         </div>
-      </div>
-      <div className="flex flex-col space-y-1">
         <div className="flex items-center justify-between gap-x-4">
           <Label>Managed Account</Label>
           <Switch
@@ -257,9 +304,6 @@ export default function CreatePlanForm() {
             onCheckedChange={(val) => handleChange('managedAccount', val)}
           />
         </div>
-      </div>
-
-      <div className="flex flex-col space-y-1">
         <div className="flex items-center justify-between gap-x-4">
           <Label>Custom Plan</Label>
           <Switch
@@ -267,11 +311,20 @@ export default function CreatePlanForm() {
             onCheckedChange={(val) => handleChange('customPlan', val)}
           />
         </div>
+        <div className="flex flex-col space-y-1">
+          <Label>Type</Label>
+          <select
+            value={form.type}
+            onChange={(e) => handleChange('type', e.target.value)}
+            className="border rounded p-2"
+          >
+            <option value="public">Public</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
       </div>
-
-
       <Button type="submit" className="w-full sm:w-auto">
-        Save Plan
+        {isEdit ? 'Update Plan' : 'Save Plan'}
       </Button>
     </form>
   );
