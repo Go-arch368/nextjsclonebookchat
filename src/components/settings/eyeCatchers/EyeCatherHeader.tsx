@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -7,55 +6,56 @@ import { Input } from '@/ui/input';
 import { Button } from '@/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table';
 import { Skeleton } from '@/ui/skeleton';
-import eyeCatcherData from './eyeCatcherData.json';
 
-// TypeScript interface for the JSON data
 interface EyeCatcher {
   id: number;
+  userId: number;
   title: string;
+  text: string;
+  backgroundColor: string;
+  textColor: string;
+  imageUrl: string | null;
   createdBy: string;
   company: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface EyeCatcherHeaderProps {
   onAddClick: () => void;
-  onAddEyeCatcher: (eyeCatcher: any) => void; // Use any to handle interface mismatch
-  eyeCatchers: any[]; // Use any to accept new EyeCatcher interface
+  onEditClick: (eyeCatcher: EyeCatcher) => void;
+  eyeCatchers: EyeCatcher[];
+  onRefresh: () => void;
+  isLoading: boolean;
+  setError: (error: string | null) => void;
 }
 
 const EyeCatcherHeader: React.FC<EyeCatcherHeaderProps> = ({
   onAddClick,
-  onAddEyeCatcher,
+  onEditClick,
   eyeCatchers,
+  onRefresh,
+  isLoading,
+  setError,
 }) => {
-  const [tableData, setTableData] = useState<EyeCatcher[]>(eyeCatcherData);
+  const [tableData, setTableData] = useState<EyeCatcher[]>(eyeCatchers);
   const [sortDirection, setSortDirection] = useState<Record<string, 'asc' | 'desc' | null>>({
     title: null,
     createdBy: null,
     company: null,
   });
   const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Normalize incoming eyeCatchers to match legacy interface
-  const normalizeEyeCatcher = (item: any): EyeCatcher => ({
-    id: item.id || Date.now(),
-    title: item.title || '',
-    createdBy: item.createdBy || item.text || 'Unknown',
-    company: item.company || item.backgroundColor || 'N/A',
-  });
-
-  // Initialize tableData
   useEffect(() => {
-    const normalizedData = [...eyeCatcherData, ...eyeCatchers].map(normalizeEyeCatcher);
-    setTableData(normalizedData);
-  }, [eyeCatchers]);
-
-  // Simulate loading state
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1000);
-    return () => clearTimeout(timer);
-  }, []);
+    const filteredData = eyeCatchers.filter(
+      (item) =>
+        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.createdBy.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.company.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setTableData(filteredData);
+  }, [eyeCatchers, searchQuery]);
 
   const handleSort = (column: keyof EyeCatcher) => {
     const newDirection = sortDirection[column] === 'asc' ? 'desc' : 'asc';
@@ -70,14 +70,41 @@ const EyeCatcherHeader: React.FC<EyeCatcherHeaderProps> = ({
     setTableData(sortedData);
   };
 
-  const handleDelete = (id: number) => {
-    setTableData((prevData) => {
-      const newData = prevData.filter((item) => item.id !== id);
-      if (newData.length <= (currentPage - 1) * 5) {
-        setCurrentPage((prev) => Math.max(1, prev - 1));
+  const handleDelete = async (id: number) => {
+    try {
+      setError(null);
+      const response = await fetch(`https://zotly.onrender.com/settings/eye-catchers/delete/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to delete eye catcher: ${response.status}`);
       }
-      return newData;
-    });
+      // Update the tableData state locally by filtering out the deleted item
+      setTableData((prev) => prev.filter((item) => item.id !== id));
+    } catch (error: any) {
+      setError(error.message || 'Failed to delete eye catcher');
+      console.error('Error deleting eye catcher:', error);
+    }
+  };
+
+  const handleClearAll = async () => {
+    try {
+      setError(null);
+      const response = await fetch('https://zotly.onrender.com/settings/eye-catchers/clear', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to clear eye catchers: ${response.status}`);
+      }
+      setTableData([]);
+    } catch (error: any) {
+      setError(error.message || 'Failed to clear eye catchers');
+      console.error('Error clearing eye catchers:', error);
+    }
   };
 
   const getSortIcon = (column: string) => {
@@ -104,8 +131,10 @@ const EyeCatcherHeader: React.FC<EyeCatcherHeaderProps> = ({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
             <Input
               type="text"
-              placeholder="Search eyecatcher"
+              placeholder="Search by title"
               className="w-full pl-10 py-2 text-black focus:outline-none rounded-md border border-gray-300"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <Button
@@ -114,6 +143,13 @@ const EyeCatcherHeader: React.FC<EyeCatcherHeaderProps> = ({
           >
             <Plus className="h-5 w-5" />
             <span>Add</span>
+          </Button>
+          <Button
+            className="px-6 py-3 bg-red-500 text-white hover:bg-red-600 flex items-center gap-3 rounded-lg"
+            onClick={handleClearAll}
+          >
+            <Trash2 className="h-5 w-5" />
+            <span>Clear All</span>
           </Button>
         </div>
       </div>
@@ -179,7 +215,7 @@ const EyeCatcherHeader: React.FC<EyeCatcherHeaderProps> = ({
                       <Button
                         variant="ghost"
                         className="bg-white p-1 rounded"
-                        onClick={() => console.log(`Edit clicked for ${item.title}`)}
+                        onClick={() => onEditClick(item)}
                       >
                         <Pencil className="h-4 w-4 text-blue-500" />
                       </Button>

@@ -1,78 +1,128 @@
-
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
 import { Label } from '@/ui/label';
-import { Camera, Trash2 } from 'lucide-react';
 
 interface EyeCatcher {
   id: number;
+  userId: number;
   title: string;
   text: string;
   backgroundColor: string;
   textColor: string;
-  image?: string;
+  imageUrl: string | null;
+  createdBy: string;
+  company: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface AddEyeCatcherFormProps {
-  onSave: (eyeCatcher: EyeCatcher) => void;
+  onSave: (eyeCatcher: EyeCatcher | Omit<EyeCatcher, 'id' | 'imageUrl'>) => void;
   onCancel: () => void;
+  initialData?: EyeCatcher;
+  isEditMode?: boolean;
 }
 
-const AddEyeCatcherForm: React.FC<AddEyeCatcherFormProps> = ({ onSave, onCancel }) => {
+const AddEyeCatcherForm: React.FC<AddEyeCatcherFormProps> = ({
+  onSave,
+  onCancel,
+  initialData,
+  isEditMode = false,
+}) => {
   const [formData, setFormData] = useState({
-    title: '',
-    text: '',
-    backgroundColor: '#ffffff',
-    textColor: '#000000',
-    image: '' as string | undefined,
+    id: initialData?.id || 0,
+    userId: initialData?.userId || 1,
+    title: initialData?.title || '',
+    text: initialData?.text || '',
+    backgroundColor: initialData?.backgroundColor || '#ffffff',
+    textColor: initialData?.textColor || '#000000',
+    imageUrl: null as string | null,
+    createdBy: initialData?.createdBy || 'Admin',
+    company: initialData?.company || 'Example Corp',
+    createdAt: initialData?.createdAt || new Date().toISOString(),
+    updatedAt: initialData?.updatedAt || new Date().toISOString(),
   });
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData({ ...formData, image: reader.result as string });
-      };
-      reader.readAsDataURL(file);
+  useEffect(() => {
+    if (initialData && isEditMode) {
+      setFormData({
+        id: initialData.id,
+        userId: initialData.userId || 1,
+        title: initialData.title || '',
+        text: initialData.text || '',
+        backgroundColor: initialData.backgroundColor || '#ffffff',
+        textColor: initialData.textColor || '#000000',
+        imageUrl: null,
+        createdBy: initialData.createdBy || 'Admin',
+        company: initialData.company || 'Example Corp',
+        createdAt: initialData.createdAt || new Date().toISOString(),
+        updatedAt: initialData.updatedAt || new Date().toISOString(),
+      });
     }
-  };
-
-  const handleImageDelete = () => {
-    setFormData({ ...formData, image: undefined });
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
+  }, [initialData, isEditMode]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({
-      id: Date.now(),
-      title: formData.title,
-      text: formData.text,
+    setError(null);
+
+    if (!formData.title.trim() || !formData.text.trim()) {
+      setError('Title and Text are required fields');
+      return;
+    }
+
+    if (!/^#[0-9A-Fa-f]{6}$/.test(formData.backgroundColor) || !/^#[0-9A-Fa-f]{6}$/.test(formData.textColor)) {
+      setError('Background and Text colors must be valid hex codes (e.g., #FF0000)');
+      return;
+    }
+
+    const eyeCatcherData = {
+      ...(isEditMode && {
+        id: formData.id,
+        imageUrl: null,
+      }),
+      userId: formData.userId,
+      title: formData.title.trim(),
+      text: formData.text.trim(),
       backgroundColor: formData.backgroundColor,
       textColor: formData.textColor,
-      image: formData.image,
-    });
-    setFormData({
-      title: '',
-      text: '',
-      backgroundColor: '#ffffff',
-      textColor: '#000000',
-      image: undefined,
-    });
-    onCancel();
+      createdBy: formData.createdBy || 'Admin',
+      company: formData.company || 'Example Corp',
+      createdAt: formData.createdAt,
+      updatedAt: formData.updatedAt,
+    };
+
+    onSave(eyeCatcherData);
+
+    if (!isEditMode) {
+      setFormData({
+        id: 0,
+        userId: 1,
+        title: '',
+        text: '',
+        backgroundColor: '#ffffff',
+        textColor: '#000000',
+        imageUrl: null,
+        createdBy: 'Admin',
+        company: 'Example Corp',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    }
   };
 
   return (
     <div className="p-10 bg-white rounded-xl shadow-lg border border-gray-200">
-      <h1 className="text-4xl font-bold text-gray-800 mb-10">Add a new eye catcher</h1>
-      <hr className='mb-10 font-bold'/>
+      <h1 className="text-4xl font-bold text-gray-800 mb-10">
+        {isEditMode ? 'Edit Eye Catcher' : 'Add a new eye catcher'}
+      </h1>
+      {error && (
+        <div className="p-4 mb-4 text-red-800 bg-red-100 rounded-lg">{error}</div>
+      )}
+      <hr className="mb-10 font-bold" />
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="flex gap-6">
           {/* Input Section */}
@@ -105,6 +155,34 @@ const AddEyeCatcherForm: React.FC<AddEyeCatcherFormProps> = ({ onSave, onCancel 
               />
             </div>
 
+            {/* Created By */}
+            <div>
+              <Label htmlFor="createdBy" className="text-sm font-medium text-gray-700">
+                Created By
+              </Label>
+              <Input
+                id="createdBy"
+                value={formData.createdBy}
+                onChange={(e) => setFormData({ ...formData, createdBy: e.target.value })}
+                className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter creator name"
+              />
+            </div>
+
+            {/* Company */}
+            <div>
+              <Label htmlFor="company" className="text-sm font-medium text-gray-700">
+                Company
+              </Label>
+              <Input
+                id="company"
+                value={formData.company}
+                onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter company name"
+              />
+            </div>
+
             {/* Background Color */}
             <div>
               <Label htmlFor="backgroundColor" className="text-sm font-medium text-gray-700">
@@ -134,9 +212,8 @@ const AddEyeCatcherForm: React.FC<AddEyeCatcherFormProps> = ({ onSave, onCancel 
             </div>
           </div>
 
-          {/* Preview and Image Upload Section */}
+          {/* Preview Section */}
           <div className="flex-1 space-y-6">
-            {/* Dummy Preview Container */}
             <div>
               <Label className="text-sm font-medium text-gray-700">Preview</Label>
               <div
@@ -157,45 +234,6 @@ const AddEyeCatcherForm: React.FC<AddEyeCatcherFormProps> = ({ onSave, onCancel 
                 </p>
               </div>
             </div>
-
-            {/* Image Upload */}
-            <div>
-              <Label htmlFor="image" className="text-sm font-medium text-gray-700">
-                Image Upload
-              </Label>
-              <div className="w-[150px] h-[150px] mt-2 bg-gray-200 border border-gray-300 shadow-lg rounded-md flex flex-col justify-center items-center relative">
-                {formData.image ? (
-                  <>
-                    <img
-                      src={formData.image}
-                      alt="Uploaded"
-                      className="w-full h-full object-cover rounded-md"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="absolute top-2 right-2 p-1 bg-white rounded-full"
-                      onClick={handleImageDelete}
-                    >
-                      <Trash2 className="h-5 w-5 text-red-500" />
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Camera className="h-8 w-8 text-gray-500" />
-                    <span className="text-sm text-gray-500 mt-2">Upload Image</span>
-                  </>
-                )}
-                <Input
-                  id="image"
-                  type="file"
-                  accept="image/*"
-                  className="absolute inset-0 opacity-0 cursor-pointer"
-                  onChange={handleImageUpload}
-                  ref={fileInputRef}
-                />
-              </div>
-            </div>
           </div>
         </div>
 
@@ -213,7 +251,7 @@ const AddEyeCatcherForm: React.FC<AddEyeCatcherFormProps> = ({ onSave, onCancel 
             type="submit"
             className="px-6 py-2 bg-blue-600 text-white hover:bg-blue-800"
           >
-            Save
+            {isEditMode ? 'Update' : 'Save'}
           </Button>
         </div>
       </form>
