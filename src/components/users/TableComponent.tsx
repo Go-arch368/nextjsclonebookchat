@@ -1,4 +1,3 @@
-// src/components/users/TableComponent.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -57,12 +56,13 @@ const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/list`);
-        console.log("GET /list response:", response.data);
+        const response = await axios.get<User[]>(`${API_BASE_URL}/list`);
         setUsers(response.data || []);
       } catch (error: any) {
-        console.error("Error fetching users:", error.message);
-        toast.error("Failed to load users");
+        const errorMessage =
+          error.response?.data?.message || error.message || "Failed to load users";
+        toast.error(errorMessage);
+        console.error("Error fetching users:", errorMessage);
       } finally {
         setIsLoading(false);
       }
@@ -70,15 +70,13 @@ const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
     fetchUsers();
   }, [setUsers]);
 
-  
-
   const handleDelete = async (id: number) => {
     try {
       await axios.delete(`${API_BASE_URL}/delete/${id}`);
       setUsers((prev) => {
         const newData = prev.filter((user) => user.id !== id);
-        if (newData.length <= (currentPage - 1) * itemsPerPage) {
-          setCurrentPage((prev) => Math.max(1, prev - 1));
+        if (newData.length <= (currentPage - 1) * itemsPerPage && currentPage > 1) {
+          setCurrentPage((prev) => prev - 1);
         }
         return newData;
       });
@@ -86,8 +84,8 @@ const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.message || error.message || "Failed to delete user";
-      console.error("Delete error:", errorMessage);
       toast.error(errorMessage);
+      console.error("Delete error:", errorMessage);
     }
   };
 
@@ -104,11 +102,9 @@ const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
       const payload = {
         ...currentUser,
         updatedAt: new Date().toISOString().slice(0, 19),
-        passwordHash: passwordHash || currentUser.passwordHash, // Use existing passwordHash if no new password
+        passwordHash: passwordHash || undefined, // Only include new password if provided
       };
-      console.log("PUT /update payload:", payload);
-      const response = await axios.put(`${API_BASE_URL}/update`, payload);
-      console.log("PUT /update response:", response.data);
+      await axios.put(`${API_BASE_URL}/update`, payload);
       setUsers((prev) =>
         prev.map((user) => (user.id === currentUser.id ? { ...payload, passwordHash: undefined } : user))
       );
@@ -120,8 +116,8 @@ const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.message || error.message || "Failed to update user";
-      console.error("Update error:", errorMessage, error.response?.data);
       toast.error(errorMessage);
+      console.error("Update error:", errorMessage);
     }
   };
 
@@ -138,43 +134,16 @@ const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
               ...prev,
               [name]: name === "companyId" || name === "simultaneousChatLimit" ? (value ? parseInt(value) : 0) : value,
             }
-          : {
-              id: 0,
-              email: "",
-              role: "",
-              firstName: "",
-              lastName: "",
-              jobTitle: "",
-              department: "",
-              companyId: 0,
-              simultaneousChatLimit: 0,
-              createdAt: new Date().toISOString().slice(0, 19),
-              updatedAt: new Date().toISOString().slice(0, 19),
-              deletedAt: null,
-              [name]: name === "companyId" || name === "simultaneousChatLimit" ? (value ? parseInt(value) : 0) : value,
-            }
+          : null
       );
     }
   };
 
-  const handleSelectChange = (name: keyof User, value: string) => {
+  const handleSelectChange = (value: string) => {
     setCurrentUser((prev) =>
       prev
-        ? { ...prev, [name]: value }
-        : {
-            id: 0,
-            email: "",
-            role: name === "role" ? value : "",
-            firstName: "",
-            lastName: "",
-            jobTitle: "",
-            department: "",
-            companyId: 0,
-            simultaneousChatLimit: 0,
-            createdAt: new Date().toISOString().slice(0, 19),
-            updatedAt: new Date().toISOString().slice(0, 19),
-            deletedAt: null,
-          }
+        ? { ...prev, role: value }
+        : null
     );
   };
 
@@ -185,8 +154,8 @@ const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
       {isLoading ? (
         <div className="space-y-4">
           {[...Array(5)].map((_, idx) => (
-            <div key={idx} className="grid grid-cols-8 gap-2">
-              {[...Array(8)].map((__, colIdx) => (
+            <div key={idx} className="grid grid-cols-9 gap-2">
+              {[...Array(9)].map((__, colIdx) => (
                 <Skeleton key={colIdx} className="h-10 w-full rounded" />
               ))}
             </div>
@@ -301,7 +270,7 @@ const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
                 </Label>
                 <Select
                   value={currentUser.role || ""}
-                  onValueChange={(value) => handleSelectChange("role", value)}
+                  onValueChange={handleSelectChange}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select a role" />
@@ -323,7 +292,7 @@ const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
                   id="passwordHash"
                   name="passwordHash"
                   type="password"
-                  value={passwordHash || ""}
+                  value={passwordHash}
                   onChange={handleInputChange}
                   className="w-full border border-gray-300 rounded-md"
                   placeholder="Enter new password"
@@ -337,7 +306,7 @@ const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
                   id="confirmPassword"
                   name="confirmPassword"
                   type="password"
-                  value={confirmPassword || ""}
+                  value={confirmPassword}
                   onChange={handleInputChange}
                   className="w-full border border-gray-300 rounded-md"
                   placeholder="Confirm new password"
@@ -403,7 +372,7 @@ const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
                   id="companyId"
                   name="companyId"
                   type="number"
-                  value={currentUser.companyId ?? 0}
+                  value={currentUser.companyId || 0}
                   onChange={handleInputChange}
                   className="w-full border border-gray-300 rounded-md"
                   placeholder="Enter company ID"
@@ -417,7 +386,7 @@ const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
                   id="simultaneousChatLimit"
                   name="simultaneousChatLimit"
                   type="number"
-                  value={currentUser.simultaneousChatLimit ?? 0}
+                  value={currentUser.simultaneousChatLimit || 0}
                   onChange={handleInputChange}
                   className="w-full border border-gray-300 rounded-md"
                   placeholder="Enter limit"

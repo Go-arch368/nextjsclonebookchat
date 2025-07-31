@@ -1,36 +1,38 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Plus, Pencil, Trash2, ArrowUp, ArrowDown, Search } from 'lucide-react';
 import { Input } from '@/ui/input';
 import { Button } from '@/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table';
 import { Skeleton } from '@/ui/skeleton';
-import globalWebhooksData from './globalWebhooksData.json';
+import { toast } from 'react-toastify';
 
-interface GlobalWebhookData {
+interface GlobalWebhook {
   id: number;
+  userId: number;
   event: string;
+  dataTypeEnabled: boolean;
+  destination: 'TARGET_URL' | 'EMAIL' | 'BOTH';
   email: string;
   targetUrl: string;
   createdBy: string;
   company: string;
-  dateTime: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface GlobalWebhooksHeaderProps {
   onAddClick: () => void;
-  onAddGlobalWebhook: (globalWebhook: any) => void;
-  globalWebhooks: any[];
+  onEditClick: (webhook: GlobalWebhook) => void;
 }
 
 const GlobalWebhooksHeader: React.FC<GlobalWebhooksHeaderProps> = ({
   onAddClick,
-  onAddGlobalWebhook,
-  globalWebhooks,
+  onEditClick,
 }) => {
-  const [tableData, setTableData] = useState<GlobalWebhookData[]>(globalWebhooksData);
+  const [globalWebhooks, setGlobalWebhooks] = useState<GlobalWebhook[]>([]);
   const [sortDirection, setSortDirection] = useState<Record<string, 'asc' | 'desc' | null>>({
     event: null,
     email: null,
@@ -40,51 +42,110 @@ const GlobalWebhooksHeader: React.FC<GlobalWebhooksHeaderProps> = ({
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Normalize incoming globalWebhooks to match legacy interface
-  const normalizeGlobalWebhook = (item: any): GlobalWebhookData => ({
-    id: item.id || Date.now(),
-    event: item.event || '',
-    email: item.email || (item.destination === 'Email' || item.destination === 'Both' ? 'email@example.com' : ''),
-    targetUrl: item.targetUrl || (item.destination === 'Target URL' || item.destination === 'Both' ? 'https://example.com' : ''),
-    createdBy: item.createdBy || (item.dataType ? 'Customer info' : 'None'),
-    company: item.company || 'N/A',
-    dateTime: item.dateTime || new Date().toISOString(),
-  });
-
-  // Initialize tableData
+  // Fetch all global webhooks on mount
   useEffect(() => {
-    const normalizedData = [...globalWebhooksData, ...globalWebhooks].map(normalizeGlobalWebhook);
-    setTableData(normalizedData);
-  }, [globalWebhooks]);
+    const fetchGlobalWebhooks = async () => {
+      try {
+        setIsLoading(true);
+        const response = await axios.get<GlobalWebhook[]>('https://zotly.onrender.com/api/v1/settings/global-webhooks');
+        setGlobalWebhooks(response.data);
+      } catch (err) {
+        toast.error('Failed to fetch global webhooks. Please try again.', {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  // Simulate loading state
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1000);
-    return () => clearTimeout(timer);
+    fetchGlobalWebhooks();
   }, []);
 
-  const handleSort = (column: keyof GlobalWebhookData) => {
+  // Handle search
+  const handleSearch = async (query: string) => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get<GlobalWebhook[]>(
+        `https://zotly.onrender.com/api/v1/settings/global-webhooks/search?keyword=${encodeURIComponent(query)}&page=${currentPage - 1}&size=10`
+      );
+      setGlobalWebhooks(response.data);
+    } catch (err) {
+      toast.error('Failed to search global webhooks. Please try again.', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Debounce search input
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (searchQuery) {
+        handleSearch(searchQuery);
+      } else {
+        const fetchAll = async () => {
+          try {
+            setIsLoading(true);
+            const response = await axios.get<GlobalWebhook[]>('https://zotly.onrender.com/api/v1/settings/global-webhooks');
+            setGlobalWebhooks(response.data);
+          } catch (err) {
+            toast.error('Failed to fetch global webhooks. Please try again.', {
+              position: 'top-right',
+              autoClose: 3000,
+            });
+            console.error(err);
+          } finally {
+            setIsLoading(false);
+          }
+        };
+        fetchAll();
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, currentPage]);
+
+  const handleSort = (column: keyof GlobalWebhook) => {
     const newDirection = sortDirection[column] === 'asc' ? 'desc' : 'asc';
     setSortDirection((prev) => ({ ...prev, [column]: newDirection }));
-    const sortedData = [...tableData].sort((a, b) => {
+    const sortedData = [...globalWebhooks].sort((a, b) => {
       const aValue = a[column] || '';
       const bValue = b[column] || '';
       return newDirection === 'asc'
         ? aValue.toString().localeCompare(bValue.toString())
         : bValue.toString().localeCompare(aValue.toString());
     });
-    setTableData(sortedData);
+    setGlobalWebhooks(sortedData);
   };
 
-  const handleDelete = (id: number) => {
-    setTableData((prevData) => {
-      const newData = prevData.filter((item) => item.id !== id);
-      if (newData.length <= (currentPage - 1) * 5) {
-        setCurrentPage((prev) => Math.max(1, prev - 1));
-      }
-      return newData;
-    });
+  const handleDelete = async (id: number) => {
+    try {
+      await axios.delete(`https://zotly.onrender.com/api/v1/settings/global-webhooks/${id}`);
+      setGlobalWebhooks((prev) => {
+        const newData = prev.filter((item) => item.id !== id);
+        if (newData.length <= (currentPage - 1) * 5) {
+          setCurrentPage((prev) => Math.max(1, prev - 1));
+        }
+        return newData;
+      });
+      toast.success('Global webhook deleted successfully!', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+    } catch (err) {
+      toast.error('Failed to delete global webhook. Please try again.', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+      console.error(err);
+    }
   };
 
   const getSortIcon = (column: string) => {
@@ -97,8 +158,8 @@ const GlobalWebhooksHeader: React.FC<GlobalWebhooksHeaderProps> = ({
   const itemsPerPage = 5;
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentData = tableData.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(tableData.length / itemsPerPage);
+  const currentData = globalWebhooks.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(globalWebhooks.length / itemsPerPage);
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
@@ -113,6 +174,8 @@ const GlobalWebhooksHeader: React.FC<GlobalWebhooksHeaderProps> = ({
               type="text"
               placeholder="Search global webhooks"
               className="w-full pl-10 py-2 text-black focus:outline-none rounded-md border border-gray-300"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <Button
@@ -130,7 +193,7 @@ const GlobalWebhooksHeader: React.FC<GlobalWebhooksHeaderProps> = ({
             <Skeleton key={index} className="h-12 w-full" />
           ))}
         </div>
-      ) : tableData.length === 0 ? (
+      ) : globalWebhooks.length === 0 ? (
         <div className="flex justify-center items-center h-64">
           <Button onClick={onAddClick}>
             <Plus className="mr-2 h-4 w-4" />
@@ -182,16 +245,7 @@ const GlobalWebhooksHeader: React.FC<GlobalWebhooksHeaderProps> = ({
                     {getSortIcon('createdBy')}
                   </Button>
                 </TableHead>
-                <TableHead className="px-4 py-4 hover:bg-gray-100 w-1/5 text-center">
-                  <Button
-                    variant="ghost"
-                    onClick={() => console.log('Sort Details')}
-                    className="p-0 w-full flex items-center justify-center"
-                  >
-                    <span>Details</span>
-                    {getSortIcon('details')}
-                  </Button>
-                </TableHead>
+                <TableHead className="px-4 py-4 hover:bg-gray-100 w-1/5 text-center">Details</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -200,13 +254,18 @@ const GlobalWebhooksHeader: React.FC<GlobalWebhooksHeaderProps> = ({
                   <TableCell className="px-4 py-3 w-1/5 text-left text-ellipsis overflow-hidden max-w-0">{item.event}</TableCell>
                   <TableCell className="px-4 py-3 w-1/5 text-left text-ellipsis overflow-hidden max-w-0">{item.email}</TableCell>
                   <TableCell className="px-4 py-3 w-1/5 text-left text-ellipsis overflow-hidden max-w-0">{item.targetUrl}</TableCell>
-                  <TableCell className="px-4 py-3 w-1/5 truncate text-center">{item.createdBy}</TableCell>
+                  <TableCell className="px-4 py-3 w-1/5 truncate text-center">
+                    <div className="flex flex-col items-center gap-1">
+                      <span>{item.createdBy}</span>
+                      <span className="text-sm text-gray-500">{item.createdAt}</span>
+                    </div>
+                  </TableCell>
                   <TableCell className="px-4 py-3 w-1/5 truncate text-center">
                     <div className="flex justify-center space-x-2">
                       <Button
                         variant="ghost"
                         className="bg-white p-1 rounded"
-                        onClick={() => console.log(`Edit clicked for ${item.event}`)}
+                        onClick={() => onEditClick(item)}
                       >
                         <Pencil className="h-4 w-4 text-blue-500" />
                       </Button>

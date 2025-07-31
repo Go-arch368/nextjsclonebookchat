@@ -1,12 +1,17 @@
-import React from 'react'
-import GlobalNotificationsHeader from './GlobalNotificationsHeader'
+"use client";
 
-const GlobalNotificationsView  = () => {
+import React from 'react';
+import GlobalNotificationsHeader from './GlobalNotificationsHeader';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+const GlobalNotificationsView: React.FC = () => {
   return (
     <div>
-      <GlobalNotificationsHeader/>
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} closeOnClick />
+      <GlobalNotificationsHeader />
     </div>
-  )
-}
+  );
+};
 
-export default GlobalNotificationsView 
+export default GlobalNotificationsView;

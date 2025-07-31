@@ -1,34 +1,40 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Plus, Pencil, Trash2, ArrowUp, ArrowDown, Search } from 'lucide-react';
 import { Input } from '@/ui/input';
 import { Button } from '@/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table';
 import { Skeleton } from '@/ui/skeleton';
-import queuedMessagesData from './queuedMessagesData.json';
+import { toast } from 'react-toastify';
 
-// TypeScript interface for the JSON data
 interface QueuedMessage {
   id: number;
+  userId: number;
   message: string;
+  backgroundColor: string;
+  textColor: string;
+  imageUrl?: string;
   createdBy: string;
   company: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface QueuedMessagesHeaderProps {
   onAddClick: () => void;
-  onAddQueuedMessage: (queuedMessage: any) => void; // Use any to handle interface mismatch
-  queuedMessages: any[]; // Use any to accept new QueuedMessage interface
+  onEditClick: (message: QueuedMessage) => void;
+  queuedMessages: QueuedMessage[];
+  setQueuedMessages: React.Dispatch<React.SetStateAction<QueuedMessage[]>>;
 }
 
 const QueuedMessagesHeader: React.FC<QueuedMessagesHeaderProps> = ({
   onAddClick,
-  onAddQueuedMessage,
+  onEditClick,
   queuedMessages,
+  setQueuedMessages,
 }) => {
-  const [tableData, setTableData] = useState<QueuedMessage[]>(queuedMessagesData);
   const [sortDirection, setSortDirection] = useState<Record<string, 'asc' | 'desc' | null>>({
     message: null,
     createdBy: null,
@@ -36,48 +42,115 @@ const QueuedMessagesHeader: React.FC<QueuedMessagesHeaderProps> = ({
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Normalize incoming queuedMessages to match legacy interface
-  const normalizeQueuedMessage = (item: any): QueuedMessage => ({
-    id: item.id || Date.now(),
-    message: item.message || item.title || '',
-    createdBy: item.createdBy || item.text || 'Unknown',
-    company: item.company || item.backgroundColor || 'N/A',
-  });
-
-  // Initialize tableData
+  // Fetch all queued messages on mount
   useEffect(() => {
-    const normalizedData = [...queuedMessagesData, ...queuedMessages].map(normalizeQueuedMessage);
-    setTableData(normalizedData);
-  }, [queuedMessages]);
+    const fetchQueuedMessages = async () => {
+      try {
+        setIsLoading(true);
+        const response = await axios.get<QueuedMessage[]>(
+          'https://zotly.onrender.com/api/v1/settings/queued-messages'
+        );
+        setQueuedMessages(response.data);
+      } catch (err) {
+        toast.error('Failed to fetch queued messages. Please try again.', {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  // Simulate loading state
+    fetchQueuedMessages();
+  }, [setQueuedMessages]);
+
+  // Handle search
+  const handleSearch = async (query: string) => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get<QueuedMessage[]>(
+        `https://zotly.onrender.com/api/v1/settings/queued-messages/search?keyword=${encodeURIComponent(query)}&page=${currentPage - 1}&size=10`
+      );
+      setQueuedMessages(response.data);
+    } catch (err) {
+      toast.error('Failed to search queued messages. Please try again.', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Debounce search input
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1000);
-    return () => clearTimeout(timer);
-  }, []);
+    const delayDebounceFn = setTimeout(() => {
+      if (searchQuery) {
+        handleSearch(searchQuery);
+      } else {
+        // Fetch all if query is empty
+        const fetchAll = async () => {
+          try {
+            setIsLoading(true);
+            const response = await axios.get<QueuedMessage[]>(
+              'https://zotly.onrender.com/api/v1/settings/queued-messages'
+            );
+            setQueuedMessages(response.data);
+          } catch (err) {
+            toast.error('Failed to fetch queued messages. Please try again.', {
+              position: 'top-right',
+              autoClose: 3000,
+            });
+            console.error(err);
+          } finally {
+            setIsLoading(false);
+          }
+        };
+        fetchAll();
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, currentPage, setQueuedMessages]);
 
   const handleSort = (column: keyof QueuedMessage) => {
     const newDirection = sortDirection[column] === 'asc' ? 'desc' : 'asc';
     setSortDirection((prev) => ({ ...prev, [column]: newDirection }));
-    const sortedData = [...tableData].sort((a, b) => {
+    const sortedData = [...queuedMessages].sort((a, b) => {
       const aValue = a[column] || '';
       const bValue = b[column] || '';
       return newDirection === 'asc'
         ? aValue.toString().localeCompare(bValue.toString())
         : bValue.toString().localeCompare(aValue.toString());
     });
-    setTableData(sortedData);
+    setQueuedMessages(sortedData);
   };
 
-  const handleDelete = (id: number) => {
-    setTableData((prevData) => {
-      const newData = prevData.filter((item) => item.id !== id);
-      if (newData.length <= (currentPage - 1) * 5) {
-        setCurrentPage((prev) => Math.max(1, prev - 1));
-      }
-      return newData;
-    });
+  const handleDelete = async (id: number) => {
+    try {
+      await axios.delete(`https://zotly.onrender.com/api/v1/settings/queued-messages/${id}`);
+      setQueuedMessages((prev) => {
+        const newData = prev.filter((item) => item.id !== id);
+        if (newData.length <= (currentPage - 1) * 5) {
+          setCurrentPage((prev) => Math.max(1, prev - 1));
+        }
+        return newData;
+      });
+      toast.success('Queued message deleted successfully!', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+    } catch (err) {
+      toast.error('Failed to delete queued message. Please try again.', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+      console.error(err);
+    }
   };
 
   const getSortIcon = (column: string) => {
@@ -90,8 +163,8 @@ const QueuedMessagesHeader: React.FC<QueuedMessagesHeaderProps> = ({
   const itemsPerPage = 5;
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentData = tableData.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(tableData.length / itemsPerPage);
+  const currentData = queuedMessages.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(queuedMessages.length / itemsPerPage);
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
@@ -104,8 +177,10 @@ const QueuedMessagesHeader: React.FC<QueuedMessagesHeaderProps> = ({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
             <Input
               type="text"
-              placeholder="Search queued messages" // Updated placeholder
+              placeholder="Search queued messages"
               className="w-full pl-10 py-2 text-black focus:outline-none rounded-md border border-gray-300"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <Button
@@ -123,7 +198,7 @@ const QueuedMessagesHeader: React.FC<QueuedMessagesHeaderProps> = ({
             <Skeleton key={index} className="h-12 w-full" />
           ))}
         </div>
-      ) : tableData.length === 0 ? (
+      ) : queuedMessages.length === 0 ? (
         <div className="flex justify-center items-center h-64">
           <Button onClick={onAddClick}>
             <Plus className="mr-2 h-4 w-4" />
@@ -179,7 +254,7 @@ const QueuedMessagesHeader: React.FC<QueuedMessagesHeaderProps> = ({
                       <Button
                         variant="ghost"
                         className="bg-white p-1 rounded"
-                        onClick={() => console.log(`Edit clicked for ${item.message}`)}
+                        onClick={() => onEditClick(item)}
                       >
                         <Pencil className="h-4 w-4 text-blue-500" />
                       </Button>

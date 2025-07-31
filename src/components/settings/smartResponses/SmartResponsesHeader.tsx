@@ -1,36 +1,39 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Plus, Pencil, Trash2, ArrowUp, ArrowDown, Search, Download, Upload } from 'lucide-react';
 import { Input } from '@/ui/input';
 import { Button } from '@/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table';
 import { Skeleton } from '@/ui/skeleton';
-import smartResponsesData from './smartResponsesData.json';
+import { toast } from 'react-toastify';
 
-// TypeScript interface for the JSON data
 interface SmartResponse {
   id: number;
-  shortcuts: string[];
+  userId: number;
   response: string;
   createdBy: string;
   company: string;
   createdAt: string;
+  updatedAt: string;
+  shortcuts: string[];
+  websites: string[];
 }
 
 interface SmartResponsesHeaderProps {
   onAddClick: () => void;
-  onAddSmartResponse: (smartResponse: any) => void;
-  smartResponses: any[];
+  onEditClick: (response: SmartResponse) => void;
+  smartResponses: SmartResponse[];
+  setSmartResponses: React.Dispatch<React.SetStateAction<SmartResponse[]>>;
 }
 
 const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
   onAddClick,
-  onAddSmartResponse,
+  onEditClick,
   smartResponses,
+  setSmartResponses,
 }) => {
-  const [tableData, setTableData] = useState<SmartResponse[]>(smartResponsesData);
   const [sortDirection, setSortDirection] = useState<Record<string, 'asc' | 'desc' | null>>({
     shortcuts: null,
     response: null,
@@ -39,50 +42,115 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Normalize incoming smartResponses to match legacy interface
-  const normalizeSmartResponse = (item: any): SmartResponse => ({
-    id: item.id || Date.now(),
-    shortcuts: item.shortcuts || [],
-    response: item.response || '',
-    createdBy: item.createdBy || item.websites?.join(', ') || 'Unknown',
-    company: item.company || 'N/A',
-    createdAt: item.createdAt || new Date().toISOString(),
-  });
-
-  // Initialize tableData
+  // Fetch all smart responses on mount
   useEffect(() => {
-    const normalizedData = [...smartResponsesData, ...smartResponses].map(normalizeSmartResponse);
-    setTableData(normalizedData);
-  }, [smartResponses]);
+    const fetchSmartResponses = async () => {
+      try {
+        setIsLoading(true);
+        const response = await axios.get<SmartResponse[]>(
+          'https://zotly.onrender.com/api/v1/settings/smart-responses'
+        );
+        setSmartResponses(response.data);
+      } catch (err) {
+        toast.error('Failed to fetch smart responses. Please try again.', {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  // Simulate loading state
+    fetchSmartResponses();
+  }, [setSmartResponses]);
+
+  // Handle search
+  const handleSearch = async (query: string) => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get<SmartResponse[]>(
+        `https://zotly.onrender.com/api/v1/settings/smart-responses/search?keyword=${encodeURIComponent(query)}&page=${currentPage - 1}&size=10`
+      );
+      setSmartResponses(response.data);
+    } catch (err) {
+      toast.error('Failed to search smart responses. Please try again.', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Debounce search input
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1000);
-    return () => clearTimeout(timer);
-  }, []);
+    const delayDebounceFn = setTimeout(() => {
+      if (searchQuery) {
+        handleSearch(searchQuery);
+      } else {
+        // Fetch all if query is empty
+        const fetchAll = async () => {
+          try {
+            setIsLoading(true);
+            const response = await axios.get<SmartResponse[]>(
+              'https://zotly.onrender.com/api/v1/settings/smart-responses'
+            );
+            setSmartResponses(response.data);
+          } catch (err) {
+            toast.error('Failed to fetch smart responses. Please try again.', {
+              position: 'top-right',
+              autoClose: 3000,
+            });
+            console.error(err);
+          } finally {
+            setIsLoading(false);
+          }
+        };
+        fetchAll();
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, currentPage, setSmartResponses]);
 
   const handleSort = (column: keyof SmartResponse) => {
     const newDirection = sortDirection[column] === 'asc' ? 'desc' : 'asc';
     setSortDirection((prev) => ({ ...prev, [column]: newDirection }));
-    const sortedData = [...tableData].sort((a, b) => {
+    const sortedData = [...smartResponses].sort((a, b) => {
       const aValue = column === 'shortcuts' ? a.shortcuts.join(', ') : a[column] || '';
       const bValue = column === 'shortcuts' ? b.shortcuts.join(', ') : b[column] || '';
       return newDirection === 'asc'
         ? aValue.toString().localeCompare(bValue.toString())
         : bValue.toString().localeCompare(aValue.toString());
     });
-    setTableData(sortedData);
+    setSmartResponses(sortedData);
   };
 
-  const handleDelete = (id: number) => {
-    setTableData((prevData) => {
-      const newData = prevData.filter((item) => item.id !== id);
-      if (newData.length <= (currentPage - 1) * 5) {
-        setCurrentPage((prev) => Math.max(1, prev - 1));
-      }
-      return newData;
-    });
+  const handleDelete = async (id: number) => {
+    try {
+      await axios.delete(`https://zotly.onrender.com/api/v1/settings/smart-responses/${id}`);
+      setSmartResponses((prev) => {
+        const newData = prev.filter((item) => item.id !== id);
+        if (newData.length <= (currentPage - 1) * 5) {
+          setCurrentPage((prev) => Math.max(1, prev - 1));
+        }
+        return newData;
+      });
+      toast.success('Smart response deleted successfully!', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+    } catch (err) {
+      toast.error('Failed to delete smart response. Please try again.', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+      console.error(err);
+    }
   };
 
   const getSortIcon = (column: string) => {
@@ -95,15 +163,15 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
   const itemsPerPage = 5;
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentData = tableData.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(tableData.length / itemsPerPage);
+  const currentData = smartResponses.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(smartResponses.length / itemsPerPage);
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   return (
     <div className="p-8 bg-white rounded-xl shadow-lg border border-gray-200">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-4xl font-bold text-gray-800">Smart Responses</h2>
+        <h2 className="text-2xl font-bold text-gray-800">Smart Responses</h2>
         <div className="flex items-center gap-6">
           <div className="relative w-[350px] mx-auto">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
@@ -111,6 +179,8 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
               type="text"
               placeholder="Search smart responses"
               className="w-full pl-10 py-2 text-black focus:outline-none rounded-md border border-gray-300"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <Button
@@ -125,7 +195,7 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
             Import
           </Button>
           <Button className="bg-gray-800">
-            <Download className="h-4 w-4 " />
+            <Download className="h-4 w-4" />
           </Button>
         </div>
       </div>
@@ -135,7 +205,7 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
             <Skeleton key={index} className="h-12 w-full" />
           ))}
         </div>
-      ) : tableData.length === 0 ? (
+      ) : smartResponses.length === 0 ? (
         <div className="flex justify-center items-center h-64">
           <Button onClick={onAddClick}>
             <Plus className="mr-2 h-4 w-4" />
@@ -188,14 +258,7 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
                   </Button>
                 </TableHead>
                 <TableHead className="px-4 py-4 hover:bg-gray-100 w-1/5 text-center">
-                  <Button
-                    variant="ghost"
-                    onClick={() => console.log('Sort Details')}
-                    className="p-0 w-full flex items-center justify-center"
-                  >
-                    <span>Details</span>
-                    {getSortIcon('details')}
-                  </Button>
+                  <span>Details</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -221,7 +284,7 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
                       <Button
                         variant="ghost"
                         className="bg-white p-1 rounded"
-                        onClick={() => console.log(`Edit clicked for ${item.response}`)}
+                        onClick={() => onEditClick(item)}
                       >
                         <Pencil className="h-4 w-4 text-blue-500" />
                       </Button>

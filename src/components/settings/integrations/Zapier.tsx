@@ -1,33 +1,48 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Input } from '@/ui/input';
 import { Button } from '@/ui/button';
+import { Input } from '@/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select';
 import { ChevronDown } from 'lucide-react';
 
-const Zapier: React.FC = () => {
-  const [inputValue, setInputValue] = useState('Zapier');
+interface ZapierProps {
+  integrations: Integration[];
+  onConfigure: () => void;
+  onEdit: (integration: Integration) => void;
+}
+
+interface Integration {
+  id: number;
+  userId: number;
+  service: 'ZAPIER' | 'DRIFT';
+  website: string;
+  apiKey: string;
+  isConfigured: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const Zapier: React.FC<ZapierProps> = ({ integrations, onConfigure, onEdit }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [selectedIntegrationId, setSelectedIntegrationId] = useState<string | null>(null);
 
   const handleInputClick = () => {
     setIsOpen(!isOpen);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
-  };
+  const selectedIntegration = integrations.find((i) => i.id.toString() === selectedIntegrationId) || null;
 
   return (
-    <div className="mt-5 ">
+    <div className="mt-5">
       <div className="space-y-6">
         <div className="p-6 rounded-lg">
           <div className="relative">
             <Input
-              value={inputValue}
-              onChange={handleInputChange}
+              value={`Zapier Integrations (${integrations.length})`}
+              readOnly
               onClick={handleInputClick}
               className="w-full border bg-sky-300 text-black font-bold border-gray-300 hover:bg-white focus:ring-2 focus:ring-blue-500 p-6 pr-10 cursor-pointer"
-              placeholder="Zapier"
             />
             <ChevronDown
               className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-black pointer-events-none"
@@ -36,7 +51,62 @@ const Zapier: React.FC = () => {
           </div>
           {isOpen && (
             <div className="mt-10 p-6 bg-white shadow-lg rounded-lg text-center">
-              <p className="mb-2 mt-2 font-bold text-2xl">Step 1</p>
+              {integrations.length > 0 ? (
+                <>
+                  <p className="mb-4 text-gray-600">
+                    Manage multiple Zapier integrations. Select an integration to view or edit its details.
+                  </p>
+                  <Select
+                    value={selectedIntegrationId || ''}
+                    onValueChange={(value) => setSelectedIntegrationId(value)}
+                  >
+                    <SelectTrigger className="w-full mb-4 border-gray-300 focus:ring-2 focus:ring-blue-500">
+                      <SelectValue placeholder={`Select from ${integrations.length} Zapier integrations`} />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60 overflow-y-auto">
+                      {integrations.map((integration) => (
+                        <SelectItem key={integration.id} value={integration.id.toString()}>
+                          {integration.website}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedIntegration ? (
+                    <>
+                      <p className="mb-2 font-bold text-2xl">Zapier Integration Details</p>
+                      <p>Website: {selectedIntegration.website}</p>
+                      <p>API Key: {selectedIntegration.apiKey}</p>
+                      <p>Status: {selectedIntegration.isConfigured ? 'Configured' : 'Not Configured'}</p>
+                      <Button
+                        className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                        onClick={() => onEdit(selectedIntegration)}
+                      >
+                        Edit Integration
+                      </Button>
+                    </>
+                  ) : (
+                    <p className="mb-2 font-bold text-xl">Select an integration to view details</p>
+                  )}
+                  <Button
+                    className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                    onClick={onConfigure}
+                  >
+                    Add New Zapier Integration
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <p className="mb-2 font-bold text-2xl">Zapier Integration Not Configured</p>
+                  <p>It looks like Zapier is not integrated with your account. Add as many integrations as needed.</p>
+                  <Button
+                    className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                    onClick={onConfigure}
+                  >
+                    Configure Zapier
+                  </Button>
+                </>
+              )}
+              <p className="mb-2 mt-6 font-bold text-2xl">Step 1</p>
               <span className="font-bold text-xl block mb-2">Click 'Make a Zap' on your Zapier Dashboard.</span>
               <Button
                 className="w-[400px] p-2 bg-black text-white border border-gray-300 hover:bg-gray-100 mb-4 mx-auto block"
@@ -50,8 +120,8 @@ const Zapier: React.FC = () => {
               <span className="font-bold text-xl block mb-2">Select a trigger event you want to integrate and click 'Continue'.</span>
               <p className="mb-2 font-bold text-xl">Step 4</p>
               <span className="font-bold text-xl block mb-2">Once you select your account, the new window will open or select one if you already have a configured account. The new window will be opened.</span>
-              <p className="mb-2 font-bold text-lg">You will be asked to enter the API key. You can find it here:</p>
-              <div className="text-left pl-4">
+              <p className="mb-2 font-bold text-lg">You can find additional API keys here:</p>
+              <div className="text-left pl-4 max-h-60 overflow-y-auto">
                 <p className="mb-1">&bull; http://abc.com - cb10c3f43bdb44ccaaaf0401a5c727e</p>
                 <p className="mb-1">&bull; http://cisco.com - 5e42a94b120a44d790fccf67323b6ac</p>
                 <p className="mb-1">&bull; http://devtestloginwithgoogle.com - f30ab1cfc44b446c8eec7ac722eda6e</p>

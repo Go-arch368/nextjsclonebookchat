@@ -1,43 +1,55 @@
-
 "use client";
 
 import React, { useState } from 'react';
 import TagsViewHeader from './TagsViewHeader';
 import AddTagForm from './AddTagForm';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // TypeScript interface for the tag
 interface Tag {
   id: number;
+  userId: number;
   tag: string;
   isDefault: boolean;
+  createdBy: string;
+  company: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 const TagsView: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
-  const [tags, setTags] = useState<Tag[]>([]);
+  const [editingTag, setEditingTag] = useState<Tag | null>(null);
 
   const handleAddClick = () => {
+    setEditingTag(null);
+    setShowAddForm(true);
+  };
+
+  const handleEditClick = (tag: Tag) => {
+    setEditingTag(tag);
     setShowAddForm(true);
   };
 
   const handleCancel = () => {
     setShowAddForm(false);
-  };
-
-  const handleSave = (newTag: Tag) => {
-    setTags((prev) => [...prev, newTag]);
-    setShowAddForm(false);
+    setEditingTag(null);
   };
 
   return (
     <div>
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} closeOnClick />
       {showAddForm ? (
-        <AddTagForm onSave={handleSave} onCancel={handleCancel} />
+        <AddTagForm
+          onSave={() => setShowAddForm(false)}
+          onCancel={handleCancel}
+          editingTag={editingTag}
+        />
       ) : (
         <TagsViewHeader
           onAddClick={handleAddClick}
-          onAddTag={handleSave}
-          tags={tags}
+          onEditClick={handleEditClick}
         />
       )}
     </div>

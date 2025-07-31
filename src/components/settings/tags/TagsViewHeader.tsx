@@ -1,35 +1,35 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Plus, Pencil, Trash2, ArrowUp, ArrowDown, Search } from 'lucide-react';
 import { Input } from '@/ui/input';
 import { Button } from '@/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table';
 import { Skeleton } from '@/ui/skeleton';
-import tagsViewData from './tagsViewData.json';
+import { toast } from 'react-toastify';
 
-// TypeScript interface for the JSON data
-interface TagData {
+interface Tag {
   id: number;
+  userId: number;
   tag: string;
+  isDefault: boolean;
   createdBy: string;
   company: string;
-  dateTime: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface TagsViewHeaderProps {
   onAddClick: () => void;
-  onAddTag: (tag: any) => void;
-  tags: any[];
+  onEditClick: (tag: Tag) => void;
 }
 
 const TagsViewHeader: React.FC<TagsViewHeaderProps> = ({
   onAddClick,
-  onAddTag,
-  tags,
+  onEditClick,
 }) => {
-  const [tableData, setTableData] = useState<TagData[]>(tagsViewData);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [sortDirection, setSortDirection] = useState<Record<string, 'asc' | 'desc' | null>>({
     tag: null,
     createdBy: null,
@@ -37,49 +37,111 @@ const TagsViewHeader: React.FC<TagsViewHeaderProps> = ({
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Normalize incoming tags to match legacy interface
-  const normalizeTag = (item: any): TagData => ({
-    id: item.id || Date.now(),
-    tag: item.tag || '',
-    createdBy: item.createdBy || (item.isDefault ? 'Default' : 'Not Default'),
-    company: item.company || 'N/A',
-    dateTime: item.dateTime || new Date().toISOString(),
-  });
-
-  // Initialize tableData
+  // Fetch all tags on mount
   useEffect(() => {
-    const normalizedData = [...tagsViewData, ...tags].map(normalizeTag);
-    setTableData(normalizedData);
-  }, [tags]);
+    const fetchTags = async () => {
+      try {
+        setIsLoading(true);
+        const response = await axios.get<Tag[]>('https://zotly.onrender.com/api/v1/settings/tags');
+        setTags(response.data);
+      } catch (err) {
+        toast.error('Failed to fetch tags. Please try again.', {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  // Simulate loading state
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1000);
-    return () => clearTimeout(timer);
+    fetchTags();
   }, []);
 
-  const handleSort = (column: keyof TagData) => {
+  // Handle search
+  const handleSearch = async (query: string) => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get<Tag[]>(
+        `https://zotly.onrender.com/api/v1/settings/tags/search?keyword=${encodeURIComponent(query)}&page=${currentPage - 1}&size=10`
+      );
+      setTags(response.data);
+    } catch (err) {
+      toast.error('Failed to search tags. Please try again.', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Debounce search input
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (searchQuery) {
+        handleSearch(searchQuery);
+      } else {
+        // Fetch all if query is empty
+        const fetchAll = async () => {
+          try {
+            setIsLoading(true);
+            const response = await axios.get<Tag[]>('https://zotly.onrender.com/api/v1/settings/tags');
+            setTags(response.data);
+          } catch (err) {
+            toast.error('Failed to fetch tags. Please try again.', {
+              position: 'top-right',
+              autoClose: 3000,
+            });
+            console.error(err);
+          } finally {
+            setIsLoading(false);
+          }
+        };
+        fetchAll();
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, currentPage]);
+
+  const handleSort = (column: keyof Tag) => {
     const newDirection = sortDirection[column] === 'asc' ? 'desc' : 'asc';
     setSortDirection((prev) => ({ ...prev, [column]: newDirection }));
-    const sortedData = [...tableData].sort((a, b) => {
+    const sortedData = [...tags].sort((a, b) => {
       const aValue = a[column] || '';
       const bValue = b[column] || '';
       return newDirection === 'asc'
         ? aValue.toString().localeCompare(bValue.toString())
         : bValue.toString().localeCompare(aValue.toString());
     });
-    setTableData(sortedData);
+    setTags(sortedData);
   };
 
-  const handleDelete = (id: number) => {
-    setTableData((prevData) => {
-      const newData = prevData.filter((item) => item.id !== id);
-      if (newData.length <= (currentPage - 1) * 4) {
-        setCurrentPage((prev) => Math.max(1, prev - 1));
-      }
-      return newData;
-    });
+  const handleDelete = async (id: number) => {
+    try {
+      await axios.delete(`https://zotly.onrender.com/api/v1/settings/tags/${id}`);
+      setTags((prev) => {
+        const newData = prev.filter((item) => item.id !== id);
+        if (newData.length <= (currentPage - 1) * 4) {
+          setCurrentPage((prev) => Math.max(1, prev - 1));
+        }
+        return newData;
+      });
+      toast.success('Tag deleted successfully!', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+    } catch (err) {
+      toast.error('Failed to delete tag. Please try again.', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+      console.error(err);
+    }
   };
 
   const getSortIcon = (column: string) => {
@@ -92,8 +154,8 @@ const TagsViewHeader: React.FC<TagsViewHeaderProps> = ({
   const itemsPerPage = 4;
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentData = tableData.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(tableData.length / itemsPerPage);
+  const currentData = tags.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(tags.length / itemsPerPage);
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
@@ -108,6 +170,8 @@ const TagsViewHeader: React.FC<TagsViewHeaderProps> = ({
               type="text"
               placeholder="Search tags"
               className="w-full pl-10 py-2 text-black focus:outline-none rounded-md border border-gray-300"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <Button
@@ -121,11 +185,11 @@ const TagsViewHeader: React.FC<TagsViewHeaderProps> = ({
       </div>
       {isLoading ? (
         <div className="space-y-2">
-          {[...Array(10)].map((_, index) => (
+          {[...Array(4)].map((_, index) => (
             <Skeleton key={index} className="h-12 w-full" />
           ))}
         </div>
-      ) : tableData.length === 0 ? (
+      ) : tags.length === 0 ? (
         <div className="flex justify-center items-center h-64">
           <Button onClick={onAddClick}>
             <Plus className="mr-2 h-4 w-4" />
@@ -167,16 +231,7 @@ const TagsViewHeader: React.FC<TagsViewHeaderProps> = ({
                     {getSortIcon('company')}
                   </Button>
                 </TableHead>
-                <TableHead className="px-4 py-4 hover:bg-gray-100 w-1/4 text-center">
-                  <Button
-                    variant="ghost"
-                    onClick={() => console.log('Sort Details')}
-                    className="p-0 w-full flex items-center justify-center"
-                  >
-                    <span>Details</span>
-                    {getSortIcon('details')}
-                  </Button>
-                </TableHead>
+                <TableHead className="px-4 py-4 hover:bg-gray-100 w-1/4 text-center">Details</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -186,7 +241,7 @@ const TagsViewHeader: React.FC<TagsViewHeaderProps> = ({
                   <TableCell className="px-4 py-3 w-1/4 text-center">
                     <div className="flex flex-col items-center gap-1">
                       <span>{item.createdBy}</span>
-                      <span className="text-sm text-gray-500">{item.dateTime}</span>
+                      <span className="text-sm text-gray-500">{item.createdAt}</span>
                     </div>
                   </TableCell>
                   <TableCell className="px-4 py-3 w-1/4 truncate text-center">{item.company}</TableCell>
@@ -195,7 +250,7 @@ const TagsViewHeader: React.FC<TagsViewHeaderProps> = ({
                       <Button
                         variant="ghost"
                         className="bg-white p-1 rounded"
-                        onClick={() => console.log(`Edit clicked for ${item.tag}`)}
+                        onClick={() => onEditClick(item)}
                       >
                         <Pencil className="h-4 w-4 text-blue-500" />
                       </Button>

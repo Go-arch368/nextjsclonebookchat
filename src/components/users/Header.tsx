@@ -1,4 +1,3 @@
-// src/components/users/Header.tsx
 "use client";
 
 import React, { useState } from 'react';
@@ -32,17 +31,16 @@ const Header: React.FC<HeaderProps> = ({ setUsers, users }) => {
         createdAt: new Date().toISOString().slice(0, 19),
         updatedAt: new Date().toISOString().slice(0, 19),
       };
-      console.log("POST /save payload:", payload);
-      const response = await axios.post(`${API_BASE_URL}/save`, payload);
-      console.log("POST /save response:", response.data);
-      const updatedUsers = await axios.get(`${API_BASE_URL}/list`);
+      await axios.post(`${API_BASE_URL}/save`, payload);
+      const updatedUsers = await axios.get<User[]>(`${API_BASE_URL}/list`);
       setUsers(updatedUsers.data || []);
+      setIsAddFormOpen(false);
       toast.success("User added successfully!");
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.message || error.message || "Failed to add user";
-      console.error("Error adding user:", errorMessage);
       toast.error(errorMessage);
+      console.error("Error adding user:", errorMessage);
     }
   };
 
@@ -53,10 +51,9 @@ const Header: React.FC<HeaderProps> = ({ setUsers, users }) => {
     }
     setIsSearching(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/search`, {
+      const response = await axios.get<User[]>(`${API_BASE_URL}/search`, {
         params: { keyword: searchTerm.trim(), page, size: searchSize },
       });
-      console.log("GET /search response:", response.data);
       const results = response.data;
       if (Array.isArray(results)) {
         if (results.length > 0) {
@@ -68,15 +65,14 @@ const Header: React.FC<HeaderProps> = ({ setUsers, users }) => {
           toast.info("No users found");
         }
       } else {
-        console.error("Unexpected response format:", results);
         toast.error("Invalid response from server");
         setUsers([]);
       }
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.message || error.message || "Failed to search users";
-      console.error("Search error:", errorMessage, error.response?.status);
       toast.error(errorMessage);
+      console.error("Search error:", errorMessage);
       setUsers([]);
     } finally {
       setIsSearching(false);
@@ -86,17 +82,15 @@ const Header: React.FC<HeaderProps> = ({ setUsers, users }) => {
   const handleClear = async () => {
     setIsClearing(true);
     try {
-      const response = await axios.delete(`${API_BASE_URL}/clear`, {
-        headers: { "Content-Type": "application/json" },
-      });
-      console.log("DELETE /clear response:", response.data);
+      await axios.delete(`${API_BASE_URL}/clear`);
       setUsers([]);
-      toast.success(response.data?.message || "All users cleared successfully!");
+      setSearchPage(0);
+      toast.success("All users cleared successfully!");
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.message || error.message || "Failed to clear users";
-      console.error("Clear error:", errorMessage);
       toast.error(errorMessage);
+      console.error("Clear error:", errorMessage);
     } finally {
       setIsClearing(false);
     }
@@ -129,18 +123,23 @@ const Header: React.FC<HeaderProps> = ({ setUsers, users }) => {
               disabled={isSearching || isClearing}
             />
           </div>
-          <Button onClick={() => handleSearch(0)} disabled={isSearching || isClearing || !searchTerm.trim()}>
+          <Button
+            onClick={() => handleSearch(0)}
+            disabled={isSearching || isClearing || !searchTerm.trim()}
+          >
             {isSearching ? "Searching..." : "Search"}
           </Button>
-          <AddUsersForm
-            onSubmit={handleFormSubmit}
-            isOpen={isAddFormOpen}
-            setIsOpen={setIsAddFormOpen}
-          />
+          <Button
+            onClick={() => setIsAddFormOpen(true)}
+            disabled={isSearching || isClearing}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add User
+          </Button>
           <Button
             onClick={handleClear}
             variant="destructive"
-            disabled={isSearching || isClearing}
+            disabled={isSearching || isClearing || users.length === 0}
           >
             <Trash2 className="mr-2 h-4 w-4" />
             {isClearing ? "Clearing..." : "Clear All"}
@@ -169,6 +168,11 @@ const Header: React.FC<HeaderProps> = ({ setUsers, users }) => {
             </div>
           </div>
         )}
+        <AddUsersForm
+          onSubmit={handleFormSubmit}
+          isOpen={isAddFormOpen}
+          setIsOpen={setIsAddFormOpen}
+        />
       </div>
     </header>
   );

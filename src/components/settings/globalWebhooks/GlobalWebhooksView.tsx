@@ -1,43 +1,58 @@
-
 "use client";
 
 import React, { useState } from 'react';
 import GlobalWebhooksHeader from './GlobalWebhooksHeader';
 import AddGlobalWebhookForm from './AddGlobalWebhookForm';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 // TypeScript interface for the global webhook
 interface GlobalWebhook {
   id: number;
+  userId: number;
   event: string;
-  dataType: boolean;
-  destination: string;
+  dataTypeEnabled: boolean;
+  destination: 'TARGET_URL' | 'EMAIL' | 'BOTH';
+  email: string;
+  targetUrl: string;
+  createdBy: string;
+  company: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 const GlobalWebhooksView: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
-  const [globalWebhooks, setGlobalWebhooks] = useState<GlobalWebhook[]>([]);
+  const [editingWebhook, setEditingWebhook] = useState<GlobalWebhook | null>(null);
 
   const handleAddClick = () => {
+    setEditingWebhook(null);
+    setShowAddForm(true);
+  };
+
+  const handleEditClick = (webhook: GlobalWebhook) => {
+    setEditingWebhook(webhook);
     setShowAddForm(true);
   };
 
   const handleCancel = () => {
     setShowAddForm(false);
-  };
-
-  const handleSave = (newGlobalWebhook: GlobalWebhook) => {
-    setGlobalWebhooks((prev) => [...prev, newGlobalWebhook]);
-    setShowAddForm(false);
+    setEditingWebhook(null);
   };
 
   return (
     <div>
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} closeOnClick />
       {showAddForm ? (
-        <AddGlobalWebhookForm onSave={handleSave} onCancel={handleCancel} />
+        <AddGlobalWebhookForm
+          onSave={() => setShowAddForm(false)}
+          onCancel={handleCancel}
+          editingWebhook={editingWebhook}
+        />
       ) : (
         <GlobalWebhooksHeader
           onAddClick={handleAddClick}
-          onAddGlobalWebhook={handleSave}
-          globalWebhooks={globalWebhooks}
+          onEditClick={handleEditClick}
         />
       )}
     </div>

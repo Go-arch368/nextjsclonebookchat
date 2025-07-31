@@ -1,35 +1,34 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Plus, Pencil, Trash2, ArrowUp, ArrowDown, Search } from 'lucide-react';
 import { Input } from '@/ui/input';
 import { Button } from '@/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table';
 import { Skeleton } from '@/ui/skeleton';
-import templatesData from './templatesData.json';
+import { toast } from 'react-toastify';
 
-// TypeScript interface for the JSON data
-interface TemplateData {
+interface Template {
   id: number;
+  userId: number;
   businessCategory: string;
   businessSubcategory: string;
   createdBy: string;
-  dateTime: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface TemplatesHeaderProps {
   onAddClick: () => void;
-  onAddTemplate: (template: any) => void;
-  templates: any[];
+  onEditClick: (template: Template) => void;
 }
 
 const TemplatesHeader: React.FC<TemplatesHeaderProps> = ({
   onAddClick,
-  onAddTemplate,
-  templates,
+  onEditClick,
 }) => {
-  const [tableData, setTableData] = useState<TemplateData[]>(templatesData);
+  const [tableData, setTableData] = useState<Template[]>([]);
   const [sortDirection, setSortDirection] = useState<Record<string, 'asc' | 'desc' | null>>({
     businessCategory: null,
     businessSubcategory: null,
@@ -37,29 +36,77 @@ const TemplatesHeader: React.FC<TemplatesHeaderProps> = ({
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Normalize incoming templates to match legacy interface
-  const normalizeTemplate = (item: any): TemplateData => ({
-    id: item.id || Date.now(),
-    businessCategory: item.businessCategory || '',
-    businessSubcategory: item.businessSubcategory || '',
-    createdBy: item.createdBy || 'Current User',
-    dateTime: item.dateTime || new Date().toISOString(),
-  });
-
-  // Initialize tableData
+  // Fetch all templates on mount
   useEffect(() => {
-    const normalizedData = [...templatesData, ...templates].map(normalizeTemplate);
-    setTableData(normalizedData);
-  }, [templates]);
+    const fetchTemplates = async () => {
+      try {
+        setIsLoading(true);
+        const response = await axios.get<Template[]>('https://zotly.onrender.com/api/v1/settings/templates/all');
+        setTableData(response.data);
+      } catch (err) {
+        toast.error('Failed to fetch templates. Please try again.', {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  // Simulate loading state
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1000);
-    return () => clearTimeout(timer);
+    fetchTemplates();
   }, []);
 
-  const handleSort = (column: keyof TemplateData) => {
+  // Handle search
+  const handleSearch = async (query: string) => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get<Template[]>(
+        `https://zotly.onrender.com/api/v1/settings/templates/search?keyword=${encodeURIComponent(query)}&page=${currentPage - 1}&size=10`
+      );
+      setTableData(response.data);
+    } catch (err) {
+      toast.error('Failed to search templates. Please try again.', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Debounce search input
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (searchQuery) {
+        handleSearch(searchQuery);
+      } else {
+        const fetchAll = async () => {
+          try {
+            setIsLoading(true);
+            const response = await axios.get<Template[]>('https://zotly.onrender.com/api/v1/settings/templates/all');
+            setTableData(response.data);
+          } catch (err) {
+            toast.error('Failed to fetch templates. Please try again.', {
+              position: 'top-right',
+              autoClose: 3000,
+            });
+            console.error(err);
+          } finally {
+            setIsLoading(false);
+          }
+        };
+        fetchAll();
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, currentPage]);
+
+  const handleSort = (column: keyof Template) => {
     const newDirection = sortDirection[column] === 'asc' ? 'desc' : 'asc';
     setSortDirection((prev) => ({ ...prev, [column]: newDirection }));
     const sortedData = [...tableData].sort((a, b) => {
@@ -72,14 +119,47 @@ const TemplatesHeader: React.FC<TemplatesHeaderProps> = ({
     setTableData(sortedData);
   };
 
-  const handleDelete = (id: number) => {
-    setTableData((prevData) => {
-      const newData = prevData.filter((item) => item.id !== id);
-      if (newData.length <= (currentPage - 1) * 5) {
-        setCurrentPage((prev) => Math.max(1, prev - 1));
+  const handleDelete = async (id: number) => {
+    try {
+      await axios.delete(`https://zotly.onrender.com/api/v1/settings/templates/delete/${id}`);
+      setTableData((prev) => {
+        const newData = prev.filter((item) => item.id !== id);
+        if (newData.length <= (currentPage - 1) * 5) {
+          setCurrentPage((prev) => Math.max(1, prev - 1));
+        }
+        return newData;
+      });
+      toast.success('Template deleted successfully!', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+    } catch (err) {
+      toast.error('Failed to delete template. Please try again.', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+      console.error(err);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    if (confirm('Are you sure you want to delete all templates? This action cannot be undone.')) {
+      try {
+        await axios.delete('https://zotly.onrender.com/api/v1/settings/templates/delete/all');
+        setTableData([]);
+        setCurrentPage(1);
+        toast.success('All templates deleted successfully!', {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+      } catch (err) {
+        toast.error('Failed to delete all templates. Please try again.', {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+        console.error(err);
       }
-      return newData;
-    });
+    }
   };
 
   const getSortIcon = (column: string) => {
@@ -108,6 +188,8 @@ const TemplatesHeader: React.FC<TemplatesHeaderProps> = ({
               type="text"
               placeholder="Search templates"
               className="w-full pl-10 py-2 text-black focus:outline-none rounded-md border border-gray-300"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <Button
@@ -116,6 +198,14 @@ const TemplatesHeader: React.FC<TemplatesHeaderProps> = ({
           >
             <Plus className="h-5 w-5" />
             <span>Add</span>
+          </Button>
+          <Button
+            className="px-6 py-3 bg-red-500 text-white hover:bg-red-600 flex items-center gap-3 rounded-lg"
+            onClick={handleDeleteAll}
+            disabled={tableData.length === 0}
+          >
+            <Trash2 className="h-5 w-5" />
+            <span>Delete All</span>
           </Button>
         </div>
       </div>
@@ -167,16 +257,7 @@ const TemplatesHeader: React.FC<TemplatesHeaderProps> = ({
                     {getSortIcon('createdBy')}
                   </Button>
                 </TableHead>
-                <TableHead className="px-4 py-4 hover:bg-gray-100 w-1/4 text-center">
-                  <Button
-                    variant="ghost"
-                    onClick={() => console.log('Sort Details')}
-                    className="p-0 w-full flex items-center justify-center"
-                  >
-                    <span>Details</span>
-                    {getSortIcon('details')}
-                  </Button>
-                </TableHead>
+                <TableHead className="px-4 py-4 hover:bg-gray-100 w-1/4 text-center">Details</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -187,7 +268,7 @@ const TemplatesHeader: React.FC<TemplatesHeaderProps> = ({
                   <TableCell className="px-4 py-3 w-1/4 text-center">
                     <div className="flex flex-col items-center gap-1">
                       <span>{item.createdBy}</span>
-                      <span className="text-sm text-gray-600">{item.dateTime}</span>
+                      <span className="text-sm text-gray-600">{new Date(item.updatedAt).toLocaleString()}</span>
                     </div>
                   </TableCell>
                   <TableCell className="px-4 py-3 w-1/4 text-center">
@@ -195,7 +276,7 @@ const TemplatesHeader: React.FC<TemplatesHeaderProps> = ({
                       <Button
                         variant="ghost"
                         className="bg-white p-1 rounded-full"
-                        onClick={() => console.log(`Edit clicked for ${item.businessCategory}`)}
+                        onClick={() => onEditClick(item)}
                       >
                         <Pencil className="h-4 w-4 text-blue-600" />
                       </Button>

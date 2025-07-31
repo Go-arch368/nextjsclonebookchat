@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Plus, Pencil, Trash2, ArrowUp, ArrowDown, Search } from 'lucide-react';
 import { Input } from '@/ui/input';
 import { Button } from '@/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table';
 import { Skeleton } from '@/ui/skeleton';
+import { toast } from 'react-toastify';
 
 interface Greeting {
   id?: number;
@@ -38,7 +40,7 @@ const GreetingHeader: React.FC<GreetingHeaderProps> = ({
   const itemsPerPage = 5;
 
   const sortedGreetings = React.useMemo(() => {
-    let sortableItems = [...greetings];
+    const sortableItems = [...greetings];
     if (sortConfig !== null) {
       sortableItems.sort((a, b) => {
         const aValue = a[sortConfig.key] ?? '';
@@ -85,25 +87,28 @@ const GreetingHeader: React.FC<GreetingHeaderProps> = ({
   const handleClearAll = async () => {
     try {
       setError(null);
-      const response = await fetch('https://zotly.onrender.com/settings/greetings/clear', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Failed to clear greetings: ${response.status}`);
-      }
+      await axios.delete('https://zotly.onrender.com/settings/greetings/clear');
+      onDelete(0); // Trigger parent refresh
       setCurrentPage(1);
-    } catch (error: any) {
-      setError(error.message || 'Failed to clear greetings');
-      console.error('Error clearing greetings:', error);
+      toast.success('All greetings cleared successfully!', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+    } catch (err: any) {
+      const message = err.response?.data?.message || 'Failed to clear greetings.';
+      setError(message);
+      toast.error(message, {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+      console.error('Error clearing greetings:', err);
     }
   };
 
   return (
     <div className="p-8 bg-white rounded-xl shadow-lg border border-gray-200">
       <div className="flex justify-between items-center mb-8">
-        <h2 className="text-4xl font-bold text-gray-800">Greetings</h2>
+        <h2 className="text-2xl font-bold text-gray-800">Greetings</h2>
         <div className="flex gap-6">
           <div className="relative w-[350px]">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" />
@@ -124,6 +129,7 @@ const GreetingHeader: React.FC<GreetingHeaderProps> = ({
           <Button
             className="px-6 py-3 bg-red-500 text-white hover:bg-red-600 flex items-center gap-3 rounded-lg"
             onClick={handleClearAll}
+            disabled={greetings.length === 0}
           >
             <Trash2 className="h-5 w-5" />
             Clear All
