@@ -27,64 +27,26 @@
 
 // smart Responses 
 
-//https://zotly.onrender.com/api/v1/settings/smart-responses - post
+//https://zotly.onrender.com/api/v1/settings/smart-responses/save - post
 
-//  {
-//   "userId": 1,
-//   "response": "Thank you for contacting us!",
-//   "createdBy": "admin",
-//   "company": "Example Corp",
-//   "createdAt": "2025-07-30T15:00:00",
-//   "updatedAt": "2025-07-30T15:00:00",
-//   "shortcuts": ["thanks", "contact"],
-//   "websites": ["example.com", "support.example.com"]
+// {
+//     "userId": 1,
+//     "response": "Thank you for your inquiry! How can we assist you today?",
+//     "shortcuts": ["thanks", "inquiry"],
+//     "websites": ["https://example.com", "https://test.com"],
+//     "createdBy": "admin",
+//     "company": "ExampleCorp",
+//     "createdAt": "2025-08-01T15:30:00",
+//     "updatedAt": "2025-08-01T15:30:00"
 // }
 // take this as a sample data for adding the data right 
 
-//https://zotly.onrender.com/api/v1/settings/smart-responses - put 
-//https://zotly.onrender.com/api/v1/settings/smart-responses - get by id
-//https://zotly.onrender.com/api/v1/settings/smart-responses/1 - delete
-//https://zotly.onrender.com/api/v1/settings/smart-responses - delete all 
-//https://zotly.onrender.com/api/v1/settings/smart-responses - get all 
-//   [
-//   {
-//     "id": 2,
-//     "userId": 1,
-//     "response": "Thank you for contacting us!",
-//     "createdBy": "admin",
-//     "company": "Example Corp",
-//     "createdAt": "2025-07-30T15:00:00",
-//     "updatedAt": "2025-07-30T15:00:00",
-//     "shortcuts": [
-//       "contact",
-//       "thanks"
-//     ],
-//     "websites": [
-//       "example.com",
-//       "support.example.com"
-//     ]
-//   },
-//   {
-//     "id": 3,
-//     "userId": 1,
-//     "response": "Thank you for contacting us!",
-//     "createdBy": "admin",
-//     "company": "Example Corp",
-//     "createdAt": "2025-07-30T15:00:00",
-//     "updatedAt": "2025-07-30T15:00:00",
-//     "shortcuts": [
-//       "contact",
-//       "thanks"
-//     ],
-//     "websites": [
-//       "example.com",
-//       "support.example.com"
-//     ]
-//   }
-// ]
-
-// this is the get data for
-//https://zotly.onrender.com/api/v1/settings/smart-responses/search?keyword=thank&page=0&size=10 0-  search
+//https://zotly.onrender.com/api/v1/settings/smart-responses/put - put 
+//https://zotly.onrender.com/api/v1/settings/smart-responses/find/1 - get by id
+//https://zotly.onrender.com/api/v1/settings/smart-responses/delete/1 - delete
+//https://zotly.onrender.com/api/v1/settings/smart-responses/delete/all - delete all 
+//https://zotly.onrender.com/api/v1/settings/smart-responses/all - get all 
+//https://zotly.onrender.com/api/v1/settings/smart-responses/search?keyword=thanks&page=0&size=10   search
 
 // Queued messages : 
 
@@ -221,3 +183,139 @@
 //https://zotly.onrender.com/api/v1/settings/global-notifcations/delete/all  - delete all 
 //https://zotly.onrender.com/api/v1/settings/global-notifcations/all  - get all 
 //https://zotlt.onrender.com/api/v1/settings/global-notifications/search?keyword=updated@example.com&page=0&size=10 - search
+
+
+// MailTemplate's 
+
+//https://zotly.onrender.com/api/v1/settings/mail-templates/save - post
+
+// {
+//   "userId": 1,
+//   "name": "Welcome Email",
+//   "useCase": "Customer Onboarding",
+//   "subject": "Welcome to Our Platform!",
+//   "active": true,
+//   "createdBy": "admin",
+//   "createdAt": "2025-07-31T15:50:00",
+//   "modifiedBy": "admin",
+//   "modifiedAt": "2025-07-31T15:50:00"
+// }
+
+// this is the data for schema for post method 
+
+//https://zotly.onrender.com/api/v1/settings/mail-templates/update  - put 
+//https://zotly.onrender.com/api/v1/settings/mail-templates/find/1 - get by id
+//https://zotly.onrender.com/api/v1/settings/mail-templates/delete/1 - delete
+//https://zotly.onrender.com/api/v1/settings/mail-templates/delete/all  - delete all 
+//https://zotly.onrender.com/api/v1/settings/mail-templates/all  - get all 
+//https://zotlt.onrender.com/api/v1/settings/mail-templates/search?keyword=welcome&page=0&size=10
+
+
+// IP Address 
+
+//https://zotly.onrender.com/api/v1/settings/ip-addresses/save - post
+
+//   {
+//   "userId": 1,
+//   "ipAddress": "192.168.1.1",
+//   "createdAt": "2025-07-31T15:50:00",
+//   "updatedAt": "2025-07-31T15:50:00"
+// }
+
+// this is for post method and this is the schema 
+
+//https://zotly.onrender.com/api/v1/settings/ip-addresses/update  - put 
+//https://zotly.onrender.com/api/v1/settings/ip-addresses/find/1 - get by id
+//https://zotly.onrender.com/api/v1/settings/ip-addresses/delete/1 - delete
+//https://zotly.onrender.com/api/v1/settings/ip-addresses/delete/all  - delete all 
+//https://zotly.onrender.com/api/v1/settings/ip-addresses/all  - get all 
+//https://zotlt.onrender.com/api/v1/settings/ip-addresses/search?keyword=192.168&page=0&size=10
+
+
+// Role Permissions
+
+//https://zotly.onrender.com/api/v1/settings/role-permissions/save - post
+
+//  {
+//   "userId": 1,
+//   "userRole": "ADMIN",
+//   "createdAt": "2025-07-31T15:50:00",
+//   "updatedAt": "2025-07-31T15:50:00"
+// }
+
+// this is the schema 
+
+//https://zotly.onrender.com/api/v1/settings/role-permissions/update  - put 
+//https://zotly.onrender.com/api/v1/settings/role-permissions/find/1 - get by id
+//https://zotly.onrender.com/api/v1/settings/role-permissions/delete/1 - delete
+//https://zotly.onrender.com/api/v1/settings/role-permissions/delete/all  - delete all 
+//https://zotly.onrender.com/api/v1/settings/role-permissions/all  - get all 
+//https://zotlt.onrender.com/api/v1/settings/role-permissions/search?keyword=admin&page=0&size=10
+
+
+// Default Avatar 
+
+//https://zotly.onrender.com/settings/default-avatars/save
+
+// {
+//   "userId": 1,
+//   "name": "John Doe",
+//   "jobTitle": "Developer",
+//   "avatarImageUrl": "http://example.com/avatar.jpg",
+//   "createdAt": "2025-07-29T17:33:00",
+//   "updatedAt": "2025-07-29T17:33:00"
+// }
+
+//https://zotly.onrender.com/settings/default-avatars/update
+//https://zotly.onrender.com/settings/default-avatars/get/1
+//https://zotly.onrender.com/settings/default-avatars/delete/1
+//https://zotly.onrender.com/settings/default-avatars/clear
+//https://zotly.onrender.com/settings/default-avatars/list
+//https://zotly.onrender.com/settings/default-avatars/search?keyword=Male&page=0&size=10
+
+
+
+//webhooks 
+
+//https://zotly.onrender.com/api/v1/settings/webhooks/save = post 
+
+// {
+//     "userId": 1,
+//     "event": "CHAT_STARTS",
+//     "dataTypes": ["Visitor Info", "Chat Info"],
+//     "targetUrl": "https://example.com/webhook",
+//     "createdBy": "admin",
+//     "company": "ExampleCorp",
+//     "createdAt": "2025-08-01T15:30:00",
+//     "updatedAt": "2025-08-01T15:30:00"
+// } 
+
+//this is the target url right
+//https://zotly.onrender.com/api/v1/settings/webhooks/update = put 
+//https://zotly.onrender.com/api/v1/settings/webhooks/find/1 = get by id 
+//https://zotly.onrender.com/api/v1/settings/webhooks/delete/1 = delete
+//https://zotly.onrender.com/api/v1/settings/webhooks/delete/all = delete
+//https://zotly.onrender.com/api/v1/settings/webhooks/all   = get 
+//https://zotly.onrender.com/api/v1/settings/webhooks/search?keyword=admin&page=0&size=10  =search
+
+
+//Knowleggebase api's 
+
+// https://zotly.onrender.com/api/v1/settings/knowledge-bases/save - post 
+
+// {
+//     "userId": 1,
+//     "questionTitle": "How to reset password?",
+//     "answerInformation": "To reset your password, click on the 'Forgot Password' link on the login page.",
+//     "keywords": "password, reset, login",
+//     "websites": ["https://example.com", "https://test.com"],
+//     "createdAt": "2025-08-01T15:30:00",
+//     "updatedAt": "2025-08-01T15:30:00"
+// }
+
+// https://zotly.onrender.com/api/v1/settings/knowledge-bases/update
+
+// https://zotly.onrender/api/v1/settings/knowledge-bases/delete/1
+// https://zotly.onrender/api/v1/settings/knowledge-bases/delete/all
+// https://zotly.onrender/api/v1/settings/knowledge-bases/all
+// https://zotly.onrender/api/v1/settings/knowledge-bases/search?keyword=password&page=0&size=10

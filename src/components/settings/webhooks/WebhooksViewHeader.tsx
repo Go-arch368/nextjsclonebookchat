@@ -1,36 +1,33 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Plus, Pencil, Trash2, ArrowUp, ArrowDown, Search } from 'lucide-react';
 import { Input } from '@/ui/input';
 import { Button } from '@/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table';
 import { Skeleton } from '@/ui/skeleton';
-import webhooksViewData from './webhooksViewData.json';
+import { toast } from 'react-toastify';
 
-// TypeScript interface for the JSON data
-interface WebhookData {
+interface Webhook {
   id: number;
+  userId: number;
   event: string;
+  dataTypes: string[];
   targetUrl: string;
   createdBy: string;
   company: string;
-  dateTime: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-interface WebhooksViewHeaderProps {
+interface WebhooksHeaderProps {
   onAddClick: () => void;
-  onAddWebhook: (webhook: any) => void;
-  webhooks: any[];
+  onEditClick: (webhook: Webhook) => void;
 }
 
-const WebhooksViewHeader: React.FC<WebhooksViewHeaderProps> = ({
-  onAddClick,
-  onAddWebhook,
-  webhooks,
-}) => {
-  const [tableData, setTableData] = useState<WebhookData[]>(webhooksViewData);
+const WebhooksHeader: React.FC<WebhooksHeaderProps> = ({ onAddClick, onEditClick }) => {
+  const [webhooks, setWebhooks] = useState<Webhook[]>([]);
   const [sortDirection, setSortDirection] = useState<Record<string, 'asc' | 'desc' | null>>({
     event: null,
     targetUrl: null,
@@ -38,51 +35,89 @@ const WebhooksViewHeader: React.FC<WebhooksViewHeaderProps> = ({
     company: null,
   });
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Normalize incoming webhooks to match legacy interface
-  const normalizeWebhook = (item: any): WebhookData => ({
-    id: item.id || Date.now(),
-    event: item.event || item.events?.join(', ') || '',
-    targetUrl: item.targetUrl || '',
-    createdBy: item.createdBy || item.dataTypes?.join(', ') || 'Unknown',
-    company: item.company || 'N/A',
-    dateTime: item.dateTime || new Date().toISOString(),
-  });
+  const fetchWebhooks = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get('https://zotly.onrender.com/api/v1/settings/webhooks/all');
+      const data = Array.isArray(response.data)
+        ? response.data
+        : Array.isArray(response.data?.data)
+        ? response.data.data
+        : [];
+      setWebhooks(data);
+      setTotalPages(Math.ceil(data.length / 5) || 1);
+    } catch (err: any) {
+      console.error('Fetch All Error:', err);
+      toast.error(`Failed to fetch webhooks: ${err.message || 'Unknown error'}`);
+      setWebhooks([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  // Initialize tableData
   useEffect(() => {
-    const normalizedData = [...webhooksViewData, ...webhooks].map(normalizeWebhook);
-    setTableData(normalizedData);
-  }, [webhooks]);
-
-  // Simulate loading state
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1000);
-    return () => clearTimeout(timer);
+    fetchWebhooks();
   }, []);
 
-  const handleSort = (column: keyof WebhookData) => {
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (searchQuery.trim()) {
+        const handleSearch = async () => {
+          try {
+            setIsLoading(true);
+            const response = await axios.get(
+              `https://zotly.onrender.com/api/v1/settings/webhooks/search?keyword=${encodeURIComponent(searchQuery)}&page=${currentPage - 1}&size=10`
+            );
+            const data = 'content' in response.data ? response.data.content : [];
+            setWebhooks(data);
+            setTotalPages(response.data.totalPages || 1);
+          } catch (err: any) {
+            console.error('Search Error:', err);
+            toast.error(`Failed to search webhooks: ${err.message || 'Unknown error'}`);
+            setWebhooks([]);
+          } finally {
+            setIsLoading(false);
+          }
+        };
+        handleSearch();
+      } else {
+        fetchWebhooks();
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, currentPage]);
+
+  const handleSort = (column: keyof Webhook) => {
     const newDirection = sortDirection[column] === 'asc' ? 'desc' : 'asc';
     setSortDirection((prev) => ({ ...prev, [column]: newDirection }));
-    const sortedData = [...tableData].sort((a, b) => {
+    const sortedData = [...webhooks].sort((a, b) => {
       const aValue = a[column] || '';
       const bValue = b[column] || '';
       return newDirection === 'asc'
         ? aValue.toString().localeCompare(bValue.toString())
         : bValue.toString().localeCompare(aValue.toString());
     });
-    setTableData(sortedData);
+    setWebhooks(sortedData);
   };
 
-  const handleDelete = (id: number) => {
-    setTableData((prevData) => {
-      const newData = prevData.filter((item) => item.id !== id);
-      if (newData.length <= (currentPage - 1) * 3) {
-        setCurrentPage((prev) => Math.max(1, prev - 1));
+  const handleDelete = async (id: number) => {
+    try {
+      await axios.delete(`https://zotly.onrender.com/api/v1/settings/webhooks/delete/${id}`);
+      const updated = webhooks.filter((item) => item.id !== id);
+      setWebhooks(updated);
+      setTotalPages(Math.ceil(updated.length / 5) || 1);
+      if ((currentPage - 1) * 5 >= updated.length && currentPage > 1) {
+        setCurrentPage((prev) => prev - 1);
       }
-      return newData;
-    });
+      toast.success('Webhook deleted successfully!');
+    } catch (err: any) {
+      toast.error(`Failed to delete webhook: ${err.message || 'Unknown error'}`);
+    }
   };
 
   const getSortIcon = (column: string) => {
@@ -92,11 +127,10 @@ const WebhooksViewHeader: React.FC<WebhooksViewHeaderProps> = ({
     return null;
   };
 
-  const itemsPerPage = 3;
+  const itemsPerPage = 5;
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentData = tableData.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(tableData.length / itemsPerPage);
+  const currentData = webhooks.slice(indexOfFirstItem, indexOfLastItem);
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
@@ -111,6 +145,11 @@ const WebhooksViewHeader: React.FC<WebhooksViewHeaderProps> = ({
               type="text"
               placeholder="Search webhooks"
               className="w-full pl-10 py-2 text-black focus:outline-none rounded-md border border-gray-300"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
             />
           </div>
           <Button
@@ -122,14 +161,16 @@ const WebhooksViewHeader: React.FC<WebhooksViewHeaderProps> = ({
           </Button>
         </div>
       </div>
+
       {isLoading ? (
         <div className="space-y-2">
           {[...Array(5)].map((_, index) => (
             <Skeleton key={index} className="h-12 w-full" />
           ))}
         </div>
-      ) : tableData.length === 0 ? (
+      ) : webhooks.length === 0 ? (
         <div className="flex justify-center items-center h-64">
+          <p className="text-gray-500 mr-4">No webhooks found.</p>
           <Button onClick={onAddClick}>
             <Plus className="mr-2 h-4 w-4" />
             Add Webhook
@@ -140,79 +181,39 @@ const WebhooksViewHeader: React.FC<WebhooksViewHeaderProps> = ({
           <Table className="border border-gray-200 w-full">
             <TableHeader>
               <TableRow>
-                <TableHead className="px-4 py-4 hover:bg-gray-100 w-1/5 text-center">
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort('event')}
-                    className="p-0 w-full flex items-center justify-center"
-                  >
-                    <span>Event</span>
-                    {getSortIcon('event')}
-                  </Button>
-                </TableHead>
-                <TableHead className="px-4 py-4 hover:bg-gray-100 w-1/5 text-center">
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort('targetUrl')}
-                    className="p-0 w-full flex items-center justify-center"
-                  >
-                    <span>Target URL</span>
-                    {getSortIcon('targetUrl')}
-                  </Button>
-                </TableHead>
-                <TableHead className="px-4 py-4 hover:bg-gray-100 w-1/5 text-center">
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort('createdBy')}
-                    className="p-0 w-full flex items-center justify-center"
-                  >
-                    <span>Created By</span>
-                    {getSortIcon('createdBy')}
-                  </Button>
-                </TableHead>
-                <TableHead className="px-4 py-4 hover:bg-gray-100 w-1/5 text-center">
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort('company')}
-                    className="p-0 w-full flex items-center justify-center"
-                  >
-                    <span>Company</span>
-                    {getSortIcon('company')}
-                  </Button>
-                </TableHead>
-                <TableHead className="px-4 py-4 hover:bg-gray-100 w-1/5 text-center">
-                  <Button
-                    variant="ghost"
-                    onClick={() => console.log('Sort Details')}
-                    className="p-0 w-full flex items-center justify-center"
-                  >
-                    <span>Details</span>
-                    {getSortIcon('details')}
-                  </Button>
-                </TableHead>
+                {['event', 'targetUrl', 'createdBy', 'company'].map((col) => (
+                  <TableHead key={col} className="px-4 py-4 hover:bg-gray-100 w-1/5 text-center">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort(col as keyof Webhook)}
+                      className="p-0 w-full flex items-center justify-center"
+                    >
+                      <span>{col.replace(/([A-Z])/g, ' $1')}</span>
+                      {getSortIcon(col)}
+                    </Button>
+                  </TableHead>
+                ))}
+                <TableHead className="px-4 py-4 hover:bg-gray-100 w-1/5 text-center">Details</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {currentData.map((item) => (
                 <TableRow key={item.id} className="hover:bg-gray-100">
-                  <TableCell className="px-4 py-3 w-1/5 text-left text-ellipsis overflow-hidden max-w-0">{item.event}</TableCell>
-                  <TableCell className="px-4 py-3 w-1/5 text-left text-ellipsis overflow-hidden max-w-0">{item.targetUrl}</TableCell>
-                  <TableCell className="px-4 py-3 w-1/5 truncate text-center">{item.createdBy}</TableCell>
-                  <TableCell className="px-4 py-3 w-1/5 truncate text-center">{item.company}</TableCell>
-                  <TableCell className="px-4 py-3 w-1/5 truncate text-center">
+                  <TableCell className="px-4 py-3 w-1/5 text-left truncate">{item.event}</TableCell>
+                  <TableCell className="px-4 py-3 w-1/5 text-left truncate">{item.targetUrl}</TableCell>
+                  <TableCell className="px-4 py-3 w-1/5 text-center">
+                    <div className="flex flex-col items-center gap-1">
+                      <span>{item.createdBy}</span>
+                      <span className="text-sm text-gray-500">{item.createdAt}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-4 py-3 w-1/5 text-center">{item.company}</TableCell>
+                  <TableCell className="px-4 py-3 w-1/5 text-center">
                     <div className="flex justify-center space-x-2">
-                      <Button
-                        variant="ghost"
-                        className="bg-white p-1 rounded"
-                        onClick={() => console.log(`Edit clicked for ${item.event}`)}
-                      >
+                      <Button variant="ghost" className="bg-white p-1 rounded" onClick={() => onEditClick(item)}>
                         <Pencil className="h-4 w-4 text-blue-500" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        className="bg-white p-1 rounded"
-                        onClick={() => handleDelete(item.id)}
-                      >
+                      <Button variant="ghost" className="bg-white p-1 rounded" onClick={() => handleDelete(item.id)}>
                         <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
                     </div>
@@ -239,4 +240,4 @@ const WebhooksViewHeader: React.FC<WebhooksViewHeaderProps> = ({
   );
 };
 
-export default WebhooksViewHeader;
+export default WebhooksHeader;

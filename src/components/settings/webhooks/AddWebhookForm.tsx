@@ -1,54 +1,156 @@
-
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
 import { Label } from '@/ui/label';
 import { Checkbox } from '@/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/ui/radio-group';
-import { Globe } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 interface Webhook {
   id: number;
+  userId: number;
   event: string;
   dataTypes: string[];
   targetUrl: string;
+  createdBy: string;
+  company: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface AddWebhookFormProps {
-  onSave: (webhook: Webhook) => void;
+  onSave: () => void;
   onCancel: () => void;
+  editingWebhook: Webhook | null;
 }
 
-const AddWebhookForm: React.FC<AddWebhookFormProps> = ({ onSave, onCancel }) => {
+const AddWebhookForm: React.FC<AddWebhookFormProps> = ({ onSave, onCancel, editingWebhook }) => {
   const [formData, setFormData] = useState({
     event: '',
     dataTypes: [] as string[],
     targetUrl: '',
+    createdBy: '',
+    company: '',
   });
+  const [existingEvents, setExistingEvents] = useState<Set<string>>(new Set());
 
   const eventOptions = [
-    'Chat starts',
-    'Support chat starts',
-    'Chat converted to lead',
-    'Chat activates/verify website',
+    'CHAT_STARTS',
+    'CHAT_ENDS',
+    'NEW_MESSAGE',
+    'VISITOR_OFFLINE',
+    'VISITOR_ONLINE',
   ];
 
-  const dataTypeOptions = [
-    'Visitor Info',
-    'Chat Info',
-    'Location Info',
-    'Technology Info',
-    'Security Info',
-    'Custom Fields',
-  ];
+  const dataTypeOptions = ['Visitor Info', 'Chat Info', 'Message Content'];
 
-  const handleEventSelect = (event: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      event,
-    }));
+  useEffect(() => {
+    const fetchWebhooks = async () => {
+      try {
+        const response = await axios.get<Webhook[]>('https://zotly.onrender.com/api/v1/settings/webhooks/all');
+        setExistingEvents(new Set(response.data.map((webhook) => webhook.event)));
+      } catch (err) {
+        toast.error('Failed to fetch existing webhooks for validation.', {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+        console.error(err);
+      }
+    };
+
+    fetchWebhooks();
+  }, []);
+
+  useEffect(() => {
+    if (editingWebhook) {
+      setFormData({
+        event: editingWebhook.event,
+        dataTypes: editingWebhook.dataTypes,
+        targetUrl: editingWebhook.targetUrl,
+        createdBy: editingWebhook.createdBy,
+        company: editingWebhook.company,
+      });
+    }
+  }, [editingWebhook]);
+
+  const validateForm = () => {
+    if (!formData.event) {
+      return 'Event is required.';
+    }
+    if (!editingWebhook && existingEvents.has(formData.event)) {
+      return `Event "${formData.event}" already has a webhook.`;
+    }
+    if (formData.dataTypes.length === 0) {
+      return 'At least one data type is required.';
+    }
+    if (!formData.targetUrl || !/^https?:\/\/[^\s$.?#].[^\s]*$/.test(formData.targetUrl)) {
+      return 'A valid URL is required for Target URL.';
+    }
+    if (!formData.createdBy) {
+      return 'Created By is required.';
+    }
+    if (!formData.company) {
+      return 'Company is required.';
+    }
+    return null;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const validationError = validateForm();
+    if (validationError) {
+      toast.error(validationError, {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+      return;
+    }
+
+    const payload: Webhook = {
+      id: editingWebhook ? editingWebhook.id : Date.now(),
+      userId: 1,
+      event: formData.event,
+      dataTypes: formData.dataTypes,
+      targetUrl: formData.targetUrl,
+      createdBy: formData.createdBy,
+      company: formData.company,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    try {
+      if (editingWebhook) {
+        await axios.put('https://zotly.onrender.com/api/v1/settings/webhooks/update', payload);
+        toast.success('Webhook updated successfully!', {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+      } else {
+        const response = await axios.post<Webhook>('https://zotly.onrender.com/api/v1/settings/webhooks/save', payload);
+        payload.id = response.data.id;
+        toast.success('Webhook created successfully!', {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+      }
+      onSave();
+      setFormData({
+        event: '',
+        dataTypes: [],
+        targetUrl: '',
+        createdBy: '',
+        company: '',
+      });
+    } catch (err) {
+      toast.error('Failed to save webhook. Please try again.', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+      console.error(err);
+    }
   };
 
   const handleDataTypeChange = (dataType: string, checked: boolean) => {
@@ -56,56 +158,36 @@ const AddWebhookForm: React.FC<AddWebhookFormProps> = ({ onSave, onCancel }) => 
       ...prev,
       dataTypes: checked
         ? [...prev.dataTypes, dataType]
-        : prev.dataTypes.filter((d) => d !== dataType),
+        : prev.dataTypes.filter((type) => type !== dataType),
     }));
-  };
-
-  const handleTargetUrlChange = (targetUrl: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      targetUrl,
-    }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave({
-      id: Date.now(),
-      event: formData.event,
-      dataTypes: formData.dataTypes,
-      targetUrl: formData.targetUrl,
-    });
-    setFormData({
-      event: '',
-      dataTypes: [],
-      targetUrl: '',
-    });
-    onCancel();
   };
 
   return (
-    <div className="p-10 bg-white rounded-xl shadow-lg border-gray-200">
-      <h1 className="text-4xl font-bold text-gray-800 mb-10">Add a new webhook</h1>
+    <div className="p-10 bg-white rounded-xl shadow-lg border border-gray-200">
+      <h1 className="text-4xl font-bold text-gray-800 mb-4">
+        {editingWebhook ? 'Edit Webhook' : 'Add a new webhook'}
+      </h1>
+      <hr className="border-gray-300 mb-6" />
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <Label className="text-sm font-medium text-gray-700">Event</Label>
           <RadioGroup
             value={formData.event}
-            onValueChange={handleEventSelect}
+            onValueChange={(value) => setFormData({ ...formData, event: value })}
             className="mt-2 space-y-2"
           >
             {eventOptions.map((event) => (
               <div key={event} className="flex items-center gap-2">
                 <RadioGroupItem value={event} id={event} />
                 <Label htmlFor={event} className="text-sm text-gray-700">
-                  {event}
+                  {event.replace('_', ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())}
                 </Label>
               </div>
             ))}
           </RadioGroup>
         </div>
         <div>
-          <Label className="text-sm font-medium text-gray-700">Data type</Label>
+          <Label className="text-sm font-medium text-gray-700">Data Types</Label>
           <div className="mt-2 space-y-2">
             {dataTypeOptions.map((dataType) => (
               <div key={dataType} className="flex items-center gap-2">
@@ -125,16 +207,37 @@ const AddWebhookForm: React.FC<AddWebhookFormProps> = ({ onSave, onCancel }) => 
           <Label htmlFor="targetUrl" className="text-sm font-medium text-gray-700">
             Target URL
           </Label>
-          <div className="relative mt-2">
-            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
-            <Input
-              id="targetUrl"
-              value={formData.targetUrl}
-              onChange={(e) => handleTargetUrlChange(e.target.value)}
-              className="w-full pl-10 border-gray-300 focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter target URL"
-            />
-          </div>
+          <Input
+            id="targetUrl"
+            value={formData.targetUrl}
+            onChange={(e) => setFormData({ ...formData, targetUrl: e.target.value })}
+            className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter target URL (e.g., http://example.com/webhook)"
+          />
+        </div>
+        <div>
+          <Label htmlFor="createdBy" className="text-sm font-medium text-gray-700">
+            Created By
+          </Label>
+          <Input
+            id="createdBy"
+            value={formData.createdBy}
+            onChange={(e) => setFormData({ ...formData, createdBy: e.target.value })}
+            className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter creator name (e.g., admin)"
+          />
+        </div>
+        <div>
+          <Label htmlFor="company" className="text-sm font-medium text-gray-700">
+            Company
+          </Label>
+          <Input
+            id="company"
+            value={formData.company}
+            onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+            className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter company name (e.g., Example Corp)"
+          />
         </div>
         <div className="flex justify-end gap-3 mt-8">
           <Button

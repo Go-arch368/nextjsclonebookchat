@@ -1,128 +1,139 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Pencil, Trash2, ArrowUp, ArrowDown, Search, Download, Upload } from 'lucide-react';
+import { Plus, Upload, Download, Globe, ChevronDown, Pencil, Trash2, ArrowUp, ArrowDown, Search } from 'lucide-react';
 import { Input } from '@/ui/input';
 import { Button } from '@/ui/button';
+import { Checkbox } from '@/ui/checkbox';
+import { Label } from '@/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table';
 import { Skeleton } from '@/ui/skeleton';
 import { toast } from 'react-toastify';
-
-interface SmartResponse {
-  id: number;
-  userId: number;
-  response: string;
-  createdBy: string;
-  company: string;
-  createdAt: string;
-  updatedAt: string;
-  shortcuts: string[];
-  websites: string[];
-}
+import { SmartResponse } from './SmartResponsesView';
 
 interface SmartResponsesHeaderProps {
   onAddClick: () => void;
   onEditClick: (response: SmartResponse) => void;
+  onDelete: (id: number) => void;
   smartResponses: SmartResponse[];
   setSmartResponses: React.Dispatch<React.SetStateAction<SmartResponse[]>>;
+  isLoading: boolean;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setError: (error: string | null) => void;
 }
 
 const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
   onAddClick,
   onEditClick,
+  onDelete,
   smartResponses,
   setSmartResponses,
+  isLoading,
+  setIsLoading,
+  setError,
 }) => {
   const [sortDirection, setSortDirection] = useState<Record<string, 'asc' | 'desc' | null>>({
     shortcuts: null,
     response: null,
     createdBy: null,
     company: null,
+    websites: null,
   });
-  const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [selectedUrls, setSelectedUrls] = useState<string[]>([]);
+  const [selectedRows, setSelectedRows] = useState<number[]>([]);
+  const itemsPerPage = 10;
 
-  // Fetch all smart responses on mount
-  useEffect(() => {
-    const fetchSmartResponses = async () => {
-      try {
-        setIsLoading(true);
-        const response = await axios.get<SmartResponse[]>(
-          'https://zotly.onrender.com/api/v1/settings/smart-responses'
-        );
-        setSmartResponses(response.data);
-      } catch (err) {
-        toast.error('Failed to fetch smart responses. Please try again.', {
-          position: 'top-right',
-          autoClose: 3000,
-        });
-        console.error(err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const urls = [
+    'http://test-zotly-to-drift-flow.com',
+    'https://drift.com',
+    'https://testbug.com',
+    'https://example.com',
+    'https://test.com',
+    'https://zotly.onrender.com',
+    'https://chatmetrics.com',
+    'https://techska.com',
+  ];
 
-    fetchSmartResponses();
-  }, [setSmartResponses]);
-
-  // Handle search
-  const handleSearch = async (query: string) => {
+  const fetchSmartResponses = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get<SmartResponse[]>(
-        `https://zotly.onrender.com/api/v1/settings/smart-responses/search?keyword=${encodeURIComponent(query)}&page=${currentPage - 1}&size=10`
+      setError(null);
+      const response = await axios.get(
+        `https://zotly.onrender.com/api/v1/settings/smart-responses/all?page=${currentPage - 1}&size=${itemsPerPage}`
       );
-      setSmartResponses(response.data);
-    } catch (err) {
-      toast.error('Failed to search smart responses. Please try again.', {
+      const data = Array.isArray(response.data)
+        ? response.data
+        : Array.isArray(response.data?.content)
+        ? response.data.content
+        : [];
+      setSmartResponses(data);
+      setTotalPages(response.data.totalPages || Math.ceil(data.length / itemsPerPage) || 1);
+    } catch (err: any) {
+      const message = err.response?.data?.message || err.message || 'Failed to fetch smart responses';
+      console.error('Fetch All Error:', err);
+      setError(message);
+      setSmartResponses([]);
+      toast.error(message, {
         position: 'top-right',
         autoClose: 3000,
       });
-      console.error(err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Debounce search input
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      if (searchQuery) {
-        handleSearch(searchQuery);
-      } else {
-        // Fetch all if query is empty
-        const fetchAll = async () => {
+      if (searchQuery.trim()) {
+        const handleSearch = async () => {
           try {
             setIsLoading(true);
-            const response = await axios.get<SmartResponse[]>(
-              'https://zotly.onrender.com/api/v1/settings/smart-responses'
+            setError(null);
+            const response = await axios.get(
+              `https://zotly.onrender.com/api/v1/settings/smart-responses/search?keyword=${encodeURIComponent(searchQuery)}&page=${currentPage - 1}&size=${itemsPerPage}`
             );
-            setSmartResponses(response.data);
-          } catch (err) {
-            toast.error('Failed to fetch smart responses. Please try again.', {
+            const data = 'content' in response.data ? response.data.content : Array.isArray(response.data) ? response.data : [];
+            setSmartResponses(data);
+            setTotalPages(response.data.totalPages || Math.ceil(data.length / itemsPerPage) || 1);
+          } catch (err: any) {
+            const message = err.response?.data?.message || err.message || 'Failed to search smart responses';
+            console.error('Search Error:', err);
+            setError(message);
+            setSmartResponses([]);
+            toast.error(message, {
               position: 'top-right',
               autoClose: 3000,
             });
-            console.error(err);
           } finally {
             setIsLoading(false);
           }
         };
-        fetchAll();
+        handleSearch();
+      } else {
+        fetchSmartResponses();
       }
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchQuery, currentPage, setSmartResponses]);
+  }, [searchQuery, currentPage]);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      fetchSmartResponses();
+    }
+  }, [currentPage]);
 
   const handleSort = (column: keyof SmartResponse) => {
     const newDirection = sortDirection[column] === 'asc' ? 'desc' : 'asc';
     setSortDirection((prev) => ({ ...prev, [column]: newDirection }));
     const sortedData = [...smartResponses].sort((a, b) => {
-      const aValue = column === 'shortcuts' ? a.shortcuts.join(', ') : a[column] || '';
-      const bValue = column === 'shortcuts' ? b.shortcuts.join(', ') : b[column] || '';
+      const aValue = Array.isArray(a[column]) ? a[column].join(', ') : a[column] || '';
+      const bValue = Array.isArray(b[column]) ? b[column].join(', ') : b[column] || '';
       return newDirection === 'asc'
         ? aValue.toString().localeCompare(bValue.toString())
         : bValue.toString().localeCompare(aValue.toString());
@@ -130,27 +141,85 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
     setSmartResponses(sortedData);
   };
 
-  const handleDelete = async (id: number) => {
+  const handleClearAll = async () => {
     try {
-      await axios.delete(`https://zotly.onrender.com/api/v1/settings/smart-responses/${id}`);
-      setSmartResponses((prev) => {
-        const newData = prev.filter((item) => item.id !== id);
-        if (newData.length <= (currentPage - 1) * 5) {
-          setCurrentPage((prev) => Math.max(1, prev - 1));
-        }
-        return newData;
+      setIsLoading(true);
+      setError(null);
+      await axios.delete('https://zotly.onrender.com/api/v1/settings/smart-responses/delete/all', {
+        headers: { 'Content-Type': 'application/json' },
       });
-      toast.success('Smart response deleted successfully!', {
+      setSmartResponses([]);
+      setCurrentPage(1);
+      setTotalPages(1);
+      toast.success('All smart responses cleared successfully!', {
         position: 'top-right',
         autoClose: 3000,
       });
-    } catch (err) {
-      toast.error('Failed to delete smart response. Please try again.', {
+    } catch (err: any) {
+      const message = err.response?.data?.message || err.message || 'Failed to clear smart responses';
+      setError(message);
+      toast.error(message, {
         position: 'top-right',
         autoClose: 3000,
       });
-      console.error(err);
+      console.error('Error clearing smart responses:', err);
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedRows.length === 0) {
+      toast.warn('No responses selected for deletion.', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+      return;
+    }
+    try {
+      setIsLoading(true);
+      setError(null);
+      await Promise.all(
+        selectedRows.map((id) =>
+          axios.delete(`https://zotly.onrender.com/api/v1/settings/smart-responses/delete/${id}`, {
+            headers: { 'Content-Type': 'application/json' },
+          })
+        )
+      );
+      const updated = smartResponses.filter((r) => !selectedRows.includes(r.id));
+      setSmartResponses(updated);
+      setSelectedRows([]);
+      setTotalPages(Math.ceil(updated.length / itemsPerPage) || 1);
+      if ((currentPage - 1) * itemsPerPage >= updated.length && currentPage > 1) {
+        setCurrentPage((prev) => prev - 1);
+      }
+      toast.success('Selected smart responses deleted successfully!', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+    } catch (err: any) {
+      const message = err.response?.data?.message || err.message || 'Failed to delete selected smart responses';
+      setError(message);
+      toast.error(message, {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+      console.error('Delete selected error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCheckboxChange = (url: string) => {
+    setSelectedUrls((prev) =>
+      prev.includes(url) ? prev.filter((item) => item !== url) : [...prev, url]
+    );
+  };
+
+  const handleRowCheckboxChange = (id: number) => {
+    setSelectedRows((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
   };
 
   const getSortIcon = (column: string) => {
@@ -160,27 +229,28 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
     return null;
   };
 
-  const itemsPerPage = 5;
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentData = smartResponses.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(smartResponses.length / itemsPerPage);
-
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+
+  const currentData = smartResponses.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
     <div className="p-8 bg-white rounded-xl shadow-lg border border-gray-200">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex justify-between items-center mb-8">
         <h2 className="text-2xl font-bold text-gray-800">Smart Responses</h2>
-        <div className="flex items-center gap-6">
-          <div className="relative w-[350px] mx-auto">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+        <div className="flex gap-6">
+          <div className="relative w-[350px]">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" />
             <Input
-              type="text"
-              placeholder="Search smart responses"
-              className="w-full pl-10 py-2 text-black focus:outline-none rounded-md border border-gray-300"
+              placeholder="Search responses..."
+              className="pl-10 py-2 w-full text-black focus:outline-none rounded-md border border-gray-300"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
             />
           </div>
           <Button
@@ -188,110 +258,129 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
             onClick={onAddClick}
           >
             <Plus className="h-5 w-5" />
-            <span>Add</span>
+            Add New
           </Button>
-          <Button className="bg-gray-800">
-            <Upload className="h-4 w-4 mr-2" />
-            Import
-          </Button>
-          <Button className="bg-gray-800">
-            <Download className="h-4 w-4" />
+          
+          <Button
+            className="px-6 py-3 bg-red-500 text-white hover:bg-red-600 flex items-center gap-3 rounded-lg"
+            onClick={handleClearAll}
+            disabled={smartResponses.length === 0}
+          >
+            <Trash2 className="h-5 w-5" />
+            Clear All
           </Button>
         </div>
       </div>
+
+      {/* <div className="mt-8 flex flex-col w-[350px]">
+        <Label className="text-sm font-medium text-gray-700">Website</Label>
+        <div className="relative mt-2">
+          <div
+            className="w-full p-3 border border-gray-300 rounded-md flex items-center justify-between cursor-pointer bg-white"
+            onClick={() => setSelectedUrls((prev) => (prev.length > 0 ? [] : urls))}
+          >
+            <div className="flex items-center gap-2">
+              <Globe className="h-5 w-5 text-gray-500" />
+              <span className="text-gray-500">
+                {selectedUrls.length > 0 ? `${selectedUrls.length} selected` : 'Select websites'}
+              </span>
+            </div>
+            <ChevronDown
+              className={`h-5 w-5 text-gray-500 transform transition-transform ${selectedUrls.length > 0 ? 'rotate-180' : ''}`}
+            />
+          </div>
+          {selectedUrls.length > 0 && (
+            <div className="absolute w-full max-h-60 overflow-y-auto border border-gray-300 rounded-md bg-white shadow-lg z-10 mt-1">
+              {urls.map((url, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-2 p-3 hover:bg-gray-100 cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCheckboxChange(url);
+                  }}
+                >
+                  <Checkbox
+                    checked={selectedUrls.includes(url)}
+                    onCheckedChange={() => handleCheckboxChange(url)}
+                    className="h-4 w-4 text-blue-500"
+                  />
+                  <span className="text-sm text-gray-700 truncate">{url}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div> */}
+
       {isLoading ? (
-        <div className="space-y-2">
-          {[...Array(5)].map((_, index) => (
-            <Skeleton key={index} className="h-12 w-full" />
+        <div className="space-y-2 mt-8">
+          {[...Array(itemsPerPage)].map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full" />
           ))}
         </div>
       ) : smartResponses.length === 0 ? (
         <div className="flex justify-center items-center h-64">
           <Button onClick={onAddClick}>
             <Plus className="mr-2 h-4 w-4" />
-            Add Smart Response
+            Create your first smart response
           </Button>
         </div>
       ) : (
         <>
-          <Table className="border border-gray-200 w-full">
+          <Table className="border border-gray-200 w-full mt-8">
             <TableHeader>
               <TableRow>
-                <TableHead className="px-4 py-4 hover:bg-gray-100 w-1/5 text-center">
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort('shortcuts')}
-                    className="p-0 w-full flex items-center justify-center"
-                  >
-                    <span>Shortcuts</span>
-                    {getSortIcon('shortcuts')}
-                  </Button>
+                <TableHead className="px-4 py-4 hover:bg-gray-100 w-[5%] text-center">
+              
                 </TableHead>
-                <TableHead className="px-4 py-4 hover:bg-gray-100 w-1/5 text-center">
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort('response')}
-                    className="p-0 w-full flex items-center justify-center"
-                  >
-                    <span>Response</span>
-                    {getSortIcon('response')}
-                  </Button>
-                </TableHead>
-                <TableHead className="px-4 py-4 hover:bg-gray-100 w-1/5 text-center">
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort('createdBy')}
-                    className="p-0 w-full flex items-center justify-center"
-                  >
-                    <span>Created By</span>
-                    {getSortIcon('createdBy')}
-                  </Button>
-                </TableHead>
-                <TableHead className="px-4 py-4 hover:bg-gray-100 w-1/5 text-center">
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort('company')}
-                    className="p-0 w-full flex items-center justify-center"
-                  >
-                    <span>Company</span>
-                    {getSortIcon('company')}
-                  </Button>
-                </TableHead>
-                <TableHead className="px-4 py-4 hover:bg-gray-100 w-1/5 text-center">
-                  <span>Details</span>
-                </TableHead>
+                {['shortcuts', 'response', 'createdBy', 'company', 'websites'].map((col) => (
+                  <TableHead key={col} className="px-4 py-4 hover:bg-gray-100 text-center">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort(col as keyof SmartResponse)}
+                      className="p-0 w-full flex items-center justify-center"
+                    >
+                      {col === 'createdBy' ? 'Created By' : col.charAt(0).toUpperCase() + col.slice(1)}
+                      {getSortIcon(col)}
+                    </Button>
+                  </TableHead>
+                ))}
+                <TableHead className="px-4 py-4 hover:bg-gray-100 text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {currentData.map((item) => (
-                <TableRow key={item.id} className="hover:bg-gray-100">
-                  <TableCell className="px-4 py-3 w-1/5 text-left">
-                    <div className="flex flex-col gap-1">
-                      {item.shortcuts.map((shortcut, index) => (
-                        <span key={index} className="bg-gray-400 rounded-full p-2">
+              {currentData.map((response) => (
+                <TableRow key={response.id} className="hover:bg-gray-100">
+                  <TableCell className="px-4 py-3 text-center">
+        
+                  </TableCell>
+                  <TableCell className="px-4 py-3 text-center">
+                    <div className="flex flex-wrap gap-1 justify-center">
+                      {response.shortcuts.map((shortcut) => (
+                        <span key={shortcut} className="bg-gray-100 px-2 py-1 rounded text-xs">
                           #{shortcut}
                         </span>
                       ))}
                     </div>
                   </TableCell>
-                  <TableCell className="px-4 py-3 w-1/5 text-left text-ellipsis overflow-hidden max-w-0">
-                    {item.response}
-                  </TableCell>
-                  <TableCell className="px-4 py-3 w-1/5 truncate text-center">{item.createdBy}</TableCell>
-                  <TableCell className="px-4 py-3 w-1/5 truncate text-center">{item.company}</TableCell>
-                  <TableCell className="px-4 py-3 w-1/5 truncate text-center">
-                    <div className="flex justify-center space-x-2">
+                  <TableCell className="px-4 py-3 truncate text-center max-w-xs">{response.response}</TableCell>
+                  <TableCell className="px-4 py-3 text-center">{response.createdBy}</TableCell>
+                  <TableCell className="px-4 py-3 text-center">{response.company}</TableCell>
+                  <TableCell className="px-4 py-3 truncate text-center">{response.websites.join(', ')}</TableCell>
+                  <TableCell className="px-4 py-3 text-center">
+                    <div className="flex justify-center gap-2">
                       <Button
                         variant="ghost"
                         className="bg-white p-1 rounded"
-                        onClick={() => onEditClick(item)}
+                        onClick={() => onEditClick(response)}
                       >
                         <Pencil className="h-4 w-4 text-blue-500" />
                       </Button>
                       <Button
                         variant="ghost"
                         className="bg-white p-1 rounded"
-                        onClick={() => handleDelete(item.id)}
+                        onClick={() => onDelete(response.id)}
                       >
                         <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
@@ -313,6 +402,17 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
               </Button>
             ))}
           </div>
+          {selectedRows.length > 0 && (
+            <div className="flex justify-end mt-4">
+              <Button
+                className="px-6 py-3 bg-red-500 text-white hover:bg-red-600 flex items-center gap-3 rounded-lg"
+                onClick={handleDeleteSelected}
+              >
+                <Trash2 className="h-5 w-5" />
+                Delete Selected
+              </Button>
+            </div>
+          )}
         </>
       )}
     </div>

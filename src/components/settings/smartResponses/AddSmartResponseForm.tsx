@@ -1,32 +1,28 @@
-"use client";
 
-import React, { useState, useEffect } from 'react';
+"use client";
 import axios from 'axios';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
 import { Label } from '@/ui/label';
 import { Checkbox } from '@/ui/checkbox';
+import { Textarea } from '@/ui/textarea';
 import { toast } from 'react-toastify';
-
-interface SmartResponse {
-  id: number;
-  userId: number;
-  response: string;
-  createdBy: string;
-  company: string;
-  createdAt: string;
-  updatedAt: string;
-  shortcuts: string[];
-  websites: string[];
-}
+import { SmartResponse } from './SmartResponsesView';
 
 interface AddSmartResponseFormProps {
-  onSave: (smartResponse: SmartResponse) => void;
+  onSave: (response: SmartResponse) => void;
   onCancel: () => void;
   editingResponse: SmartResponse | null;
+  smartResponses: SmartResponse[];
 }
 
-const AddSmartResponseForm: React.FC<AddSmartResponseFormProps> = ({ onSave, onCancel, editingResponse }) => {
+const AddSmartResponseForm: React.FC<AddSmartResponseFormProps> = ({
+  onSave,
+  onCancel,
+  editingResponse,
+  smartResponses,
+}) => {
   const [formData, setFormData] = useState({
     shortcuts: '',
     response: '',
@@ -34,12 +30,24 @@ const AddSmartResponseForm: React.FC<AddSmartResponseFormProps> = ({ onSave, onC
     company: '',
     websites: [] as string[],
   });
-  const [existingShortcuts, setExistingShortcuts] = useState<Map<number, Set<string>>>(new Map());
+  const [errors, setErrors] = useState<{
+    shortcuts?: string;
+    response?: string;
+    createdBy?: string;
+    company?: string;
+  }>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const websiteOptions = [
     'http://test-zotly-to-drift-flow.com',
     'https://drift.com',
     'https://testbug.com',
+    'https://example.com',
+    'https://test.com',
+    'https://zotly.onrender.com',
+    'https://chatmetrics.com',
+    'https://techska.com',
   ];
 
   const variables = [
@@ -54,31 +62,6 @@ const AddSmartResponseForm: React.FC<AddSmartResponseFormProps> = ({ onSave, onC
     '+Visitor Browser',
   ];
 
-  // Fetch existing smart responses to validate shortcuts
-  useEffect(() => {
-    const fetchSmartResponses = async () => {
-      try {
-        const response = await axios.get<SmartResponse[]>(
-          'https://zotly.onrender.com/api/v1/settings/smart-responses'
-        );
-        const shortcutMap = new Map<number, Set<string>>();
-        response.data.forEach((sr) => {
-          shortcutMap.set(sr.id, new Set(sr.shortcuts));
-        });
-        setExistingShortcuts(shortcutMap);
-      } catch (err) {
-        toast.error('Failed to fetch existing shortcuts for validation.', {
-          position: 'top-right',
-          autoClose: 3000,
-        });
-        console.error(err);
-      }
-    };
-
-    fetchSmartResponses();
-  }, []);
-
-  // Initialize form with editing data
   useEffect(() => {
     if (editingResponse) {
       setFormData({
@@ -92,196 +75,256 @@ const AddSmartResponseForm: React.FC<AddSmartResponseFormProps> = ({ onSave, onC
   }, [editingResponse]);
 
   const handleVariableClick = (variable: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      response: prev.response + variable,
-    }));
+    const textarea = textareaRef.current;
+    if (textarea) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const newValue = formData.response.slice(0, start) + variable + formData.response.slice(end);
+      setFormData((prev) => ({ ...prev, response: newValue }));
+      setErrors((prev) => ({ ...prev, response: '' }));
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
   };
 
   const handleWebsiteChange = (website: string, checked: boolean) => {
     setFormData((prev) => ({
       ...prev,
-      websites: checked
-        ? [...prev.websites, website]
-        : prev.websites.filter((w) => w !== website),
+      websites: checked ? [...prev.websites, website] : prev.websites.filter((w) => w !== website),
     }));
   };
 
-  const validateShortcuts = (shortcuts: string[], currentId: number | null) => {
-    const newShortcuts = shortcuts.map((s) => s.trim().toLowerCase());
-    for (const [id, shortcutsSet] of existingShortcuts) {
-      if (currentId !== null && id === currentId) continue; // Skip validation for the same response when editing
-      for (const shortcut of newShortcuts) {
-        if (shortcutsSet.has(shortcut)) {
-          return `Shortcut "${shortcut}" is already used in another smart response.`;
+  const validateForm = () => {
+    const newErrors: { shortcuts?: string; response?: string; createdBy?: string; company?: string } = {};
+    const shortcuts = formData.shortcuts.split(',').map((s) => s.trim()).filter((s) => s);
+
+    if (shortcuts.length === 0) {
+      newErrors.shortcuts = 'At least one shortcut is required';
+    } else {
+      const unique = new Set(shortcuts.map((s) => s.toLowerCase()));
+      if (unique.size !== shortcuts.length) {
+        newErrors.shortcuts = 'Duplicate shortcuts found';
+      } else {
+        for (const response of smartResponses) {
+          if (editingResponse && response.id === editingResponse.id) continue;
+          if (response.shortcuts.some((s) => shortcuts.includes(s))) {
+            newErrors.shortcuts = `Shortcut "${shortcuts.find((s) => response.shortcuts.includes(s))}" already exists`;
+          }
         }
       }
     }
-    return null;
+
+    if (!formData.response.trim()) {
+      newErrors.response = 'Response is required';
+    }
+    if (!formData.createdBy.trim()) {
+      newErrors.createdBy = 'Created By is required';
+    }
+    if (!formData.company.trim()) {
+      newErrors.company = 'Company is required';
+    }
+
+    return newErrors;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const shortcuts = formData.shortcuts.split(',').map((s) => s.trim()).filter((s) => s);
-    const validationError = validateShortcuts(shortcuts, editingResponse ? editingResponse.id : null);
-    if (validationError) {
-      toast.error(validationError, {
+    setIsSubmitting(true);
+
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      toast.error('Please fill in all required fields', {
         position: 'top-right',
         autoClose: 3000,
       });
+      setIsSubmitting(false);
       return;
     }
 
+    const shortcuts = formData.shortcuts.split(',').map((s) => s.trim()).filter((s) => s);
     const payload: SmartResponse = {
-      id: editingResponse ? editingResponse.id : Date.now(), // Temporary ID for new responses
+      id: editingResponse?.id || 0,
       userId: 1,
-      response: formData.response,
-      createdBy: formData.createdBy,
-      company: formData.company,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      response: formData.response.trim(),
       shortcuts,
       websites: formData.websites,
+      createdBy: formData.createdBy.trim(),
+      company: formData.company.trim(),
+      createdAt: editingResponse?.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
     try {
-      if (editingResponse) {
-        // Update existing response
-        await axios.put('https://zotly.onrender.com/api/v1/settings/smart-responses', payload);
-        toast.success('Smart response updated successfully!', {
-          position: 'top-right',
-          autoClose: 3000,
-        });
-      } else {
-        // Create new response
-        const response = await axios.post<SmartResponse>('https://zotly.onrender.com/api/v1/settings/smart-responses', payload);
-        payload.id = response.data.id; // Use server-generated ID
-        toast.success('Smart response created successfully!', {
-          position: 'top-right',
-          autoClose: 3000,
-        });
-      }
-      onSave(payload);
-      setFormData({
-        shortcuts: '',
-        response: '',
-        createdBy: '',
-        company: '',
-        websites: [],
+      const url = editingResponse
+        ? 'https://zotly.onrender.com/api/v1/settings/smart-responses/put'
+        : 'https://zotly.onrender.com/api/v1/settings/smart-responses/save';
+
+      const response = await axios({
+        method: editingResponse ? 'PUT' : 'POST',
+        url,
+        headers: { 'Content-Type': 'application/json' },
+        data: payload,
       });
-    } catch (err) {
-      toast.error('Failed to save smart response. Please try again.', {
+
+      onSave(response.data);
+      toast.success(`Smart response ${editingResponse ? 'updated' : 'created'} successfully!`, {
         position: 'top-right',
         autoClose: 3000,
       });
-      console.error(err);
+      onCancel();
+    } catch (err: any) {
+      const message = err.response?.data?.message || err.message || `Failed to ${editingResponse ? 'update' : 'create'} smart response`;
+      toast.error(message, {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+      console.error('API error:', err);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <div className="p-10 bg-white rounded-xl shadow-lg border border-gray-200">
       <h1 className="text-4xl font-bold text-gray-800 mb-10">
-        {editingResponse ? 'Edit Smart Response' : 'Add a new smart response'}
+        {editingResponse ? 'Edit Smart Response' : 'Add New Smart Response'}
       </h1>
-      <hr className="mb-10 font-bold" />
       <form onSubmit={handleSubmit} className="space-y-6">
-        <label className="-mt-10">Smart response</label>
-        <p className="text-sm text-gray-600">
-          Smart responses are pre-made messages you can recall easily during chat.
-        </p>
         <div>
-          <Label htmlFor="shortcuts" className="text-sm font-medium text-gray-700">
-            Shortcuts
-          </Label>
+          <Label htmlFor="shortcuts" className="text-sm font-medium text-gray-700">Shortcuts *</Label>
           <Input
             id="shortcuts"
             value={formData.shortcuts}
-            onChange={(e) => setFormData({ ...formData, shortcuts: e.target.value })}
-            className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter shortcuts (comma-separated, e.g., hi, hello, hey)"
+            onChange={(e) => {
+              setFormData({ ...formData, shortcuts: e.target.value });
+              setErrors((prev) => ({ ...prev, shortcuts: '' }));
+            }}
+            placeholder="Comma separated shortcuts (e.g., thanks, inquiry)"
+            className={errors.shortcuts ? 'border-red-500' : 'border-gray-300'}
           />
+          {errors.shortcuts && <p className="text-red-500 text-sm mt-1">{errors.shortcuts}</p>}
           <p className="text-xs text-gray-500 mt-1">
-            To use a canned response during a chat, type in # and a shortcut.
+            Use #shortcut during chat to trigger this response
           </p>
         </div>
+
         <div>
-          <Label htmlFor="response" className="text-sm font-medium text-gray-700">
-            Response
-          </Label>
-          <Input
-            id="response"
-            value={formData.response}
-            onChange={(e) => setFormData({ ...formData, response: e.target.value })}
-            className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500 h-20"
-            placeholder="Enter response message"
-          />
-          <div className="mt-2 flex flex-wrap gap-2">
+          <Label htmlFor="response" className="text-sm font-medium text-gray-700 mb-2">Response *</Label>
+          <div className="flex flex-wrap gap-2 mb-2">
             {variables.map((variable) => (
               <Button
                 key={variable}
                 type="button"
-                variant="outline"
-                className="text-sm"
+                className="bg-gray-200 text-gray-700 rounded-full px-3 py-1 text-sm hover:bg-gray-300"
                 onClick={() => handleVariableClick(variable)}
               >
                 {variable}
               </Button>
             ))}
           </div>
+          <Textarea
+            id="response"
+            value={formData.response}
+            onChange={(e) => {
+              setFormData({ ...formData, response: e.target.value });
+              setErrors((prev) => ({ ...prev, response: '' }));
+              if (textareaRef.current) {
+                textareaRef.current.style.height = 'auto';
+                textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+              }
+            }}
+            className={`w-full min-h-[100px] border-gray-300 focus:ring-2 focus:ring-blue-500 ${errors.response ? 'border-red-500' : ''}`}
+            placeholder="Enter your response message (e.g., Thank you for your inquiry!)"
+            ref={textareaRef}
+          />
+          {errors.response && <p className="text-red-500 text-sm mt-1">{errors.response}</p>}
         </div>
+
         <div>
-          <Label htmlFor="createdBy" className="text-sm font-medium text-gray-700">
-            Created By
-          </Label>
+          <Label htmlFor="createdBy" className="text-sm font-medium text-gray-700">Created By *</Label>
           <Input
             id="createdBy"
             value={formData.createdBy}
-            onChange={(e) => setFormData({ ...formData, createdBy: e.target.value })}
-            className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
+            onChange={(e) => {
+              setFormData({ ...formData, createdBy: e.target.value });
+              setErrors((prev) => ({ ...prev, createdBy: '' }));
+            }}
             placeholder="Enter creator name (e.g., admin)"
+            className={errors.createdBy ? 'border-red-500' : 'border-gray-300'}
           />
+          {errors.createdBy && <p className="text-red-500 text-sm mt-1">{errors.createdBy}</p>}
         </div>
+
         <div>
-          <Label htmlFor="company" className="text-sm font-medium text-gray-700">
-            Company
-          </Label>
+          <Label htmlFor="company" className="text-sm font-medium text-gray-700">Company *</Label>
           <Input
             id="company"
             value={formData.company}
-            onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-            className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter company name (e.g., Example Corp)"
+            onChange={(e) => {
+              setFormData({ ...formData, company: e.target.value });
+              setErrors((prev) => ({ ...prev, company: '' }));
+            }}
+            placeholder="Enter company name (e.g., ExampleCorp)"
+            className={errors.company ? 'border-red-500' : 'border-gray-300'}
           />
+          {errors.company && <p className="text-red-500 text-sm mt-1">{errors.company}</p>}
         </div>
+
         <div>
           <Label className="text-sm font-medium text-gray-700">Websites</Label>
-          <div className="mt-2 space-y-2">
+          <div className="space-y-2 mt-2">
             {websiteOptions.map((website) => (
               <div key={website} className="flex items-center gap-2">
                 <Checkbox
-                  id={website}
+                  id={`website-${website}`}
                   checked={formData.websites.includes(website)}
                   onCheckedChange={(checked) => handleWebsiteChange(website, checked as boolean)}
+                  className="h-4 w-4 text-blue-500"
                 />
-                <label htmlFor={website} className="text-sm">{website}</label>
+                <label htmlFor={`website-${website}`} className="text-sm text-gray-700">
+                  {website}
+                </label>
               </div>
             ))}
           </div>
         </div>
-        <div className="flex justify-end gap-3 mt-8">
+
+        <div className="flex justify-end gap-3 pt-6">
           <Button
             type="button"
             variant="outline"
             className="px-6 py-2 border-gray-300 text-gray-800"
             onClick={onCancel}
+            disabled={isSubmitting}
           >
             Cancel
           </Button>
           <Button
             type="submit"
             className="px-6 py-2 bg-blue-600 text-white hover:bg-blue-800"
+            disabled={isSubmitting}
           >
-            Save
+            {isSubmitting ? (
+              <span className="flex items-center">
+                <svg
+                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                {editingResponse ? 'Updating...' : 'Creating...'}
+              </span>
+            ) : (
+              editingResponse ? 'Update' : 'Create'
+            )}
           </Button>
         </div>
       </form>
