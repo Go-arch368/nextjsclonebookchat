@@ -18,7 +18,7 @@ const fetchWithRetry = async (url: string, options = {}, retries = 3) => {
     return response;
   } catch (error) {
     if (retries <= 0) throw error;
-    await new Promise(res => setTimeout(res, 1000 * (4 - retries)));
+    await new Promise(resolve => setTimeout(resolve, 1000 * (4 - retries)));
     return fetchWithRetry(url, options, retries - 1);
   }
 };
