@@ -306,20 +306,7 @@ const KnowledgeBaseHeader: React.FC<KnowledgeBaseHeaderProps> = ({
             <Plus className="h-5 w-5" />
             Add Record
           </Button>
-          <Button
-            className="px-6 py-3 bg-gray-800 text-white rounded-lg flex items-center gap-3"
-            onClick={() => console.log('Import clicked')}
-          >
-            <Upload className="h-5 w-5" />
-            Import
-          </Button>
-          <Button
-            className="px-6 py-3 bg-gray-800 text-white rounded-lg flex items-center gap-3"
-            onClick={() => console.log('Download template clicked')}
-          >
-            <Download className="h-5 w-5" />
-            Download Template
-          </Button>
+    
           <Button
             className="px-6 py-3 bg-red-500 text-white hover:bg-red-600 flex items-center gap-3 rounded-lg"
             onClick={handleClearAll}
