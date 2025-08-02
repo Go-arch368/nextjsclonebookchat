@@ -1,16 +1,16 @@
-// src/types/user.ts
+
 export interface User {
-  id?: number;
+  id: number;
   email: string;
   role: string;
-  passwordHash?: string;
+  passwordHash: string;
   firstName: string;
   lastName: string;
-  jobTitle?: string;
-  department?: string;
+  jobTitle: string;
+  department: string;
   companyId: number;
   simultaneousChatLimit: number;
-  createdAt?: string;
-  updatedAt?: string;
-  deletedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
 }

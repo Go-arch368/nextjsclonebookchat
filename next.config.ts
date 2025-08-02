@@ -14,17 +14,26 @@ const nextConfig: NextConfig = {
         "/*": ["./registry/**/*"],
       },
       images: {
-        remotePatterns: [
-          {
-            protocol: "https",
-            hostname: "avatars.githubusercontent.com",
-          },
-          {
-            protocol: "https",
-            hostname: "images.unsplash.com",
-          },
-        ],
-      },
+  remotePatterns: [
+    {
+      protocol: "https",
+      hostname: "avatars.githubusercontent.com",
+    },
+    {
+      protocol: "https",
+      hostname: "images.unsplash.com",
+    },
+    {
+      protocol: "http", // Allow http
+      hostname: "example.com",
+    },
+    {
+      protocol: "https",
+      hostname: "images.pexels.com", // This is the actual host serving Pexels images
+    },
+  ],
+}
+
 };
 
 export default withBundleAnalyzer(nextConfig);

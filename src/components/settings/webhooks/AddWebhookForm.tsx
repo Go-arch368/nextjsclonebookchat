@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -35,7 +36,7 @@ const AddWebhookForm: React.FC<AddWebhookFormProps> = ({ onSave, onCancel, editi
     createdBy: '',
     company: '',
   });
-  const [existingEvents, setExistingEvents] = useState<Set<string>>(new Set());
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const eventOptions = [
     'CHAT_STARTS',
@@ -46,23 +47,6 @@ const AddWebhookForm: React.FC<AddWebhookFormProps> = ({ onSave, onCancel, editi
   ];
 
   const dataTypeOptions = ['Visitor Info', 'Chat Info', 'Message Content'];
-
-  useEffect(() => {
-    const fetchWebhooks = async () => {
-      try {
-        const response = await axios.get<Webhook[]>('https://zotly.onrender.com/api/v1/settings/webhooks/all');
-        setExistingEvents(new Set(response.data.map((webhook) => webhook.event)));
-      } catch (err) {
-        toast.error('Failed to fetch existing webhooks for validation.', {
-          position: 'top-right',
-          autoClose: 3000,
-        });
-        console.error(err);
-      }
-    };
-
-    fetchWebhooks();
-  }, []);
 
   useEffect(() => {
     if (editingWebhook) {
@@ -76,66 +60,54 @@ const AddWebhookForm: React.FC<AddWebhookFormProps> = ({ onSave, onCancel, editi
     }
   }, [editingWebhook]);
 
-  const validateForm = () => {
-    if (!formData.event) {
-      return 'Event is required.';
-    }
-    if (!editingWebhook && existingEvents.has(formData.event)) {
-      return `Event "${formData.event}" already has a webhook.`;
-    }
-    if (formData.dataTypes.length === 0) {
-      return 'At least one data type is required.';
-    }
-    if (!formData.targetUrl || !/^https?:\/\/[^\s$.?#].[^\s]*$/.test(formData.targetUrl)) {
-      return 'A valid URL is required for Target URL.';
-    }
-    if (!formData.createdBy) {
-      return 'Created By is required.';
-    }
-    if (!formData.company) {
-      return 'Company is required.';
-    }
-    return null;
+  const formatTimestamp = () => {
+    const now = new Date();
+    return now.toISOString().slice(0, 19); // e.g., "2025-08-02T11:52:46"
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const validationError = validateForm();
-    if (validationError) {
-      toast.error(validationError, {
-        position: 'top-right',
-        autoClose: 3000,
-      });
-      return;
-    }
 
-    const payload: Webhook = {
-      id: editingWebhook ? editingWebhook.id : Date.now(),
-      userId: 1,
-      event: formData.event,
-      dataTypes: formData.dataTypes,
-      targetUrl: formData.targetUrl,
-      createdBy: formData.createdBy,
-      company: formData.company,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
+    setIsSubmitting(true);
     try {
+      // Prepare payload matching the Postman JSON schema exactly
+      const payload: Omit<Webhook, 'id'> = {
+        userId: 1, // Hardcoded to match Postman; replace with dynamic userId if available
+        // userId: currentUser.id || 1, // Example for dynamic userId
+        event: formData.event,
+        dataTypes: formData.dataTypes,
+        targetUrl: formData.targetUrl,
+        createdBy: formData.createdBy.toLowerCase(), // Normalize to match "admin"
+        company: formData.company,
+        createdAt: formatTimestamp(),
+        updatedAt: formatTimestamp(),
+      };
+
+      console.log('POST /save payload:', JSON.stringify(payload, null, 2)); // Pretty-print payload
+
       if (editingWebhook) {
-        await axios.put('https://zotly.onrender.com/api/v1/settings/webhooks/update', payload);
+        const updatePayload: Webhook = { ...payload, id: editingWebhook.id };
+        const response = await axios.put<Webhook>('https://zotly.onrender.com/api/v1/settings/webhooks/update', updatePayload, {
+          headers: {
+            'Content-Type': 'application/json',
+            // Uncomment if authentication is required
+            // 'Authorization': 'Bearer <your-token-here>',
+          },
+        });
+        console.log('PUT /update response:', JSON.stringify(response.data, null, 2)); // Pretty-print response
         toast.success('Webhook updated successfully!', {
           position: 'top-right',
           autoClose: 3000,
         });
       } else {
         const response = await axios.post<Webhook>('https://zotly.onrender.com/api/v1/settings/webhooks/save', payload);
-        payload.id = response.data.id;
+        console.log('POST /save response:', JSON.stringify(response.data, null, 2)); // Pretty-print response
         toast.success('Webhook created successfully!', {
           position: 'top-right',
           autoClose: 3000,
         });
       }
+
       onSave();
       setFormData({
         event: '',
@@ -144,12 +116,24 @@ const AddWebhookForm: React.FC<AddWebhookFormProps> = ({ onSave, onCancel, editi
         createdBy: '',
         company: '',
       });
-    } catch (err) {
-      toast.error('Failed to save webhook. Please try again.', {
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to save webhook.';
+      console.error('Save webhook error:', errorMessage, {
+        status: err.response?.status,
+        data: JSON.stringify(err.response?.data, null, 2),
+        headers: err.response?.headers,
+        request: {
+          url: err.config?.url,
+          method: err.config?.method,
+          data: JSON.stringify(err.config?.data, null, 2),
+        },
+      });
+      toast.error(errorMessage, {
         position: 'top-right',
         autoClose: 3000,
       });
-      console.error(err);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -178,7 +162,7 @@ const AddWebhookForm: React.FC<AddWebhookFormProps> = ({ onSave, onCancel, editi
           >
             {eventOptions.map((event) => (
               <div key={event} className="flex items-center gap-2">
-                <RadioGroupItem value={event} id={event} />
+                <RadioGroupItem value={event} id={event} disabled={isSubmitting} />
                 <Label htmlFor={event} className="text-sm text-gray-700">
                   {event.replace('_', ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())}
                 </Label>
@@ -195,6 +179,7 @@ const AddWebhookForm: React.FC<AddWebhookFormProps> = ({ onSave, onCancel, editi
                   id={dataType}
                   checked={formData.dataTypes.includes(dataType)}
                   onCheckedChange={(checked) => handleDataTypeChange(dataType, checked as boolean)}
+                  disabled={isSubmitting}
                 />
                 <Label htmlFor={dataType} className="text-sm text-gray-700">
                   {dataType}
@@ -212,7 +197,8 @@ const AddWebhookForm: React.FC<AddWebhookFormProps> = ({ onSave, onCancel, editi
             value={formData.targetUrl}
             onChange={(e) => setFormData({ ...formData, targetUrl: e.target.value })}
             className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter target URL (e.g., http://example.com/webhook)"
+            placeholder="Enter target URL (e.g., https://example.com/webhook)"
+            disabled={isSubmitting}
           />
         </div>
         <div>
@@ -225,6 +211,7 @@ const AddWebhookForm: React.FC<AddWebhookFormProps> = ({ onSave, onCancel, editi
             onChange={(e) => setFormData({ ...formData, createdBy: e.target.value })}
             className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
             placeholder="Enter creator name (e.g., admin)"
+            disabled={isSubmitting}
           />
         </div>
         <div>
@@ -236,7 +223,8 @@ const AddWebhookForm: React.FC<AddWebhookFormProps> = ({ onSave, onCancel, editi
             value={formData.company}
             onChange={(e) => setFormData({ ...formData, company: e.target.value })}
             className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter company name (e.g., Example Corp)"
+            placeholder="Enter company name (e.g., titanss)"
+            disabled={isSubmitting}
           />
         </div>
         <div className="flex justify-end gap-3 mt-8">
@@ -245,14 +233,16 @@ const AddWebhookForm: React.FC<AddWebhookFormProps> = ({ onSave, onCancel, editi
             variant="outline"
             className="px-6 py-2 border-gray-300 text-gray-800"
             onClick={onCancel}
+            disabled={isSubmitting}
           >
             Cancel
           </Button>
           <Button
             type="submit"
             className="px-6 py-2 bg-blue-600 text-white hover:bg-blue-800"
+            disabled={isSubmitting}
           >
-            Save
+            {isSubmitting ? 'Saving...' : 'Save'}
           </Button>
         </div>
       </form>

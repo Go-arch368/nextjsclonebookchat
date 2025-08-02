@@ -45,6 +45,7 @@ const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [passwordHash, setPasswordHash] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showErrors, setShowErrors] = useState(false);
 
   const API_BASE_URL = "https://zotly.onrender.com/users";
   const itemsPerPage = 5;
@@ -70,6 +71,34 @@ const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
     fetchUsers();
   }, [setUsers]);
 
+  const validateUpdateForm = () => {
+    const errors: { [key: string]: string } = {};
+    if (!currentUser?.email) {
+      errors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(currentUser.email)) {
+      errors.email = "A valid email address is required";
+    }
+    if (!currentUser?.role) {
+      errors.role = "Role is required";
+    }
+    if (!currentUser?.firstName) {
+      errors.firstName = "First name is required";
+    }
+    if (!currentUser?.lastName) {
+      errors.lastName = "Last name is required";
+    }
+    if (!currentUser?.companyId) {
+      errors.companyId = "Company ID is required";
+    }
+    if (!currentUser?.simultaneousChatLimit) {
+      errors.simultaneousChatLimit = "Chat limit is required";
+    }
+    if (passwordHash && passwordHash !== confirmPassword) {
+      errors.confirmPassword = "Passwords do not match";
+    }
+    return errors;
+  };
+
   const handleDelete = async (id: number) => {
     try {
       await axios.delete(`${API_BASE_URL}/delete/${id}`);
@@ -90,34 +119,63 @@ const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
   };
 
   const handleUpdate = async () => {
-    if (!currentUser?.id || !currentUser.email || !currentUser.role || !currentUser.firstName || !currentUser.lastName || !currentUser.companyId || !currentUser.simultaneousChatLimit) {
-      toast.error("All required fields must be filled");
+    if (!currentUser) return;
+    const validationErrors = validateUpdateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setShowErrors(true);
+      toast.error("Please fill all required fields correctly");
       return;
     }
-    if (passwordHash && passwordHash !== confirmPassword) {
-      toast.error("Passwords do not match!");
-      return;
-    }
+
     try {
-      const payload = {
-        ...currentUser,
+      // Prepare payload matching the API schema
+      const payload: User = {
+        id: currentUser.id,
+        email: currentUser.email,
+        role: currentUser.role,
+        passwordHash: passwordHash || currentUser.passwordHash, // Use existing passwordHash if not updated
+        firstName: currentUser.firstName,
+        lastName: currentUser.lastName,
+        jobTitle: currentUser.jobTitle || "",
+        department: currentUser.department || "",
+        companyId: currentUser.companyId,
+        simultaneousChatLimit: currentUser.simultaneousChatLimit,
+        createdAt: currentUser.createdAt,
         updatedAt: new Date().toISOString().slice(0, 19),
-        passwordHash: passwordHash || undefined, // Only include new password if provided
+        deletedAt: currentUser.deletedAt,
       };
-      await axios.put(`${API_BASE_URL}/update`, payload);
+
+      console.log("PUT /update payload:", payload); // Debug log
+
+      const response = await axios.put<User>(`${API_BASE_URL}/update`, payload, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      // Update state with response data, preserving existing passwordHash
       setUsers((prev) =>
-        prev.map((user) => (user.id === currentUser.id ? { ...payload, passwordHash: undefined } : user))
+        prev.map((user) =>
+          user.id === currentUser.id
+            ? { ...response.data, passwordHash: user.passwordHash } // Preserve existing passwordHash
+            : user
+        )
       );
+
       toast.success("User updated successfully!");
       setIsUpdateOpen(false);
       setCurrentUser(null);
       setPasswordHash("");
       setConfirmPassword("");
+      setShowErrors(false);
     } catch (error: any) {
       const errorMessage =
-        error.response?.data?.message || error.message || "Failed to update user";
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to update user";
+      console.error("Update error:", errorMessage, {
+        status: error.response?.status,
+        data: error.response?.data,
+      });
       toast.error(errorMessage);
-      console.error("Update error:", errorMessage);
     }
   };
 
@@ -132,7 +190,7 @@ const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
         prev
           ? {
               ...prev,
-              [name]: name === "companyId" || name === "simultaneousChatLimit" ? (value ? parseInt(value) : 0) : value,
+              [name]: name === "companyId" || name === "simultaneousChatLimit" ? parseInt(value) || 0 : value,
             }
           : null
       );
@@ -145,6 +203,15 @@ const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
         ? { ...prev, role: value }
         : null
     );
+  };
+
+  const isFieldInvalid = (field: keyof User | "confirmPassword") => {
+    if (!currentUser) return false;
+    if (field === "confirmPassword") return showErrors && passwordHash !== confirmPassword;
+    if (field === "id" || field === "jobTitle" || field === "department" || field === "createdAt" || field === "updatedAt" || field === "deletedAt") return false;
+    if (field === "companyId" || field === "simultaneousChatLimit") return showErrors && currentUser[field] === 0;
+    if (field === "email") return showErrors && (!currentUser.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(currentUser.email));
+    return showErrors && !currentUser[field];
   };
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
@@ -243,171 +310,175 @@ const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
             setCurrentUser(null);
             setPasswordHash("");
             setConfirmPassword("");
+            setShowErrors(false);
           }
         }}>
-          <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
               <DialogTitle>Update User</DialogTitle>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-blue-700 block">
-                  Email *
-                </Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={currentUser.email || ""}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-md"
-                  placeholder="Enter email"
-                />
+            <div className="max-h-[60vh] overflow-y-auto pr-4">
+              <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-blue-700 block">
+                    Email *
+                  </Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={currentUser.email || ""}
+                    onChange={handleInputChange}
+                    className={`w-full border border-gray-300 rounded-md ${isFieldInvalid("email") ? "border-red-500" : ""}`}
+                    placeholder="Enter email"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="role" className="text-blue-700 block">
+                    Role *
+                  </Label>
+                  <Select
+                    value={currentUser.role || ""}
+                    onValueChange={handleSelectChange}
+                  >
+                    <SelectTrigger className="w-full border border-gray-300 rounded-md">
+                      <SelectValue placeholder="Select a role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ROLES.map((role) => (
+                        <SelectItem key={role} value={role}>
+                          {role}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="passwordHash" className="text-blue-700 block">
+                    Password (optional)
+                  </Label>
+                  <Input
+                    id="passwordHash"
+                    name="passwordHash"
+                    type="password"
+                    value={passwordHash}
+                    onChange={handleInputChange}
+                    className={`w-full border border-gray-300 rounded-md ${isFieldInvalid("passwordHash") ? "border-red-500" : ""}`}
+                    placeholder="Enter new password"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="text-blue-700 block">
+                    Confirm Password (optional)
+                  </Label>
+                  <Input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={handleInputChange}
+                    className={`w-full border border-gray-300 rounded-md ${isFieldInvalid("confirmPassword") ? "border-red-500" : ""}`}
+                    placeholder="Confirm new password"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="firstName" className="text-blue-700 block">
+                    First Name *
+                  </Label>
+                  <Input
+                    id="firstName"
+                    name="firstName"
+                    value={currentUser.firstName || ""}
+                    onChange={handleInputChange}
+                    className={`w-full border border-gray-300 rounded-md ${isFieldInvalid("firstName") ? "border-red-500" : ""}`}
+                    placeholder="Enter first name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName" className="text-blue-700 block">
+                    Last Name *
+                  </Label>
+                  <Input
+                    id="lastName"
+                    name="lastName"
+                    value={currentUser.lastName || ""}
+                    onChange={handleInputChange}
+                    className={`w-full border border-gray-300 rounded-md ${isFieldInvalid("lastName") ? "border-red-500" : ""}`}
+                    placeholder="Enter last name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="jobTitle" className="text-blue-700 block">
+                    Job Title
+                  </Label>
+                  <Input
+                    id="jobTitle"
+                    name="jobTitle"
+                    value={currentUser.jobTitle || ""}
+                    onChange={handleInputChange}
+                    className="w-full border border-gray-300 rounded-md"
+                    placeholder="Enter job title"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="department" className="text-blue-700 block">
+                    Department
+                  </Label>
+                  <Input
+                    id="department"
+                    name="department"
+                    value={currentUser.department || ""}
+                    onChange={handleInputChange}
+                    className="w-full border border-gray-300 rounded-md"
+                    placeholder="Enter department"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="companyId" className="text-blue-700 block">
+                    Company ID *
+                  </Label>
+                  <Input
+                    id="companyId"
+                    name="companyId"
+                    type="number"
+                    value={currentUser.companyId || 0}
+                    onChange={handleInputChange}
+                    className={`w-full border border-gray-300 rounded-md ${isFieldInvalid("companyId") ? "border-red-500" : ""}`}
+                    placeholder="Enter company ID"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="simultaneousChatLimit" className="text-blue-700 block">
+                    Simultaneous Chat Limit *
+                  </Label>
+                  <Input
+                    id="simultaneousChatLimit"
+                    name="simultaneousChatLimit"
+                    type="number"
+                    value={currentUser.simultaneousChatLimit || 0}
+                    onChange={handleInputChange}
+                    className={`w-full border border-gray-300 rounded-md ${isFieldInvalid("simultaneousChatLimit") ? "border-red-500" : ""}`}
+                    placeholder="Enter limit"
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="role" className="text-blue-700 block">
-                  Role *
-                </Label>
-                <Select
-                  value={currentUser.role || ""}
-                  onValueChange={handleSelectChange}
+              <div className="flex justify-end gap-2 sticky bottom-0 bg-white pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsUpdateOpen(false);
+                    setCurrentUser(null);
+                    setPasswordHash("");
+                    setConfirmPassword("");
+                    setShowErrors(false);
+                  }}
                 >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ROLES.map((role) => (
-                      <SelectItem key={role} value={role}>
-                        {role}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  Cancel
+                </Button>
+                <Button onClick={handleUpdate} disabled={!currentUser.email}>
+                  Update
+                </Button>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="passwordHash" className="text-blue-700 block">
-                  Password (optional)
-                </Label>
-                <Input
-                  id="passwordHash"
-                  name="passwordHash"
-                  type="password"
-                  value={passwordHash}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-md"
-                  placeholder="Enter new password"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-blue-700 block">
-                  Confirm Password (optional)
-                </Label>
-                <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-md"
-                  placeholder="Confirm new password"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="firstName" className="text-blue-700 block">
-                  First Name *
-                </Label>
-                <Input
-                  id="firstName"
-                  name="firstName"
-                  value={currentUser.firstName || ""}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-md"
-                  placeholder="Enter first name"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName" className="text-blue-700 block">
-                  Last Name *
-                </Label>
-                <Input
-                  id="lastName"
-                  name="lastName"
-                  value={currentUser.lastName || ""}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-md"
-                  placeholder="Enter last name"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="jobTitle" className="text-blue-700 block">
-                  Job Title
-                </Label>
-                <Input
-                  id="jobTitle"
-                  name="jobTitle"
-                  value={currentUser.jobTitle || ""}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-md"
-                  placeholder="Enter job title"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="department" className="text-blue-700 block">
-                  Department
-                </Label>
-                <Input
-                  id="department"
-                  name="department"
-                  value={currentUser.department || ""}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-md"
-                  placeholder="Enter department"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="companyId" className="text-blue-700 block">
-                  Company ID *
-                </Label>
-                <Input
-                  id="companyId"
-                  name="companyId"
-                  type="number"
-                  value={currentUser.companyId || 0}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-md"
-                  placeholder="Enter company ID"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="simultaneousChatLimit" className="text-blue-700 block">
-                  Simultaneous Chat Limit *
-                </Label>
-                <Input
-                  id="simultaneousChatLimit"
-                  name="simultaneousChatLimit"
-                  type="number"
-                  value={currentUser.simultaneousChatLimit || 0}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-md"
-                  placeholder="Enter limit"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setIsUpdateOpen(false);
-                  setCurrentUser(null);
-                  setPasswordHash("");
-                  setConfirmPassword("");
-                }}
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleUpdate} disabled={!currentUser.email}>
-                Update
-              </Button>
             </div>
           </DialogContent>
         </Dialog>

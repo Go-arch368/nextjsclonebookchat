@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from 'react';
@@ -24,23 +25,15 @@ const Header: React.FC<HeaderProps> = ({ setUsers, users }) => {
 
   const API_BASE_URL = "https://zotly.onrender.com/users";
 
-  const handleFormSubmit = async (data: User) => {
+  const handleFormSubmit = async () => {
     try {
-      const payload = {
-        ...data,
-        createdAt: new Date().toISOString().slice(0, 19),
-        updatedAt: new Date().toISOString().slice(0, 19),
-      };
-      await axios.post(`${API_BASE_URL}/save`, payload);
-      const updatedUsers = await axios.get<User[]>(`${API_BASE_URL}/list`);
-      setUsers(updatedUsers.data || []);
-      setIsAddFormOpen(false);
-      toast.success("User added successfully!");
+      const response = await axios.get<User[]>(`${API_BASE_URL}/list`);
+      setUsers(response.data || []);
     } catch (error: any) {
       const errorMessage =
-        error.response?.data?.message || error.message || "Failed to add user";
+        error.response?.data?.message || error.message || "Failed to refresh users";
       toast.error(errorMessage);
-      console.error("Error adding user:", errorMessage);
+      console.error("Error refreshing users:", errorMessage);
     }
   };
 
