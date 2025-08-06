@@ -35,7 +35,7 @@ interface BillingStore {
   searchPricePlans: (keyword: string, page: number, size: number) => Promise<void>;
 }
 
-const API_BASE_URL = 'https://zotly.onrender.com';
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}`
 
 export const useBillingStore = create<BillingStore>((set, get) => ({
   invoices: [],
