@@ -52,8 +52,8 @@ const SmartResponsesView: React.FC = () => {
       setError(null);
 
       const url = newSmartResponse.id
-        ? 'https://zotly.onrender.com/api/v1/settings/smart-responses/put'
-        : 'https://zotly.onrender.com/api/v1/settings/smart-responses/save';
+        ? `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/smart-responses/put`
+        : `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/smart-responses/save`;
 
       const response = await axios({
         method: newSmartResponse.id ? 'PUT' : 'POST',
@@ -96,7 +96,7 @@ const SmartResponsesView: React.FC = () => {
       setIsLoading(true);
       setError(null);
 
-      await axios.delete(`https://zotly.onrender.com/api/v1/settings/smart-responses/delete/${id}`, {
+      await axios.delete(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/smart-responses/delete/${id}`, {
         headers: { 'Content-Type': 'application/json' },
       });
 

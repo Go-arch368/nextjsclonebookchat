@@ -62,7 +62,7 @@ export default function DefaultAvatarView() {
     try {
       setIsLoading(true);
       const response = await fetchWithRetry(
-        `https://zotly.onrender.com/settings/default-avatars/get/1`
+        `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/default-avatars/get/1`
       );
       
       if (response.data && typeof response.data === 'object' && 
@@ -121,7 +121,7 @@ export default function DefaultAvatarView() {
       };
 
       const response = await fetchWithRetry(
-        "https://zotly.onrender.com/settings/default-avatars/save",
+        `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/default-avatars/save`,
         {
           method: "post",
           data: payload
@@ -153,7 +153,7 @@ export default function DefaultAvatarView() {
     try {
       setIsLoading(true);
       await fetchWithRetry(
-        `https://zotly.onrender.com/settings/default-avatars/delete/1`,
+        `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/default-avatars/delete/1`,
         { method: 'delete' }
       );
       setDefaultAvatar({

@@ -23,7 +23,7 @@ const Header: React.FC<HeaderProps> = ({ setUsers, users }) => {
   const [isSearching, setIsSearching] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
 
-  const API_BASE_URL = "https://zotly.onrender.com/users";
+  const API_BASE_URL = `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/users`;
 
   const handleFormSubmit = async () => {
     try {
@@ -129,14 +129,14 @@ const Header: React.FC<HeaderProps> = ({ setUsers, users }) => {
             <Plus className="mr-2 h-4 w-4" />
             Add User
           </Button>
-          <Button
+          {/* <Button
             onClick={handleClear}
             variant="destructive"
             disabled={isSearching || isClearing || users.length === 0}
           >
             <Trash2 className="mr-2 h-4 w-4" />
             {isClearing ? "Clearing..." : "Clear All"}
-          </Button>
+          </Button> */}
         </div>
         {searchTerm && (
           <div className="flex justify-between items-center">

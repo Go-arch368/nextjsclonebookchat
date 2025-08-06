@@ -38,7 +38,7 @@ const AddTagForm: React.FC<AddTagFormProps> = ({ onSave, onCancel, editingTag })
   useEffect(() => {
     const fetchTags = async () => {
       try {
-        const response = await axios.get<Tag[]>('https://zotly.onrender.com/api/v1/settings/tags');
+        const response = await axios.get<Tag[]>(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/tags`);
         setExistingTags(new Set(response.data.map((tag) => tag.tag.toLowerCase())));
       } catch (err) {
         toast.error('Failed to fetch existing tags for validation.', {
@@ -104,14 +104,14 @@ const AddTagForm: React.FC<AddTagFormProps> = ({ onSave, onCancel, editingTag })
     try {
       if (editingTag) {
         // Update existing tag
-        await axios.put('https://zotly.onrender.com/api/v1/settings/tags', payload);
+        await axios.put(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/tags`, payload);
         toast.success('Tag updated successfully!', {
           position: 'top-right',
           autoClose: 3000,
         });
       } else {
         // Create new tag
-        const response = await axios.post<Tag>('https://zotly.onrender.com/api/v1/settings/tags', payload);
+        const response = await axios.post<Tag>(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/tags`, payload);
         payload.id = response.data.id; // Use server-generated ID
         toast.success('Tag created successfully!', {
           position: 'top-right',

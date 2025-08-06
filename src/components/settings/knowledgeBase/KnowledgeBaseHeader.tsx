@@ -111,7 +111,7 @@ const KnowledgeBaseHeader: React.FC<KnowledgeBaseHeaderProps> = ({
     try {
       setIsLoading(true);
       setError(null);
-      const response = await axios.get(`https://zotly.onrender.com/api/v1/settings/knowledge-bases/all?page=${currentPage - 1}&size=${itemsPerPage}`);
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/knowledge-bases/all?page=${currentPage - 1}&size=${itemsPerPage}`);
       const data = Array.isArray(response.data)
         ? response.data
         : Array.isArray(response.data?.content)
@@ -141,7 +141,7 @@ const KnowledgeBaseHeader: React.FC<KnowledgeBaseHeaderProps> = ({
             setIsLoading(true);
             setError(null);
             const response = await axios.get(
-              `https://zotly.onrender.com/api/v1/settings/knowledge-bases/search?keyword=${encodeURIComponent(searchQuery)}&page=${currentPage - 1}&size=${itemsPerPage}`
+              `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/knowledge-bases/search?keyword=${encodeURIComponent(searchQuery)}&page=${currentPage - 1}&size=${itemsPerPage}`
             );
             const data = 'content' in response.data ? response.data.content : Array.isArray(response.data) ? response.data : [];
             setKnowledgeBaseRecords(data);
@@ -191,7 +191,7 @@ const KnowledgeBaseHeader: React.FC<KnowledgeBaseHeaderProps> = ({
     try {
       setIsLoading(true);
       setError(null);
-      await axios.delete('https://zotly.onrender.com/api/v1/settings/knowledge-bases/delete/all', {
+      await axios.delete(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/knowledge-bases/delete/all`, {
         headers: { 'Content-Type': 'application/json' },
       });
       setKnowledgeBaseRecords([]);
@@ -227,7 +227,7 @@ const KnowledgeBaseHeader: React.FC<KnowledgeBaseHeaderProps> = ({
       setError(null);
       await Promise.all(
         selectedRows.map(id => 
-          axios.delete(`https://zotly.onrender.com/api/v1/settings/knowledge-bases/delete/${id}`, {
+          axios.delete(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/knowledge-bases/delete/${id}`, {
             headers: { 'Content-Type': 'application/json' },
           })
         )

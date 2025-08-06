@@ -44,7 +44,7 @@ const TagsViewHeader: React.FC<TagsViewHeaderProps> = ({
     const fetchTags = async () => {
       try {
         setIsLoading(true);
-        const response = await axios.get<Tag[]>('https://zotly.onrender.com/api/v1/settings/tags');
+        const response = await axios.get<Tag[]>(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/tags`);
         setTags(response.data);
       } catch (err) {
         toast.error('Failed to fetch tags. Please try again.', {
@@ -89,7 +89,7 @@ const TagsViewHeader: React.FC<TagsViewHeaderProps> = ({
         const fetchAll = async () => {
           try {
             setIsLoading(true);
-            const response = await axios.get<Tag[]>('https://zotly.onrender.com/api/v1/settings/tags');
+            const response = await axios.get<Tag[]>(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/tags`);
             setTags(response.data);
           } catch (err) {
             toast.error('Failed to fetch tags. Please try again.', {
@@ -123,7 +123,7 @@ const TagsViewHeader: React.FC<TagsViewHeaderProps> = ({
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`https://zotly.onrender.com/api/v1/settings/tags/${id}`);
+      await axios.delete(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/tags/${id}`);
       setTags((prev) => {
         const newData = prev.filter((item) => item.id !== id);
         if (newData.length <= (currentPage - 1) * 4) {

@@ -89,14 +89,14 @@ const AddQueuedMessageForm: React.FC<AddQueuedMessageFormProps> = ({ onSave, onC
     try {
       if (editingMessage) {
         // Update existing message
-        await axios.put('https://zotly.onrender.com/api/v1/settings/queued-messages', payload);
+        await axios.put(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/queued-messages`, payload);
         toast.success('Queued message updated successfully!', {
           position: 'top-right',
           autoClose: 3000,
         });
       } else {
         // Create new message
-        const response = await axios.post<QueuedMessage>('https://zotly.onrender.com/api/v1/settings/queued-messages', payload);
+        const response = await axios.post<QueuedMessage>(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/queued-messages`, payload);
         payload.id = response.data.id; // Use server-generated ID
         toast.success('Queued message created successfully!', {
           position: 'top-right',

@@ -64,7 +64,7 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
       setIsLoading(true);
       setError(null);
       const response = await axios.get(
-        `https://zotly.onrender.com/api/v1/settings/smart-responses/all?page=${currentPage - 1}&size=${itemsPerPage}`
+        `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/smart-responses/all?page=${currentPage - 1}&size=${itemsPerPage}`
       );
       const data = Array.isArray(response.data)
         ? response.data
@@ -95,7 +95,7 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
             setIsLoading(true);
             setError(null);
             const response = await axios.get(
-              `https://zotly.onrender.com/api/v1/settings/smart-responses/search?keyword=${encodeURIComponent(searchQuery)}&page=${currentPage - 1}&size=${itemsPerPage}`
+              `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/smart-responses/search?keyword=${encodeURIComponent(searchQuery)}&page=${currentPage - 1}&size=${itemsPerPage}`
             );
             const data = 'content' in response.data ? response.data.content : Array.isArray(response.data) ? response.data : [];
             setSmartResponses(data);
@@ -145,7 +145,7 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
     try {
       setIsLoading(true);
       setError(null);
-      await axios.delete('https://zotly.onrender.com/api/v1/settings/smart-responses/delete/all', {
+      await axios.delete(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/smart-responses/delete/all`, {
         headers: { 'Content-Type': 'application/json' },
       });
       setSmartResponses([]);
@@ -181,7 +181,7 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
       setError(null);
       await Promise.all(
         selectedRows.map((id) =>
-          axios.delete(`https://zotly.onrender.com/api/v1/settings/smart-responses/delete/${id}`, {
+          axios.delete(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/smart-responses/delete/${id}`, {
             headers: { 'Content-Type': 'application/json' },
           })
         )

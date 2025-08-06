@@ -48,8 +48,8 @@ const KnowledgeBaseView: React.FC = () => {
       setError(null);
       
       const url = record.id 
-        ? 'https://zotly.onrender.com/api/v1/settings/knowledge-bases/update'
-        : 'https://zotly.onrender.com/api/v1/settings/knowledge-bases/save';
+        ? `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/knowledge-bases/update`
+        : `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/knowledge-bases/save`;
       
       const method = record.id ? 'PUT' : 'POST';
       
@@ -91,7 +91,7 @@ const KnowledgeBaseView: React.FC = () => {
       setError(null);
       
       const response = await fetch(
-        `https://zotly.onrender.com/api/v1/settings/knowledge-bases/delete/${id}`,
+        `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/knowledge-bases/delete/${id}`,
         { method: 'DELETE', headers: { 'Content-Type': 'application/json' } }
       );
 

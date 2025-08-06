@@ -85,13 +85,13 @@ const AddIntegrationForm: React.FC<AddIntegrationFormProps> = ({ onSave, onCance
 
     try {
       if (editingIntegration) {
-        await axios.put('https://zotly.onrender.com/api/v1/settings/integrations', payload);
+        await axios.put(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/integrations`, payload);
         toast.success('Integration updated successfully!', {
           position: 'top-right',
           autoClose: 3000,
         });
       } else {
-        const response = await axios.post<Integration>('https://zotly.onrender.com/api/v1/settings/integrations', payload);
+        const response = await axios.post<Integration>(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/integrations`, payload);
         payload.id = response.data.id; // Use server-generated ID
         toast.success('Integration created successfully!', {
           position: 'top-right',

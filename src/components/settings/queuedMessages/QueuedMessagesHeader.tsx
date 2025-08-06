@@ -50,7 +50,7 @@ const QueuedMessagesHeader: React.FC<QueuedMessagesHeaderProps> = ({
       try {
         setIsLoading(true);
         const response = await axios.get<QueuedMessage[]>(
-          'https://zotly.onrender.com/api/v1/settings/queued-messages'
+          `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/queued-messages`
         );
         setQueuedMessages(response.data);
       } catch (err) {
@@ -72,7 +72,7 @@ const QueuedMessagesHeader: React.FC<QueuedMessagesHeaderProps> = ({
     try {
       setIsLoading(true);
       const response = await axios.get<QueuedMessage[]>(
-        `https://zotly.onrender.com/api/v1/settings/queued-messages/search?keyword=${encodeURIComponent(query)}&page=${currentPage - 1}&size=10`
+        `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/queued-messages/search?keyword=${encodeURIComponent(query)}&page=${currentPage - 1}&size=10`
       );
       setQueuedMessages(response.data);
     } catch (err) {
@@ -97,7 +97,7 @@ const QueuedMessagesHeader: React.FC<QueuedMessagesHeaderProps> = ({
           try {
             setIsLoading(true);
             const response = await axios.get<QueuedMessage[]>(
-              'https://zotly.onrender.com/api/v1/settings/queued-messages'
+              `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/queued-messages`
             );
             setQueuedMessages(response.data);
           } catch (err) {
@@ -132,7 +132,7 @@ const QueuedMessagesHeader: React.FC<QueuedMessagesHeaderProps> = ({
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`https://zotly.onrender.com/api/v1/settings/queued-messages/${id}`);
+      await axios.delete(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/queued-messages/${id}`);
       setQueuedMessages((prev) => {
         const newData = prev.filter((item) => item.id !== id);
         if (newData.length <= (currentPage - 1) * 5) {

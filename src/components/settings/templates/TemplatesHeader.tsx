@@ -43,7 +43,7 @@ const TemplatesHeader: React.FC<TemplatesHeaderProps> = ({
     const fetchTemplates = async () => {
       try {
         setIsLoading(true);
-        const response = await axios.get<Template[]>('https://zotly.onrender.com/api/v1/settings/templates/all');
+        const response = await axios.get<Template[]>(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/templates/all`);
         setTableData(response.data);
       } catch (err) {
         toast.error('Failed to fetch templates. Please try again.', {
@@ -64,7 +64,7 @@ const TemplatesHeader: React.FC<TemplatesHeaderProps> = ({
     try {
       setIsLoading(true);
       const response = await axios.get<Template[]>(
-        `https://zotly.onrender.com/api/v1/settings/templates/search?keyword=${encodeURIComponent(query)}&page=${currentPage - 1}&size=10`
+        `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/templates/search?keyword=${encodeURIComponent(query)}&page=${currentPage - 1}&size=10`
       );
       setTableData(response.data);
     } catch (err) {
@@ -87,7 +87,7 @@ const TemplatesHeader: React.FC<TemplatesHeaderProps> = ({
         const fetchAll = async () => {
           try {
             setIsLoading(true);
-            const response = await axios.get<Template[]>('https://zotly.onrender.com/api/v1/settings/templates/all');
+            const response = await axios.get<Template[]>(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/templates/all`);
             setTableData(response.data);
           } catch (err) {
             toast.error('Failed to fetch templates. Please try again.', {
@@ -121,7 +121,7 @@ const TemplatesHeader: React.FC<TemplatesHeaderProps> = ({
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`https://zotly.onrender.com/api/v1/settings/templates/delete/${id}`);
+      await axios.delete(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/templates/delete/${id}`);
       setTableData((prev) => {
         const newData = prev.filter((item) => item.id !== id);
         if (newData.length <= (currentPage - 1) * 5) {
@@ -145,7 +145,7 @@ const TemplatesHeader: React.FC<TemplatesHeaderProps> = ({
   const handleDeleteAll = async () => {
     if (confirm('Are you sure you want to delete all templates? This action cannot be undone.')) {
       try {
-        await axios.delete('https://zotly.onrender.com/api/v1/settings/templates/delete/all');
+        await axios.delete(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/templates/delete/all`);
         setTableData([]);
         setCurrentPage(1);
         toast.success('All templates deleted successfully!', {

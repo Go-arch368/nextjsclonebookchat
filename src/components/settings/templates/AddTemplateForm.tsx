@@ -77,13 +77,13 @@ const AddTemplateForm: React.FC<AddTemplateFormProps> = ({ onSave, onCancel, edi
 
     try {
       if (editingTemplate) {
-        await axios.put('https://zotly.onrender.com/api/v1/settings/templates/update', payload);
+        await axios.put(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/templates/update`, payload);
         toast.success('Template updated successfully!', {
           position: 'top-right',
           autoClose: 3000,
         });
       } else {
-        const response = await axios.post<Template>('https://zotly.onrender.com/api/v1/settings/templates/save', payload);
+        const response = await axios.post<Template>(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/templates/save`, payload);
         payload.id = response.data.id; // Use server-generated ID
         toast.success('Template created successfully!', {
           position: 'top-right',

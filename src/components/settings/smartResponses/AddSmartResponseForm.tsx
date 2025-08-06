@@ -45,7 +45,6 @@ const AddSmartResponseForm: React.FC<AddSmartResponseFormProps> = ({
     'https://testbug.com',
     'https://example.com',
     'https://test.com',
-    'https://zotly.onrender.com',
     'https://chatmetrics.com',
     'https://techska.com',
   ];
@@ -157,8 +156,8 @@ const AddSmartResponseForm: React.FC<AddSmartResponseFormProps> = ({
 
     try {
       const url = editingResponse
-        ? 'https://zotly.onrender.com/api/v1/settings/smart-responses/put'
-        : 'https://zotly.onrender.com/api/v1/settings/smart-responses/save';
+        ? `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/smart-responses/put`
+        :  `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/smart-responses/save`;
 
       const response = await axios({
         method: editingResponse ? 'PUT' : 'POST',

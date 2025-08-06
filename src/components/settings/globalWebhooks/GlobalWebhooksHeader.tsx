@@ -49,7 +49,7 @@ const GlobalWebhooksHeader: React.FC<GlobalWebhooksHeaderProps> = ({
     const fetchGlobalWebhooks = async () => {
       try {
         setIsLoading(true);
-        const response = await axios.get<GlobalWebhook[]>('https://zotly.onrender.com/api/v1/settings/global-webhooks');
+        const response = await axios.get<GlobalWebhook[]>(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/global-webhooks`);
         setGlobalWebhooks(response.data);
       } catch (err) {
         toast.error('Failed to fetch global webhooks. Please try again.', {
@@ -70,7 +70,7 @@ const GlobalWebhooksHeader: React.FC<GlobalWebhooksHeaderProps> = ({
     try {
       setIsLoading(true);
       const response = await axios.get<GlobalWebhook[]>(
-        `https://zotly.onrender.com/api/v1/settings/global-webhooks/search?keyword=${encodeURIComponent(query)}&page=${currentPage - 1}&size=10`
+        `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/global-webhooks/search?keyword=${encodeURIComponent(query)}&page=${currentPage - 1}&size=10`
       );
       setGlobalWebhooks(response.data);
     } catch (err) {
@@ -93,7 +93,7 @@ const GlobalWebhooksHeader: React.FC<GlobalWebhooksHeaderProps> = ({
         const fetchAll = async () => {
           try {
             setIsLoading(true);
-            const response = await axios.get<GlobalWebhook[]>('https://zotly.onrender.com/api/v1/settings/global-webhooks');
+            const response = await axios.get<GlobalWebhook[]>(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/global-webhooks`);
             setGlobalWebhooks(response.data);
           } catch (err) {
             toast.error('Failed to fetch global webhooks. Please try again.', {
@@ -127,7 +127,7 @@ const GlobalWebhooksHeader: React.FC<GlobalWebhooksHeaderProps> = ({
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`https://zotly.onrender.com/api/v1/settings/global-webhooks/${id}`);
+      await axios.delete(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/global-webhooks/${id}`);
       setGlobalWebhooks((prev) => {
         const newData = prev.filter((item) => item.id !== id);
         if (newData.length <= (currentPage - 1) * 5) {

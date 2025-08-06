@@ -56,7 +56,7 @@ const AddGlobalWebhookForm: React.FC<AddGlobalWebhookFormProps> = ({ onSave, onC
   useEffect(() => {
     const fetchWebhooks = async () => {
       try {
-        const response = await axios.get<GlobalWebhook[]>('https://zotly.onrender.com/api/v1/settings/global-webhooks');
+        const response = await axios.get<GlobalWebhook[]>(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/global-webhooks`);
         setExistingEvents(new Set(response.data.map((webhook) => webhook.event)));
       } catch (err) {
         toast.error('Failed to fetch existing webhooks for validation.', {
@@ -141,13 +141,13 @@ const AddGlobalWebhookForm: React.FC<AddGlobalWebhookFormProps> = ({ onSave, onC
 
     try {
       if (editingWebhook) {
-        await axios.put('https://zotly.onrender.com/api/v1/settings/global-webhooks', payload);
+        await axios.put(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/global-webhooks`, payload);
         toast.success('Global webhook updated successfully!', {
           position: 'top-right',
           autoClose: 3000,
         });
       } else {
-        const response = await axios.post<GlobalWebhook>('https://zotly.onrender.com/api/v1/settings/global-webhooks', payload);
+        const response = await axios.post<GlobalWebhook>(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/global-webhooks`, payload);
         payload.id = response.data.id; // Use server-generated ID
         toast.success('Global webhook created successfully!', {
           position: 'top-right',

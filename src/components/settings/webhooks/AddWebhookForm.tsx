@@ -87,7 +87,7 @@ const AddWebhookForm: React.FC<AddWebhookFormProps> = ({ onSave, onCancel, editi
 
       if (editingWebhook) {
         const updatePayload: Webhook = { ...payload, id: editingWebhook.id };
-        const response = await axios.put<Webhook>('https://zotly.onrender.com/api/v1/settings/webhooks/update', updatePayload, {
+        const response = await axios.put<Webhook>(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/webhooks/update`, updatePayload, {
           headers: {
             'Content-Type': 'application/json',
             // Uncomment if authentication is required
@@ -100,7 +100,7 @@ const AddWebhookForm: React.FC<AddWebhookFormProps> = ({ onSave, onCancel, editi
           autoClose: 3000,
         });
       } else {
-        const response = await axios.post<Webhook>('https://zotly.onrender.com/api/v1/settings/webhooks/save', payload);
+        const response = await axios.post<Webhook>(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/webhooks/save`, payload);
         console.log('POST /save response:', JSON.stringify(response.data, null, 2)); // Pretty-print response
         toast.success('Webhook created successfully!', {
           position: 'top-right',

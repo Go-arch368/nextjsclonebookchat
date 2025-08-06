@@ -57,10 +57,10 @@ export default function AvatarTemplatesView({ onSelectTemplate, newAvatar }: Ava
     try {
       setIsLoading(true);
       const url = searchKeyword
-        ? `https://zotly.onrender.com/settings/default-avatars/search?keyword=${encodeURIComponent(
+        ? `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/default-avatars/search?keyword=${encodeURIComponent(
             searchKeyword
           )}&page=${page}&size=${pageSize}`
-        : "https://zotly.onrender.com/settings/default-avatars/list";
+        : `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/default-avatars/list`;
       
       const response = await fetchWithRetry(url, { method: 'get' });
 
@@ -111,7 +111,7 @@ export default function AvatarTemplatesView({ onSelectTemplate, newAvatar }: Ava
       setTemplates((prev) => [...prev, tempTemplate]);
 
       const response = await fetchWithRetry(
-        "https://zotly.onrender.com/settings/default-avatars/save",
+        `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/default-avatars/save`,
         {
           method: "post",
           data: {
@@ -155,7 +155,7 @@ export default function AvatarTemplatesView({ onSelectTemplate, newAvatar }: Ava
     try {
       setTemplates((prev) => prev.filter((t) => t.id !== template.id));
       await fetchWithRetry(
-        `https://zotly.onrender.com/settings/default-avatars/delete/${template.id}`,
+        `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/default-avatars/delete/${template.id}`,
         { method: 'delete' }
       );
       toast.success("Avatar template deleted successfully!");

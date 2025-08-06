@@ -47,7 +47,7 @@ const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showErrors, setShowErrors] = useState(false);
 
-  const API_BASE_URL = "https://zotly.onrender.com/users";
+  const API_BASE_URL = `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/users`;
   const itemsPerPage = 5;
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;

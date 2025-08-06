@@ -22,7 +22,7 @@ const IPAddressesView: React.FC = () => {
   const [selectedIPAddress, setSelectedIPAddress] = useState<IPAddress | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const BASE_URL = 'https://zotly.onrender.com/api/v1/settings/ip-addresses';
+  const BASE_URL = `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/ip-addresses`;
 
   // Fetch all IP addresses
   const fetchIPAddresses = async () => {

@@ -47,7 +47,7 @@ const InactivityTimeoutsHeader: React.FC = () => {
     const fetchSettings = async () => {
       try {
         setLoading(true);
-        const response = await axios.get<InactivityTimeout[]>('https://zotly.onrender.com/api/v1/settings/inactivity-timeouts');
+        const response = await axios.get<InactivityTimeout[]>(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/inactivity-timeouts`);
         const settings = response.data;
 
         // Sort by createdAt (descending) to get the most recent setting
@@ -102,7 +102,7 @@ const InactivityTimeoutsHeader: React.FC = () => {
     try {
       if (currentSettingId === null) {
         // No existing setting, use POST to create a new one
-        const response = await axios.post<InactivityTimeout>('https://zotly.onrender.com/api/v1/settings/inactivity-timeouts', payload);
+        const response = await axios.post<InactivityTimeout>(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/inactivity-timeouts`, payload);
         setCurrentSettingId(response.data.id || null);
         toast.success('Settings created successfully!', {
           position: 'top-right',
@@ -110,7 +110,7 @@ const InactivityTimeoutsHeader: React.FC = () => {
         });
       } else {
         // Existing setting, use PUT to update
-        await axios.put(`https://zotly.onrender.com/api/v1/settings/inactivity-timeouts`, {
+        await axios.put(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/inactivity-timeouts`, {
           ...payload,
           id: currentSettingId,
         });

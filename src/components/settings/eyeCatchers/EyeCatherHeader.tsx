@@ -73,7 +73,7 @@ const EyeCatcherHeader: React.FC<EyeCatcherHeaderProps> = ({
   const handleDelete = async (id: number) => {
     try {
       setError(null);
-      const response = await fetch(`https://zotly.onrender.com/settings/eye-catchers/delete/${id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/eye-catchers/delete/${id}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -92,7 +92,7 @@ const EyeCatcherHeader: React.FC<EyeCatcherHeaderProps> = ({
   const handleClearAll = async () => {
     try {
       setError(null);
-      const response = await fetch('https://zotly.onrender.com/settings/eye-catchers/clear', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/eye-catchers/clear`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
       });

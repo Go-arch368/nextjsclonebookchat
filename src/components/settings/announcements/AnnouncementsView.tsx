@@ -50,7 +50,7 @@ const AnnouncementsView = () => {
 
   const fetchAnnouncements = async () => {
     try {
-      const response = await fetch('https://zotly.onrender.com/settings/announcements/list');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/announcements/list`);
       if (!response.ok) {
         throw new Error(`Failed to fetch announcements: ${response.statusText}`);
       }
@@ -163,8 +163,8 @@ const AnnouncementsView = () => {
       }
 
       const url = editingId[form.pageType]
-        ? `https://zotly.onrender.com/settings/announcements/update`
-        : `https://zotly.onrender.com/settings/announcements/save`;
+        ? `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/announcements/update`
+        : `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/announcements/save`;
       const method = editingId[form.pageType] ? 'PUT' : 'POST';
 
       // Prepare payload matching the schema
@@ -210,7 +210,7 @@ const AnnouncementsView = () => {
   const deleteAnnouncement = async (id: number, pageType: string) => {
     try {
       const response = await fetch(
-        `https://zotly.onrender.com/settings/announcements/delete/${id}`,
+        `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/announcements/delete/${id}`,
         { method: 'DELETE' },
       );
       if (!response.ok) {
@@ -226,7 +226,7 @@ const AnnouncementsView = () => {
 
   const clearAnnouncements = async () => {
     try {
-      const response = await fetch('https://zotly.onrender.com/settings/announcements/clear', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/announcements/clear`, {
         method: 'DELETE',
       });
       if (!response.ok) {

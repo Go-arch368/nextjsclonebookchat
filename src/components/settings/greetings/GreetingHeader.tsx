@@ -87,7 +87,7 @@ const GreetingHeader: React.FC<GreetingHeaderProps> = ({
   const handleClearAll = async () => {
     try {
       setError(null);
-      await axios.delete('https://zotly.onrender.com/settings/greetings/clear');
+      await axios.delete(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/greetings/clear`);
       onDelete(0); // Trigger parent refresh
       setCurrentPage(1);
       toast.success('All greetings cleared successfully!', {

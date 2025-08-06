@@ -27,7 +27,7 @@ const MailTemplatesView: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<MailTemplate | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const BASE_URL = 'https://zotly.onrender.com/api/v1/settings/mail-templates';
+  const BASE_URL = `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/mail-templates`;
 
   // Fetch all templates
   const fetchTemplates = async () => {

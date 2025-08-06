@@ -34,7 +34,7 @@ const EyeCatchersView: React.FC = () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await fetch('https://zotly.onrender.com/settings/eye-catchers/list', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/eye-catchers/list`, {
         headers: { 'Content-Type': 'application/json' },
       });
       if (!response.ok) throw new Error(`Failed to fetch eye catchers: ${response.status}`);
@@ -83,7 +83,7 @@ const EyeCatchersView: React.FC = () => {
         createdAt: eyeCatcher.createdAt || new Date().toISOString(),
         updatedAt: eyeCatcher.updatedAt || new Date().toISOString(),
       };
-      const response = await fetch('https://zotly.onrender.com/settings/eye-catchers/save', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}settings/eye-catchers/save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -104,7 +104,7 @@ const EyeCatchersView: React.FC = () => {
   const handleUpdate = async (eyeCatcher: EyeCatcher) => {
     try {
       setError(null);
-      const response = await fetch('https://zotly.onrender.com/settings/eye-catchers/update', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/eye-catchers/update`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

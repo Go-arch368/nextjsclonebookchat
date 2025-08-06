@@ -40,7 +40,7 @@ const GlobalNotificationsHeader: React.FC = () => {
     const fetchNotification = async () => {
       try {
         setIsLoading(true);
-        const response = await axios.get<Notification[]>('https://zotly.onrender.com/api/v1/settings/global-notifications/all');
+        const response = await axios.get<Notification[]>(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/global-notifications/all`);
         if (response.data.length > 0) {
           setFormData(response.data[0]); // Use the first (latest) setting
           setHasSetting(true);
@@ -91,13 +91,13 @@ const GlobalNotificationsHeader: React.FC = () => {
 
     try {
       if (hasSetting) {
-        await axios.put('https://zotly.onrender.com/api/v1/settings/global-notifications/update', payload);
+        await axios.put(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/global-notifications/update`, payload);
         toast.success('Notification setting updated successfully!', {
           position: 'top-right',
           autoClose: 3000,
         });
       } else {
-        const response = await axios.post<Notification>('https://zotly.onrender.com/api/v1/settings/global-notifications/save', {
+        const response = await axios.post<Notification>(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/global-notifications/save`, {
           ...payload,
           id: undefined, // Let backend generate ID
         });
@@ -109,7 +109,7 @@ const GlobalNotificationsHeader: React.FC = () => {
         });
       }
       // Refresh the form with the latest data
-      const response = await axios.get<Notification[]>('https://zotly.onrender.com/api/v1/settings/global-notifications/all');
+      const response = await axios.get<Notification[]>(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/global-notifications/all`);
       if (response.data.length > 0) {
         setFormData(response.data[0]);
         setHasSetting(true);
@@ -127,7 +127,7 @@ const GlobalNotificationsHeader: React.FC = () => {
     if (!confirm('Are you sure you want to delete the notification setting?')) return;
 
     try {
-      await axios.delete('https://zotly.onrender.com/api/v1/settings/global-notifications/delete/1');
+      await axios.delete(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/global-notifications/delete/1`);
       setFormData({
         id: 1,
         userId: 1,

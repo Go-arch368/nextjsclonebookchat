@@ -22,7 +22,7 @@ const RolePermissionsView: React.FC = () => {
   const [selectedRolePermission, setSelectedRolePermission] = useState<RolePermission | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const BASE_URL = 'https://zotly.onrender.com/api/v1/settings/role-permissions';
+  const BASE_URL = `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/role-permissions`;
 
   // Fetch all role permissions
   const fetchRolePermissions = async () => {

@@ -42,7 +42,7 @@ const WebhooksHeader: React.FC<WebhooksHeaderProps> = ({ onAddClick, onEditClick
   const fetchWebhooks = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get('https://zotly.onrender.com/api/v1/settings/webhooks/all');
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/webhooks/all`);
       const data = Array.isArray(response.data)
         ? response.data
         : Array.isArray(response.data?.data)
@@ -70,7 +70,7 @@ const WebhooksHeader: React.FC<WebhooksHeaderProps> = ({ onAddClick, onEditClick
           try {
             setIsLoading(true);
             const response = await axios.get(
-              `https://zotly.onrender.com/api/v1/settings/webhooks/search?keyword=${encodeURIComponent(searchQuery)}&page=${currentPage - 1}&size=10`
+              `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/webhooks/search?keyword=${encodeURIComponent(searchQuery)}&page=${currentPage - 1}&size=10`
             );
             const data = 'content' in response.data ? response.data.content : [];
             setWebhooks(data);
@@ -107,7 +107,7 @@ const WebhooksHeader: React.FC<WebhooksHeaderProps> = ({ onAddClick, onEditClick
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`https://zotly.onrender.com/api/v1/settings/webhooks/delete/${id}`);
+      await axios.delete(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/webhooks/delete/${id}`);
       const updated = webhooks.filter((item) => item.id !== id);
       setWebhooks(updated);
       setTotalPages(Math.ceil(updated.length / 5) || 1);

@@ -27,7 +27,7 @@ const GreetingsView: React.FC = () => {
       try {
         setIsLoading(true);
         setError(null);
-        const response = await fetch('https://zotly.onrender.com/settings/greetings/list');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/greetings/list`);
         if (!response.ok) throw new Error(`Failed to fetch greetings: ${response.status}`);
         const data = await response.json();
         setGreetings(Array.isArray(data) ? data : []);
@@ -67,8 +67,8 @@ const GreetingsView: React.FC = () => {
       setError(null);
       
       const url = greeting.id 
-        ? 'https://zotly.onrender.com/settings/greetings/update' 
-        : 'https://zotly.onrender.com/settings/greetings/save';
+        ? `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/greetings/update`
+        : `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/greetings/save`;
       
       const method = greeting.id ? 'PUT' : 'POST';
       
@@ -110,7 +110,7 @@ const GreetingsView: React.FC = () => {
       setError(null);
       
       const response = await fetch(
-        `https://zotly.onrender.com/settings/greetings/delete/${id}`,
+        `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/greetings/delete/${id}`,
         { method: 'DELETE', headers: { 'Content-Type': 'application/json' } }
       );
 
