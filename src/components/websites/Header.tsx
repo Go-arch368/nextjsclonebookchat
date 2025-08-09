@@ -1,11 +1,10 @@
-// components/websites/Header.tsx
 "use client";
 
 import { useState } from "react";
 import { toast } from "sonner";
 import { Input } from "@/ui/input";
 import { Button } from "@/ui/button";
-import { Search, Trash2, Plus } from "lucide-react";
+import { Search, Trash2,Plus } from "lucide-react";
 import axios from "axios";
 import AddWebsiteForm from "./AddWebsiteForm";
 import { Website } from "@/types/website";
@@ -23,17 +22,22 @@ export default function Header({ setWebsites, websites }: HeaderProps) {
   const [isSearching, setIsSearching] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
 
-  const API_BASE_URL = "https://zotly.onrender.com/websites";
+  const API_BASE_URL = "/api/websites";
 
-  const handleFormSubmit = async (data: Website) => {
+  const handleFormSubmit = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/list`);
-      console.log("GET /list after form submit:", response.data); // Debug log
-      setWebsites(response.data || []);
-      toast.success("Website list refreshed after adding new website");
+      const response = await axios.get<Website[]>(`${API_BASE_URL}?action=list`);
+      if (!Array.isArray(response.data)) {
+        throw new Error('Invalid response format: Expected an array');
+      }
+      setWebsites(response.data);
+      toast.success("Website list refreshed successfully!");
     } catch (error: any) {
-      console.error("Error fetching websites:", error.message);
-      toast.error("Failed to refresh website list");
+      const errorMessage =
+        error.response?.data?.message || error.message || "Failed to refresh websites";
+      console.error("Error fetching websites:", errorMessage, error.response?.data);
+      toast.error(errorMessage);
+      setWebsites([]);
     }
   };
 
@@ -44,31 +48,25 @@ export default function Header({ setWebsites, websites }: HeaderProps) {
     }
     setIsSearching(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/search`, {
+      const response = await axios.get<Website[]>(`${API_BASE_URL}?action=search`, {
         params: { keyword: searchTerm.trim(), page, size: searchSize },
       });
-      console.log("GET /search response:", response.data); // Debug log
+      if (!Array.isArray(response.data)) {
+        throw new Error('Invalid response format: Expected an array');
+      }
       const results = response.data;
-      if (Array.isArray(results)) {
-        if (results.length > 0) {
-          setWebsites(results);
-          setSearchPage(page);
-          toast.success(`Found ${results.length} website(s)`);
-        } else {
-          setWebsites([]);
-          toast.info("No websites found");
-        }
+      if (results.length > 0) {
+        setWebsites(results);
+        setSearchPage(page);
+        toast.success(`Found ${results.length} website(s)`);
       } else {
-        console.error("Unexpected response format:", results);
-        toast.error("Invalid response from server");
         setWebsites([]);
+        toast.info("No websites found");
       }
     } catch (error: any) {
       const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to search websites";
-      console.error("Search error:", errorMessage, error.response?.status); // Debug log
+        error.response?.data?.message || error.message || "Failed to search websites";
+      console.error("Search error:", errorMessage, error.response?.data);
       toast.error(errorMessage);
       setWebsites([]);
     } finally {
@@ -79,18 +77,14 @@ export default function Header({ setWebsites, websites }: HeaderProps) {
   const handleClear = async () => {
     setIsClearing(true);
     try {
-      const response = await axios.delete(`${API_BASE_URL}/clear`, {
-        headers: { "Content-Type": "application/json" },
-      });
-      console.log("DELETE /clear response:", response.data); // Debug log
+      const response = await axios.delete(`${API_BASE_URL}?action=clear`);
       setWebsites([]);
+      setSearchPage(0);
       toast.success(response.data?.message || "All websites cleared successfully!");
     } catch (error: any) {
       const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to clear websites";
-      console.error("Clear error:", errorMessage); // Debug log
+        error.response?.data?.message || error.message || "Failed to clear websites";
+      console.error("Clear error:", errorMessage, error.response?.data);
       toast.error(errorMessage);
     } finally {
       setIsClearing(false);
@@ -124,18 +118,23 @@ export default function Header({ setWebsites, websites }: HeaderProps) {
               disabled={isSearching || isClearing}
             />
           </div>
-          <Button onClick={() => handleSearch(0)} disabled={isSearching || isClearing || !searchTerm.trim()}>
+          <Button
+            onClick={() => handleSearch(0)}
+            disabled={isSearching || isClearing || !searchTerm.trim()}
+          >
             {isSearching ? "Searching..." : "Search"}
           </Button>
-          <AddWebsiteForm
-            onSubmit={handleFormSubmit}
-            isOpen={isAddFormOpen}
-            setIsOpen={setIsAddFormOpen}
-          />
+          <Button
+            onClick={() => setIsAddFormOpen(true)}
+            disabled={isSearching || isClearing}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add Website
+          </Button>
           <Button
             onClick={handleClear}
             variant="destructive"
-            disabled={isSearching || isClearing}
+            disabled={isSearching || isClearing || websites.length === 0}
           >
             <Trash2 className="mr-2 h-4 w-4" />
             {isClearing ? "Clearing..." : "Clear All"}
@@ -164,6 +163,11 @@ export default function Header({ setWebsites, websites }: HeaderProps) {
             </div>
           </div>
         )}
+        <AddWebsiteForm
+          onSubmit={handleFormSubmit}
+          isOpen={isAddFormOpen}
+          setIsOpen={setIsAddFormOpen}
+        />
       </div>
     </header>
   );

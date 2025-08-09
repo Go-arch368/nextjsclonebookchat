@@ -1,7 +1,6 @@
-// components/websites/TableComponent.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
   Table,
@@ -33,32 +32,53 @@ interface TableComponentProps {
 
 export default function TableComponent({ websites, setWebsites }: TableComponentProps) {
   const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isUpdateOpen, setIsUpdateOpen] = useState(false);
   const [currentWebsite, setCurrentWebsite] = useState<Website | null>(null);
 
-  const API_BASE_URL = "https://zotly.onrender.com/websites";
+  const API_BASE_URL = "/api/websites";
   const itemsPerPage = 5;
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentData = websites.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(websites.length / itemsPerPage);
 
+  useEffect(() => {
+    const fetchWebsites = async () => {
+      try {
+        const response = await axios.get<Website[]>(`${API_BASE_URL}?action=list`);
+        if (!Array.isArray(response.data)) {
+          throw new Error('Invalid response format: Expected an array');
+        }
+        setWebsites(response.data);
+      } catch (error: any) {
+        const errorMessage =
+          error.response?.data?.message || error.message || "Failed to load websites";
+        console.error("Error fetching websites:", errorMessage, error.response?.data);
+        toast.error(errorMessage);
+        setWebsites([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchWebsites();
+  }, [setWebsites]);
+
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`${API_BASE_URL}/delete/${id}`);
+      const response = await axios.delete(`${API_BASE_URL}?id=${id}`);
       setWebsites((prev) => {
         const newData = prev.filter((item) => item.id !== id);
-        if (newData.length <= (currentPage - 1) * itemsPerPage) {
+        if (newData.length <= (currentPage - 1) * itemsPerPage && currentPage > 1) {
           setCurrentPage((prev) => Math.max(1, prev - 1));
         }
         return newData;
       });
-      toast.success("Website deleted successfully!");
+      toast.success(response.data?.message || "Website deleted successfully!");
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.message || error.message || "Failed to delete website";
-      console.error("Delete error:", errorMessage); // Debug log
+      console.error("Delete error:", errorMessage, error.response?.data);
       toast.error(errorMessage);
     }
   };
@@ -78,18 +98,20 @@ export default function TableComponent({ websites, setWebsites }: TableComponent
         ...currentWebsite,
         updatedAt: new Date().toISOString().slice(0, 19),
       };
-      console.log("PUT /update payload:", payload); // Debug log
-      await axios.put(`${API_BASE_URL}/update`, payload);
+      console.log("PUT /update payload:", payload);
+      const response = await axios.put<Website>(`${API_BASE_URL}`, payload);
       setWebsites((prev) =>
-        prev.map((item) => (item.id === currentWebsite.id ? payload : item))
+        prev.map((item) => (item.id === currentWebsite.id ? { ...response.data } : item))
       );
-      toast.success("Website updated successfully!");
+      toast.success(
+        "Website updated successfully!"
+      );
       setIsUpdateOpen(false);
       setCurrentWebsite(null);
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.message || error.message || "Failed to update website";
-      console.error("Update error:", errorMessage); // Debug log
+      console.error("Update error:", errorMessage, error.response?.data);
       toast.error(errorMessage);
     }
   };
@@ -100,21 +122,9 @@ export default function TableComponent({ websites, setWebsites }: TableComponent
       prev
         ? {
             ...prev,
-            [name]: name === "companyId" ? (value ? parseInt(value) : 0) : value,
+            [name]: name === "companyId" ? parseInt(value) || 0 : value,
           }
-        : {
-            id: 0,
-            protocol: "HTTPS",
-            domain: "",
-            companyId: 0,
-            businessCategory: "",
-            dateAdded: "",
-            isActive: false,
-            isVerified: false,
-            createdAt: new Date().toISOString().slice(0, 19),
-            updatedAt: new Date().toISOString().slice(0, 19),
-            [name]: name === "companyId" ? (value ? parseInt(value) : 0) : value,
-          }
+        : null
     );
   };
 
@@ -122,18 +132,7 @@ export default function TableComponent({ websites, setWebsites }: TableComponent
     setCurrentWebsite((prev) =>
       prev
         ? { ...prev, [name]: value }
-        : {
-            id: 0,
-            protocol: name === "protocol" ? value : "HTTPS",
-            domain: "",
-            companyId: 0,
-            businessCategory: name === "businessCategory" ? value : "",
-            dateAdded: "",
-            isActive: false,
-            isVerified: false,
-            createdAt: new Date().toISOString().slice(0, 19),
-            updatedAt: new Date().toISOString().slice(0, 19),
-          }
+        : null
     );
   };
 
@@ -141,18 +140,7 @@ export default function TableComponent({ websites, setWebsites }: TableComponent
     setCurrentWebsite((prev) =>
       prev
         ? { ...prev, [name]: checked }
-        : {
-            id: 0,
-            protocol: "HTTPS",
-            domain: "",
-            companyId: 0,
-            businessCategory: "",
-            dateAdded: "",
-            isActive: name === "isActive" ? checked : false,
-            isVerified: name === "isVerified" ? checked : false,
-            createdAt: new Date().toISOString().slice(0, 19),
-            updatedAt: new Date().toISOString().slice(0, 19),
-          }
+        : null
     );
   };
 
@@ -363,10 +351,13 @@ export default function TableComponent({ websites, setWebsites }: TableComponent
               </div>
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => {
-                setIsUpdateOpen(false);
-                setCurrentWebsite(null);
-              }}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsUpdateOpen(false);
+                  setCurrentWebsite(null);
+                }}
+              >
                 Cancel
               </Button>
               <Button onClick={handleUpdate} disabled={!currentWebsite.domain}>

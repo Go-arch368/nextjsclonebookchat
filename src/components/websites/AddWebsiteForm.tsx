@@ -1,4 +1,3 @@
-// components/websites/AddWebsiteForm.tsx
 "use client";
 
 import { useState } from "react";
@@ -25,7 +24,7 @@ import axios from "axios";
 import { Website } from "@/types/website";
 
 interface AddWebsiteFormProps {
-  onSubmit: (data: Website) => void;
+  onSubmit: () => Promise<void>;
   isOpen: boolean;
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
@@ -45,7 +44,7 @@ export default function AddWebsiteForm({ onSubmit, isOpen, setIsOpen }: AddWebsi
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
 
-  const API_BASE_URL = "https://zotly.onrender.com/websites";
+  const API_BASE_URL = "/api/websites";
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -82,11 +81,10 @@ export default function AddWebsiteForm({ onSubmit, isOpen, setIsOpen }: AddWebsi
         createdAt: formData.createdAt || new Date().toISOString().slice(0, 19),
         updatedAt: formData.updatedAt || new Date().toISOString().slice(0, 19),
       };
-      console.log("POST /save payload:", payload); // Debug log
-      const response = await axios.post(`${API_BASE_URL}/save`, payload);
-      console.log("POST /save response:", response.data); // Debug log
-      toast.success("Website added successfully!");
-      onSubmit(payload);
+      console.log("POST /save payload:", payload);
+      const response = await axios.post<Website>(`${API_BASE_URL}`, payload);
+      console.log("POST /save response:", response.data);
+      await onSubmit();
       setFormData({
         protocol: "HTTPS",
         domain: "",
@@ -99,11 +97,20 @@ export default function AddWebsiteForm({ onSubmit, isOpen, setIsOpen }: AddWebsi
         updatedAt: new Date().toISOString().slice(0, 19),
       });
       setIsOpen(false);
+      toast.success(
+         "Website added successfully!"
+      );
     } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message || error.message || "Failed to add website";
-      console.error("Error adding website:", errorMessage, error.response?.status); // Debug log
-      toast.error(errorMessage);
+      const errorMessage = error.response?.data?.message || error.message || "Failed to add website";
+      console.error("POST /save error:", errorMessage, error.response?.data);
+      // Check for duplicate domain error
+      if (errorMessage.includes("Duplicate entry") && errorMessage.includes("for key 'domain'")) {
+        const domainMatch = errorMessage.match(/Duplicate entry '([^']+)' for key 'domain'/);
+        const domain = domainMatch ? domainMatch[1] : formData.domain;
+        toast.error(`Website with domain '${domain}' already exists`);
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setIsSubmitting(false);
       setShowErrors(false);
@@ -112,17 +119,14 @@ export default function AddWebsiteForm({ onSubmit, isOpen, setIsOpen }: AddWebsi
 
   const isFieldInvalid = (field: keyof Website) => {
     if (field === "companyId") return showErrors && formData[field] === 0;
-    if (field === "protocol" || field === "isActive" || field === "isVerified") return false;
+    if (field === "protocol" || field === "isActive" || field === "isVerified" || field === "createdAt" || field === "updatedAt") return false;
     return showErrors && !formData[field];
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Add
-        </Button>
+    
       </DialogTrigger>
       <DialogContent className="sm:max-w-[800px]">
         <DialogHeader>
@@ -205,7 +209,7 @@ export default function AddWebsiteForm({ onSubmit, isOpen, setIsOpen }: AddWebsi
               name="dateAdded"
               value={formData.dateAdded}
               onChange={handleInputChange}
-              className={`w-full border border-gray-300 rounded-md ${isFieldInvalid("dateAdded") ? "border-red-500" : ""}`}
+              className={`w-full border border-gray-300 rounded-md ${isFieldInvalid("domain") ? "border-red-500" : ""}`}
               placeholder="YYYY-MM-DDTHH:mm:ss (e.g., 2025-07-29T09:44:00)"
             />
           </div>
@@ -234,10 +238,16 @@ export default function AddWebsiteForm({ onSubmit, isOpen, setIsOpen }: AddWebsi
           </div>
         </div>
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => setIsOpen(false)}>
+          <Button
+            variant="outline"
+            onClick={() => setIsOpen(false)}
+          >
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting}>
+          <Button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+          >
             {isSubmitting ? "Adding..." : "Add"}
           </Button>
         </div>

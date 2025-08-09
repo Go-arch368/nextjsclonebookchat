@@ -1,4 +1,3 @@
-// app/websites/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -9,16 +8,20 @@ import { Website } from "@/types/website";
 
 export default function WebsitesPage() {
   const [websites, setWebsites] = useState<Website[]>([]);
-  const API_BASE_URL = "https://zotly.onrender.com/websites";
+  const API_BASE_URL = "/api/websites";
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const response = await axios.get(`${API_BASE_URL}/list`);
-        console.log("GET /list response:", response.data); // Debug log
-        setWebsites(response.data || []);
+        const response = await axios.get<Website[]>(`${API_BASE_URL}?action=list`);
+        if (!Array.isArray(response.data)) {
+          throw new Error('Invalid response format: Expected an array');
+        }
+        setWebsites(response.data);
       } catch (error: any) {
-        console.error("Error fetching websites:", error.message);
+        const errorMessage =
+          error.response?.data?.message || error.message || "Failed to fetch websites";
+        console.error("Error fetching websites:", errorMessage, error.response?.data);
         setWebsites([]);
       }
     }
