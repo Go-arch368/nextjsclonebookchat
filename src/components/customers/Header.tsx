@@ -14,7 +14,7 @@ interface HeaderProps {
   setCustomers: React.Dispatch<React.SetStateAction<Customer[]>>;
   isAddFormOpen: boolean;
   setIsAddFormOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  customers: Customer[]; // Add customers prop
+  customers: Customer[];
 }
 
 export default function Header({
@@ -29,16 +29,19 @@ export default function Header({
   const [isSearching, setIsSearching] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
 
-  const API_BASE_URL = "https://zotly.onrender.com/customers";
+  const API_BASE_URL = "/api/customers";
 
-  const handleFormSubmit = async (data: Customer) => {
+  const handleFormSubmit = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/list`);
+      const response = await axios.get(`${API_BASE_URL}?action=list`);
+      if (!Array.isArray(response.data)) {
+        throw new Error("Invalid response format: Expected an array");
+      }
       setCustomers(response.data);
       toast.success("Customer list refreshed after adding new customer");
     } catch (error: any) {
-      console.error("Error fetching customers:", error.message);
-      toast.error("Failed to refresh customer list");
+      console.error("Error fetching customers:", error.message, error.response?.data);
+      toast.error(error.response?.data?.message || "Failed to refresh customer list");
     }
   };
 
@@ -49,11 +52,14 @@ export default function Header({
     }
     setIsSearching(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/search`, {
+      const response = await axios.get(`${API_BASE_URL}?action=search`, {
         params: { keyword: searchTerm.trim(), page, size: searchSize },
       });
+      if (!Array.isArray(response.data)) {
+        throw new Error("Invalid response format: Expected an array");
+      }
       const results = response.data;
-      if (Array.isArray(results) && results.length > 0) {
+      if (results.length > 0) {
         setCustomers(results);
         setSearchPage(page);
         toast.success(`Found ${results.length} customer(s)`);
@@ -62,12 +68,8 @@ export default function Header({
         toast.info("No customers found");
       }
     } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to search customers";
-      console.error("Error searching customers:", errorMessage);
-      toast.error(errorMessage);
+      console.error("Error searching customers:", error.message, error.response?.data);
+      toast.error(error.response?.data?.message || "Failed to search customers");
     } finally {
       setIsSearching(false);
     }
@@ -76,18 +78,12 @@ export default function Header({
   const handleClear = async () => {
     setIsClearing(true);
     try {
-      const response = await axios.delete(`${API_BASE_URL}/clear`, {
-        headers: { "Content-Type": "application/json" },
-      });
+      const response = await axios.delete(`${API_BASE_URL}?action=clear`);
       setCustomers([]);
       toast.success(response.data?.message || "All customers cleared successfully!");
     } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to clear customers";
-      console.error("Error clearing customers:", errorMessage);
-      toast.error(errorMessage);
+      console.error("Error clearing customers:", error.message, error.response?.data);
+      toast.error(error.response?.data?.message || "Failed to clear customers");
     } finally {
       setIsClearing(false);
     }

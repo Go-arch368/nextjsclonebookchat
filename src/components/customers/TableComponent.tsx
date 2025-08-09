@@ -23,7 +23,13 @@ import {
 } from "@/ui/dialog";
 import { Input } from "@/ui/input";
 import { Label } from "@/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/ui/select";
 import { Customer } from "@/types/customer";
 
 interface TableComponentProps {
@@ -32,8 +38,14 @@ interface TableComponentProps {
   openAddCustomerForm: () => void;
 }
 
-export default function TableComponent({ customers, setCustomers, openAddCustomerForm }: TableComponentProps) {
-  const [sortDirection, setSortDirection] = useState<Record<string, "asc" | "desc" | null>>({
+export default function TableComponent({
+  customers,
+  setCustomers,
+  openAddCustomerForm,
+}: TableComponentProps) {
+  const [sortDirection, setSortDirection] = useState<
+    Record<string, "asc" | "desc" | null>
+  >({
     name: null,
     email: null,
     country: null,
@@ -47,7 +59,7 @@ export default function TableComponent({ customers, setCustomers, openAddCustome
   const [isUpdateOpen, setIsUpdateOpen] = useState(false);
   const [currentCustomer, setCurrentCustomer] = useState<Customer | null>(null);
 
-  const API_BASE_URL = "https://zotly.onrender.com/customers";
+  const API_BASE_URL = "/api/customers";
 
   setTimeout(() => setIsLoading(false), 1000);
 
@@ -60,7 +72,9 @@ export default function TableComponent({ customers, setCustomers, openAddCustome
       if (column === "dateAdded" || column === "createdAt" || column === "updatedAt") {
         const dateA = aValue ? new Date(aValue) : new Date(0);
         const dateB = bValue ? new Date(bValue) : new Date(0);
-        return newDirection === "asc" ? dateA.getTime() - dateB.getTime() : dateB.getTime() - dateA.getTime();
+        return newDirection === "asc"
+          ? dateA.getTime() - dateB.getTime()
+          : dateB.getTime() - dateA.getTime();
       }
       return newDirection === "asc"
         ? aValue.toString().localeCompare(bValue.toString())
@@ -71,17 +85,18 @@ export default function TableComponent({ customers, setCustomers, openAddCustome
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`${API_BASE_URL}/delete/${id}`);
+      const response = await axios.delete(`${API_BASE_URL}?id=${id}`);
       setCustomers((prevData) => {
         const newData = prevData.filter((item) => item.id !== id);
-        if (newData.length <= (currentPage - 1) * 5) {
+        if (newData.length <= (currentPage - 1) * 3) {
           setCurrentPage((prev) => Math.max(1, prev - 1));
         }
         return newData;
       });
-      toast.success("Customer deleted successfully!");
+      toast.success(response.data?.message || `Customer ${id} deleted successfully!`);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to delete customer");
+      console.error(`Error deleting customer ${id}:`, error.message, error.response?.data);
+      toast.error(error.response?.data?.message || `Failed to delete customer ${id}`);
     }
   };
 
@@ -95,14 +110,15 @@ export default function TableComponent({ customers, setCustomers, openAddCustome
         ...currentCustomer,
         updatedAt: new Date().toISOString().slice(0, 19),
       };
-      await axios.put(`${API_BASE_URL}/update`, payload);
+      const response = await axios.put(API_BASE_URL, payload);
       setCustomers((prev) =>
         prev.map((item) => (item.id === currentCustomer.id ? payload : item))
       );
-      toast.success("Customer updated successfully!");
+      toast.success(response.data?.message || "Customer updated successfully!");
       setIsUpdateOpen(false);
       setCurrentCustomer(null);
     } catch (error: any) {
+      console.error("Error updating customer:", error.message, error.response?.data);
       toast.error(error.response?.data?.message || "Failed to update customer");
     }
   };
@@ -236,12 +252,24 @@ export default function TableComponent({ customers, setCustomers, openAddCustome
             <TableBody>
               {currentData.map((item, index) => (
                 <TableRow key={item.id || index} className="hover:bg-gray-100">
-                  <TableCell className="px-2 py-3 w-1/7 truncate text-center">{item.name}</TableCell>
-                  <TableCell className="px-2 py-3 w-2/7 truncate text-center">{item.email || ""}</TableCell>
-                  <TableCell className="px-2 py-3 w-1/7 truncate text-center">{item.country || ""}</TableCell>
-                  <TableCell className="px-2 py-3 w-1/7 truncate text-center">{item.dateAdded || ""}</TableCell>
-                  <TableCell className="px-2 py-3 w-1/7 truncate text-center">{item.integrations || ""}</TableCell>
-                  <TableCell className="px-2 py-3 w-1/7 truncate text-center">{item.activePlanName || ""}</TableCell>
+                  <TableCell className="px-2 py-3 w-1/7 truncate text-center">
+                    {item.name}
+                  </TableCell>
+                  <TableCell className="px-2 py-3 w-2/7 truncate text-center">
+                    {item.email || ""}
+                  </TableCell>
+                  <TableCell className="px-2 py-3 w-1/7 truncate text-center">
+                    {item.country || ""}
+                  </TableCell>
+                  <TableCell className="px-2 py-3 w-1/7 truncate text-center">
+                    {item.dateAdded || ""}
+                  </TableCell>
+                  <TableCell className="px-2 py-3 w-1/7 truncate text-center">
+                    {item.integrations || ""}
+                  </TableCell>
+                  <TableCell className="px-2 py-3 w-1/7 truncate text-center">
+                    {item.activePlanName || ""}
+                  </TableCell>
                   <TableCell className="px-2 py-3 w-1/7 truncate text-center">
                     <div className="flex justify-center space-x-2">
                       <Button

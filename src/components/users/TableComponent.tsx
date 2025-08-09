@@ -47,7 +47,8 @@ const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showErrors, setShowErrors] = useState(false);
 
-  const API_BASE_URL = `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/users`;
+  const API_BASE_URL = `/api/users`; // Use Next.js API route
+
   const itemsPerPage = 5;
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -57,13 +58,16 @@ const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.get<User[]>(`${API_BASE_URL}/list`);
-        setUsers(response.data || []);
+        const response = await axios.get<User[]>(`${API_BASE_URL}?action=list`);
+        if (!Array.isArray(response.data)) {
+          throw new Error('Invalid response format: Expected an array');
+        }
+        setUsers(response.data);
       } catch (error: any) {
         const errorMessage =
           error.response?.data?.message || error.message || "Failed to load users";
         toast.error(errorMessage);
-        console.error("Error fetching users:", errorMessage);
+        console.error("Error fetching users:", errorMessage, error.response?.data);
       } finally {
         setIsLoading(false);
       }
@@ -101,7 +105,7 @@ const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`${API_BASE_URL}/delete/${id}`);
+      const response = await axios.delete(`${API_BASE_URL}?id=${id}`);
       setUsers((prev) => {
         const newData = prev.filter((user) => user.id !== id);
         if (newData.length <= (currentPage - 1) * itemsPerPage && currentPage > 1) {
@@ -109,12 +113,12 @@ const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
         }
         return newData;
       });
-      toast.success("User deleted successfully!");
+      toast.success(response.data.message || "User deleted successfully!");
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.message || error.message || "Failed to delete user";
       toast.error(errorMessage);
-      console.error("Delete error:", errorMessage);
+      console.error("Delete error:", errorMessage, error.response?.data);
     }
   };
 
@@ -128,12 +132,11 @@ const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
     }
 
     try {
-      // Prepare payload matching the API schema
       const payload: User = {
         id: currentUser.id,
         email: currentUser.email,
         role: currentUser.role,
-        passwordHash: passwordHash || currentUser.passwordHash, // Use existing passwordHash if not updated
+        passwordHash: passwordHash || currentUser.passwordHash,
         firstName: currentUser.firstName,
         lastName: currentUser.lastName,
         jobTitle: currentUser.jobTitle || "",
@@ -145,22 +148,21 @@ const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
         deletedAt: currentUser.deletedAt,
       };
 
-      console.log("PUT /update payload:", payload); // Debug log
+      console.log("PUT /update payload:", payload);
 
-      const response = await axios.put<User>(`${API_BASE_URL}/update`, payload, {
+      const response = await axios.put<User>(`${API_BASE_URL}`, payload, {
         headers: { 'Content-Type': 'application/json' },
       });
 
-      // Update state with response data, preserving existing passwordHash
       setUsers((prev) =>
         prev.map((user) =>
           user.id === currentUser.id
-            ? { ...response.data, passwordHash: user.passwordHash } // Preserve existing passwordHash
+            ? { ...response.data, passwordHash: user.passwordHash }
             : user
         )
       );
 
-      toast.success("User updated successfully!");
+      toast.success( "User updated successfully!");
       setIsUpdateOpen(false);
       setCurrentUser(null);
       setPasswordHash("");
@@ -168,13 +170,8 @@ const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
       setShowErrors(false);
     } catch (error: any) {
       const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to update user";
-      console.error("Update error:", errorMessage, {
-        status: error.response?.status,
-        data: error.response?.data,
-      });
+        error.response?.data?.message || error.message || "Failed to update user";
+      console.error("Update error:", errorMessage, error.response?.data);
       toast.error(errorMessage);
     }
   };

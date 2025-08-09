@@ -25,7 +25,7 @@ import axios from "axios";
 import { Customer } from "@/types/customer";
 
 interface AddCustomerFormProps {
-  onSubmit: (data: Customer) => void;
+  onSubmit: () => void;
   isOpen: boolean;
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
@@ -45,7 +45,7 @@ export default function AddCustomerForm({ onSubmit, isOpen, setIsOpen }: AddCust
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const API_BASE_URL = "https://zotly.onrender.com/customers";
+  const API_BASE_URL = "/api/customers";
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -70,7 +70,6 @@ export default function AddCustomerForm({ onSubmit, isOpen, setIsOpen }: AddCust
       toast.error("Name is required");
       return;
     }
-    // Validate dateAdded format (yyyy-MM-dd'T'HH:mm:ss)
     if (formData.dateAdded) {
       const dateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/;
       if (!dateRegex.test(formData.dateAdded)) {
@@ -90,11 +89,11 @@ export default function AddCustomerForm({ onSubmit, isOpen, setIsOpen }: AddCust
         createdAt: formData.createdAt || new Date().toISOString().slice(0, 19),
         updatedAt: formData.updatedAt || new Date().toISOString().slice(0, 19),
       };
-      console.log("POST /save payload:", payload); // Debug log
-      const response = await axios.post(`${API_BASE_URL}/save`, payload);
-      console.log("POST /save response:", response.data); // Debug log
-      toast.success("Customer added successfully!");
-      onSubmit(payload);
+      console.log("POST payload:", payload);
+      const response = await axios.post(API_BASE_URL, payload);
+      console.log("POST response:", response.data);
+      toast.success(response.data?.message || "Customer added successfully!");
+      onSubmit();
       setFormData({
         name: "",
         email: "",
@@ -108,10 +107,8 @@ export default function AddCustomerForm({ onSubmit, isOpen, setIsOpen }: AddCust
       });
       setIsConfirmOpen(false);
     } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message || error.message || "Failed to add customer";
-      console.error("Error adding customer:", errorMessage, error.response?.status); // Debug log
-      toast.error(errorMessage);
+      console.error("Error adding customer:", error.message, error.response?.data);
+      toast.error(error.response?.data?.message || "Failed to add customer");
     } finally {
       setIsSubmitting(false);
     }
@@ -233,7 +230,10 @@ export default function AddCustomerForm({ onSubmit, isOpen, setIsOpen }: AddCust
                 Plan
               </Label>
               <div className="col-span-3">
-                <Select onValueChange={(value) => handleSelectChange("activePlanName", value)} value={formData.activePlanName}>
+                <Select
+                  onValueChange={(value) => handleSelectChange("activePlanName", value)}
+                  value={formData.activePlanName}
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select a plan" />
                   </SelectTrigger>
@@ -249,7 +249,10 @@ export default function AddCustomerForm({ onSubmit, isOpen, setIsOpen }: AddCust
                 Status
               </Label>
               <div className="col-span-3">
-                <Select onValueChange={(value) => handleSelectChange("status", value)} value={formData.status}>
+                <Select
+                  onValueChange={(value) => handleSelectChange("status", value)}
+                  value={formData.status}
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>

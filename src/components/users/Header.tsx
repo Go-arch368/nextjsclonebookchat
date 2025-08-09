@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from 'react';
@@ -23,17 +22,21 @@ const Header: React.FC<HeaderProps> = ({ setUsers, users }) => {
   const [isSearching, setIsSearching] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
 
-  const API_BASE_URL = `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/users`;
+  const API_BASE_URL = `/api/users`; // Use Next.js API route
 
   const handleFormSubmit = async () => {
     try {
-      const response = await axios.get<User[]>(`${API_BASE_URL}/list`);
-      setUsers(response.data || []);
+      const response = await axios.get<User[]>(`${API_BASE_URL}?action=list`);
+      if (!Array.isArray(response.data)) {
+        throw new Error('Invalid response format: Expected an array');
+      }
+      setUsers(response.data);
+      toast.success("User list refreshed successfully!");
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.message || error.message || "Failed to refresh users";
       toast.error(errorMessage);
-      console.error("Error refreshing users:", errorMessage);
+      console.error("Error refreshing users:", errorMessage, error.response?.data);
     }
   };
 
@@ -44,28 +47,26 @@ const Header: React.FC<HeaderProps> = ({ setUsers, users }) => {
     }
     setIsSearching(true);
     try {
-      const response = await axios.get<User[]>(`${API_BASE_URL}/search`, {
+      const response = await axios.get<User[]>(`${API_BASE_URL}?action=search`, {
         params: { keyword: searchTerm.trim(), page, size: searchSize },
       });
+      if (!Array.isArray(response.data)) {
+        throw new Error('Invalid response format: Expected an array');
+      }
       const results = response.data;
-      if (Array.isArray(results)) {
-        if (results.length > 0) {
-          setUsers(results);
-          setSearchPage(page);
-          toast.success(`Found ${results.length} user(s)`);
-        } else {
-          setUsers([]);
-          toast.info("No users found");
-        }
+      if (results.length > 0) {
+        setUsers(results);
+        setSearchPage(page);
+        toast.success(`Found ${results.length} user(s)`);
       } else {
-        toast.error("Invalid response from server");
         setUsers([]);
+        toast.info("No users found");
       }
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.message || error.message || "Failed to search users";
       toast.error(errorMessage);
-      console.error("Search error:", errorMessage);
+      console.error("Search error:", errorMessage, error.response?.data);
       setUsers([]);
     } finally {
       setIsSearching(false);
@@ -75,15 +76,15 @@ const Header: React.FC<HeaderProps> = ({ setUsers, users }) => {
   const handleClear = async () => {
     setIsClearing(true);
     try {
-      await axios.delete(`${API_BASE_URL}/clear`);
+      const response = await axios.delete(`${API_BASE_URL}?action=clear`);
       setUsers([]);
       setSearchPage(0);
-      toast.success("All users cleared successfully!");
+      toast.success(response.data.message || "All users cleared successfully!");
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.message || error.message || "Failed to clear users";
       toast.error(errorMessage);
-      console.error("Clear error:", errorMessage);
+      console.error("Clear error:", errorMessage, error.response?.data);
     } finally {
       setIsClearing(false);
     }
@@ -129,14 +130,14 @@ const Header: React.FC<HeaderProps> = ({ setUsers, users }) => {
             <Plus className="mr-2 h-4 w-4" />
             Add User
           </Button>
-          {/* <Button
+          <Button
             onClick={handleClear}
             variant="destructive"
             disabled={isSearching || isClearing || users.length === 0}
           >
             <Trash2 className="mr-2 h-4 w-4" />
             {isClearing ? "Clearing..." : "Clear All"}
-          </Button> */}
+          </Button>
         </div>
         {searchTerm && (
           <div className="flex justify-between items-center">

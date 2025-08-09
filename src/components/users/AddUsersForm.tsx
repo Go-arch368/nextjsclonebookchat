@@ -24,7 +24,7 @@ import axios from "axios";
 import { User } from "@/types/user";
 
 interface AddUsersFormProps {
-  onSubmit: (data: User) => Promise<void>;
+  onSubmit: () => Promise<void>;
   isOpen: boolean;
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
@@ -50,7 +50,7 @@ export default function AddUsersForm({ onSubmit, isOpen, setIsOpen }: AddUsersFo
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
 
-  const API_BASE_URL = `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/users`;
+  const API_BASE_URL = `/api/users`; // Use Next.js API route
 
   const validateForm = () => {
     const errors: { [key: string]: string } = {};
@@ -96,7 +96,6 @@ export default function AddUsersForm({ onSubmit, isOpen, setIsOpen }: AddUsersFo
 
     setIsSubmitting(true);
     try {
-      // Prepare payload matching the API schema, excluding id
       const payload: Omit<User, 'id'> = {
         email: formData.email,
         role: formData.role,
@@ -112,16 +111,14 @@ export default function AddUsersForm({ onSubmit, isOpen, setIsOpen }: AddUsersFo
         deletedAt: formData.deletedAt,
       };
 
-      console.log("POST /save payload:", payload); // Debug log
+      console.log("POST /save payload:", payload);
 
-      const response = await axios.post<User>(`${API_BASE_URL}/save`, payload, {
+      const response = await axios.post<User>(`${API_BASE_URL}`, payload, {
         headers: { 'Content-Type': 'application/json' },
       });
 
-      // Call onSubmit to refresh the user list
-      await onSubmit(response.data);
+      await onSubmit();
 
-      // Reset form
       setFormData({
         email: "",
         role: "",
@@ -142,10 +139,7 @@ export default function AddUsersForm({ onSubmit, isOpen, setIsOpen }: AddUsersFo
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.message || error.message || "Failed to add user";
-      console.error("POST /save error:", errorMessage, {
-        status: error.response?.status,
-        data: error.response?.data,
-      });
+      console.error("POST /save error:", errorMessage, error.response?.data);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -177,7 +171,7 @@ export default function AddUsersForm({ onSubmit, isOpen, setIsOpen }: AddUsersFo
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-       
+        <Button className="hidden">Add User</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>

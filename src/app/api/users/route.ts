@@ -1,45 +1,84 @@
-// src/app/api/customers/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_BASE_URL = 'https://zotly.onrender.com/customers';
+const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI
+  ? `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/users`
+  : 'https://zotly.onrender.com/users';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const action = searchParams.get('action');
+  const keyword = searchParams.get('keyword');
+  const page = searchParams.get('page') || '0';
+  const size = searchParams.get('size') || '10';
 
   if (action === 'list') {
     try {
-      const res = await fetch(`${BACKEND_BASE_URL}/list`);
+      const res = await fetch(`${BACKEND_BASE_URL}/list`, {
+        headers: { 'Content-Type': 'application/json' },
+      });
       if (!res.ok) {
         const errorText = await res.text();
         console.error(`Backend /list responded with status ${res.status}: ${errorText}`);
         throw new Error(`Backend responded with status ${res.status}`);
       }
-      const data = await res.json();
+      const contentType = res.headers.get('content-type');
+      const text = await res.text();
+      let data;
+      if (text && contentType?.includes('application/json')) {
+        try {
+          data = JSON.parse(text);
+        } catch (error) {
+          console.error(`Error parsing JSON for /list: ${text}`);
+          throw new Error('Invalid JSON response from backend');
+        }
+      } else {
+        data = []; // Fallback to empty array for list
+      }
       return NextResponse.json(data);
     } catch (error: any) {
       console.error('Error in GET /list:', error.message, error.stack);
-      return NextResponse.json({ message: error.message || 'Failed to fetch customers' }, { status: 500 });
+      return NextResponse.json(
+        { message: error.message || 'Failed to fetch users' },
+        { status: 500 }
+      );
     }
-  } else if (action === 'search') {
-    const keyword = searchParams.get('keyword') || '';
-    const page = searchParams.get('page') || '0';
-    const size = searchParams.get('size') || '10';
+  } else if (action === 'search' && keyword) {
     try {
-      const res = await fetch(`${BACKEND_BASE_URL}/search?keyword=${encodeURIComponent(keyword)}&page=${page}&size=${size}`);
+      const res = await fetch(
+        `${BACKEND_BASE_URL}/search?keyword=${encodeURIComponent(keyword)}&page=${page}&size=${size}`,
+        { headers: { 'Content-Type': 'application/json' } }
+      );
       if (!res.ok) {
         const errorText = await res.text();
         console.error(`Backend /search responded with status ${res.status}: ${errorText}`);
         throw new Error(`Backend responded with status ${res.status}`);
       }
-      const data = await res.json();
+      const contentType = res.headers.get('content-type');
+      const text = await res.text();
+      let data;
+      if (text && contentType?.includes('application/json')) {
+        try {
+          data = JSON.parse(text);
+        } catch (error) {
+          console.error(`Error parsing JSON for /search: ${text}`);
+          throw new Error('Invalid JSON response from backend');
+        }
+      } else {
+        data = []; // Fallback to empty array for search
+      }
       return NextResponse.json(data);
     } catch (error: any) {
       console.error('Error in GET /search:', error.message, error.stack);
-      return NextResponse.json({ message: error.message || 'Failed to search customers' }, { status: 500 });
+      return NextResponse.json(
+        { message: error.message || 'Failed to search users' },
+        { status: 500 }
+      );
     }
   } else {
-    return NextResponse.json({ message: 'Invalid action' }, { status: 400 });
+    return NextResponse.json(
+      { message: 'Invalid action or missing keyword' },
+      { status: 400 }
+    );
   }
 }
 
@@ -56,11 +95,26 @@ export async function POST(req: NextRequest) {
       console.error(`Backend /save responded with status ${res.status}: ${errorText}`);
       throw new Error(`Backend responded with status ${res.status}`);
     }
-    const data = await res.json();
+    const contentType = res.headers.get('content-type');
+    const text = await res.text();
+    let data;
+    if (text && contentType?.includes('application/json')) {
+      try {
+        data = JSON.parse(text);
+      } catch (error) {
+        console.error(`Error parsing JSON for /save: ${text}`);
+        throw new Error('Invalid JSON response from backend');
+      }
+    } else {
+      data = { message: 'User added successfully', ...body };
+    }
     return NextResponse.json(data);
   } catch (error: any) {
     console.error('Error in POST /save:', error.message, error.stack);
-    return NextResponse.json({ message: error.message || 'Failed to add customer' }, { status: 500 });
+    return NextResponse.json(
+      { message: error.message || 'Failed to add user' },
+      { status: 500 }
+    );
   }
 }
 
@@ -77,11 +131,26 @@ export async function PUT(req: NextRequest) {
       console.error(`Backend /update responded with status ${res.status}: ${errorText}`);
       throw new Error(`Backend responded with status ${res.status}`);
     }
-    const data = await res.json();
+    const contentType = res.headers.get('content-type');
+    const text = await res.text();
+    let data;
+    if (text && contentType?.includes('application/json')) {
+      try {
+        data = JSON.parse(text);
+      } catch (error) {
+        console.error(`Error parsing JSON for /update: ${text}`);
+        throw new Error('Invalid JSON response from backend');
+      }
+    } else {
+      data = { message: 'User updated successfully', ...body };
+    }
     return NextResponse.json(data);
   } catch (error: any) {
     console.error('Error in PUT /update:', error.message, error.stack);
-    return NextResponse.json({ message: error.message || 'Failed to update customer' }, { status: 500 });
+    return NextResponse.json(
+      { message: error.message || 'Failed to update user' },
+      { status: 500 }
+    );
   }
 }
 
@@ -112,17 +181,21 @@ export async function DELETE(req: NextRequest) {
           throw new Error('Invalid JSON response from backend');
         }
       } else {
-        data = { message: 'Customers cleared successfully' };
+        data = { message: 'All users cleared successfully' };
       }
       return NextResponse.json(data);
     } catch (error: any) {
       console.error('Error in DELETE /clear:', error.message, error.stack);
-      return NextResponse.json({ message: error.message || 'Failed to clear customers' }, { status: 500 });
+      return NextResponse.json(
+        { message: error.message || 'Failed to clear users' },
+        { status: 500 }
+      );
     }
   } else if (id) {
     try {
       const res = await fetch(`${BACKEND_BASE_URL}/delete/${id}`, {
         method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
       });
       if (!res.ok) {
         const errorText = await res.text();
@@ -140,15 +213,20 @@ export async function DELETE(req: NextRequest) {
           throw new Error('Invalid JSON response from backend');
         }
       } else {
-        // Fallback for empty or non-JSON response
-        data = { message: `Customer ${id} deleted successfully` };
+        data = { message: `User ${id} deleted successfully` };
       }
       return NextResponse.json(data);
     } catch (error: any) {
       console.error(`Error in DELETE /delete/${id}:`, error.message, error.stack);
-      return NextResponse.json({ message: error.message || 'Failed to delete customer' }, { status: 500 });
+      return NextResponse.json(
+        { message: error.message || 'Failed to delete user' },
+        { status: 500 }
+      );
     }
   } else {
-    return NextResponse.json({ message: 'Invalid delete request: specify "action=clear" or "id=<id>"' }, { status: 400 });
+    return NextResponse.json(
+      { message: 'Invalid delete request: specify "action=clear" or "id=<id>"' },
+      { status: 400 }
+    );
   }
 }
