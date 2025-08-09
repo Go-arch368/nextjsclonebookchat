@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import EyeCatcherHeader from './EyeCatherHeader';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 import AddEyeCatcherForm from './AddEyeCatcherForm';
+import EyeCatcherHeader from './EyeCatherHeader';
 
 interface EyeCatcher {
   id: number;
@@ -26,6 +28,8 @@ const EyeCatchersView: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const API_BASE_URL = '/api/settings/eye-catchers';
+
   useEffect(() => {
     fetchEyeCatchers();
   }, []);
@@ -34,15 +38,23 @@ const EyeCatchersView: React.FC = () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/eye-catchers/list`, {
-        headers: { 'Content-Type': 'application/json' },
+      const response = await axios.get<EyeCatcher[]>(`${API_BASE_URL}?action=list`);
+      if (!Array.isArray(response.data)) {
+        throw new Error('Invalid response format: Expected an array');
+      }
+      setEyeCatchers(response.data);
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.status === 404
+          ? 'Eye catchers API route not found. Please check the server configuration.'
+          : err.response?.data?.message || err.message || 'Failed to load eye catchers';
+      console.error('Fetch error:', errorMessage, err.response?.data);
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        position: 'top-right',
+        autoClose: 3000,
       });
-      if (!response.ok) throw new Error(`Failed to fetch eye catchers: ${response.status}`);
-      const data = await response.json();
-      setEyeCatchers(data);
-    } catch (error: any) {
-      setError(error.message || 'Failed to fetch eye catchers');
-      console.error('Error fetching eye catchers:', error);
+      setEyeCatchers([]);
     } finally {
       setIsLoading(false);
     }
@@ -71,6 +83,7 @@ const EyeCatchersView: React.FC = () => {
 
   const handleSave = async (eyeCatcher: Omit<EyeCatcher, 'id' | 'imageUrl'>) => {
     try {
+      setIsLoading(true);
       setError(null);
       const payload = {
         userId: eyeCatcher.userId || 1,
@@ -83,54 +96,100 @@ const EyeCatchersView: React.FC = () => {
         createdAt: eyeCatcher.createdAt || new Date().toISOString(),
         updatedAt: eyeCatcher.updatedAt || new Date().toISOString(),
       };
-      const response = await fetch(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}settings/eye-catchers/save`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Failed to save eye catcher: ${response.status}`);
-      }
-      const savedEyeCatcher: EyeCatcher = await response.json();
+      const response = await axios.post(`${API_BASE_URL}`, payload);
+      const savedEyeCatcher: EyeCatcher = response.data;
       setEyeCatchers((prev) => [...prev, savedEyeCatcher]);
       setShowAddForm(false);
-    } catch (error: any) {
-      setError(error.message || 'Failed to add eye catcher. Please check the input data and try again.');
-      console.error('Error saving eye catcher:', error);
+      toast.success(
+        response.data?.message ||
+        (typeof response.data === 'object' && 'title' in response.data
+          ? `Eye catcher ${response.data.title} saved successfully!`
+          : 'Eye catcher saved successfully!'),
+        {
+          position: 'top-right',
+          autoClose: 3000,
+        }
+      );
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.status === 404
+          ? 'Eye catchers API route not found. Please check the server configuration.'
+          : err.response?.data?.message || err.message || 'Failed to add eye catcher';
+      console.error('Save error:', errorMessage, err.response?.data);
+      setError(errorMessage);
+      if (errorMessage.includes('Duplicate entry') && errorMessage.includes('for key \'title\'')) {
+        const titleMatch = errorMessage.match(/Duplicate entry '([^']+)' for key 'title'/);
+        const title = titleMatch ? titleMatch[1] : eyeCatcher.title;
+        toast.error(`Eye catcher with title '${title}' already exists`, {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+      } else {
+        toast.error(errorMessage, {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleUpdate = async (eyeCatcher: EyeCatcher) => {
     try {
+      setIsLoading(true);
       setError(null);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/eye-catchers/update`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: eyeCatcher.id,
-          userId: eyeCatcher.userId || 1,
-          title: eyeCatcher.title.trim(),
-          text: eyeCatcher.text.trim(),
-          backgroundColor: eyeCatcher.backgroundColor,
-          textColor: eyeCatcher.textColor,
-          imageUrl: null,
-          createdBy: eyeCatcher.createdBy || 'Admin',
-          company: eyeCatcher.company || 'Example Corp',
-          createdAt: eyeCatcher.createdAt,
-          updatedAt: new Date().toISOString(),
-        }),
+      const response = await axios.put(`${API_BASE_URL}`, {
+        id: eyeCatcher.id,
+        userId: eyeCatcher.userId || 1,
+        title: eyeCatcher.title.trim(),
+        text: eyeCatcher.text.trim(),
+        backgroundColor: eyeCatcher.backgroundColor,
+        textColor: eyeCatcher.textColor,
+        imageUrl: null,
+        createdBy: eyeCatcher.createdBy || 'Admin',
+        company: eyeCatcher.company || 'Example Corp',
+        createdAt: eyeCatcher.createdAt,
+        updatedAt: new Date().toISOString(),
       });
-      if (!response.ok) throw new Error(`Failed to update eye catcher: ${response.status}`);
-      const updatedEyeCatcher = await response.json();
+      const updatedEyeCatcher: EyeCatcher = response.data;
       setEyeCatchers((prev) =>
         prev.map((item) => (item.id === updatedEyeCatcher.id ? updatedEyeCatcher : item))
       );
       setShowEditForm(false);
       setEditingEyeCatcher(null);
-    } catch (error: any) {
-      setError(error.message || 'Failed to update eye catcher');
-      console.error('Error updating eye catcher:', error);
+      toast.success(
+        response.data?.message ||
+        (typeof response.data === 'object' && 'title' in response.data
+          ? `Eye catcher ${response.data.title} updated successfully!`
+          : 'Eye catcher updated successfully!'),
+        {
+          position: 'top-right',
+          autoClose: 3000,
+        }
+      );
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.status === 404
+          ? 'Eye catchers API route not found. Please check the server configuration.'
+          : err.response?.data?.message || err.message || 'Failed to update eye catcher';
+      console.error('Update error:', errorMessage, err.response?.data);
+      setError(errorMessage);
+      if (errorMessage.includes('Duplicate entry') && errorMessage.includes('for key \'title\'')) {
+        const titleMatch = errorMessage.match(/Duplicate entry '([^']+)' for key 'title'/);
+        const title = titleMatch ? titleMatch[1] : eyeCatcher.title;
+        toast.error(`Eye catcher with title '${title}' already exists`, {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+      } else {
+        toast.error(errorMessage, {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 

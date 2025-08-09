@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Plus, Pencil, Trash2, ArrowUp, ArrowDown, Search } from 'lucide-react';
 import { Input } from '@/ui/input';
 import { Button } from '@/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table';
 import { Skeleton } from '@/ui/skeleton';
+import { toast } from 'react-toastify';
 
 interface EyeCatcher {
   id: number;
@@ -47,6 +49,8 @@ const EyeCatcherHeader: React.FC<EyeCatcherHeaderProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const API_BASE_URL = '/api/settings/eye-catchers';
+
   useEffect(() => {
     const filteredData = eyeCatchers.filter(
       (item) =>
@@ -73,37 +77,52 @@ const EyeCatcherHeader: React.FC<EyeCatcherHeaderProps> = ({
   const handleDelete = async (id: number) => {
     try {
       setError(null);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/eye-catchers/delete/${id}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Failed to delete eye catcher: ${response.status}`);
-      }
-      // Update the tableData state locally by filtering out the deleted item
+      const response = await axios.delete(`${API_BASE_URL}?id=${id}`);
       setTableData((prev) => prev.filter((item) => item.id !== id));
-    } catch (error: any) {
-      setError(error.message || 'Failed to delete eye catcher');
-      console.error('Error deleting eye catcher:', error);
+      toast.success(
+        response.data?.message || 'Eye catcher deleted successfully!',
+        {
+          position: 'top-right',
+          autoClose: 3000,
+        }
+      );
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.status === 404
+          ? 'Eye catchers API route not found. Please check the server configuration.'
+          : err.response?.data?.message || err.message || 'Failed to delete eye catcher';
+      console.error('Delete error:', errorMessage, err.response?.data);
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        position: 'top-right',
+        autoClose: 3000,
+      });
     }
   };
 
   const handleClearAll = async () => {
     try {
       setError(null);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/eye-catchers/clear`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Failed to clear eye catchers: ${response.status}`);
-      }
+      const response = await axios.delete(`${API_BASE_URL}?action=clear`);
       setTableData([]);
-    } catch (error: any) {
-      setError(error.message || 'Failed to clear eye catchers');
-      console.error('Error clearing eye catchers:', error);
+      toast.success(
+        response.data?.message || 'All eye catchers cleared successfully!',
+        {
+          position: 'top-right',
+          autoClose: 3000,
+        }
+      );
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.status === 404
+          ? 'Eye catchers API route not found. Please check the server configuration.'
+          : err.response?.data?.message || err.message || 'Failed to clear eye catchers';
+      console.error('Clear error:', errorMessage, err.response?.data);
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        position: 'top-right',
+        autoClose: 3000,
+      });
     }
   };
 

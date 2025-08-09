@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
 import { Label } from '@/ui/label';
+import { toast } from 'react-toastify';
 
 interface EyeCatcher {
   id: number;
@@ -46,6 +47,7 @@ const AddEyeCatcherForm: React.FC<AddEyeCatcherFormProps> = ({
     updatedAt: initialData?.updatedAt || new Date().toISOString(),
   });
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (initialData && isEditMode) {
@@ -65,17 +67,20 @@ const AddEyeCatcherForm: React.FC<AddEyeCatcherFormProps> = ({
     }
   }, [initialData, isEditMode]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setIsSubmitting(true);
 
     if (!formData.title.trim() || !formData.text.trim()) {
       setError('Title and Text are required fields');
+      setIsSubmitting(false);
       return;
     }
 
     if (!/^#[0-9A-Fa-f]{6}$/.test(formData.backgroundColor) || !/^#[0-9A-Fa-f]{6}$/.test(formData.textColor)) {
       setError('Background and Text colors must be valid hex codes (e.g., #FF0000)');
+      setIsSubmitting(false);
       return;
     }
 
@@ -95,22 +100,42 @@ const AddEyeCatcherForm: React.FC<AddEyeCatcherFormProps> = ({
       updatedAt: formData.updatedAt,
     };
 
-    onSave(eyeCatcherData);
-
-    if (!isEditMode) {
-      setFormData({
-        id: 0,
-        userId: 1,
-        title: '',
-        text: '',
-        backgroundColor: '#ffffff',
-        textColor: '#000000',
-        imageUrl: null,
-        createdBy: 'Admin',
-        company: 'Example Corp',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
+    try {
+      await onSave(eyeCatcherData);
+      if (!isEditMode) {
+        setFormData({
+          id: 0,
+          userId: 1,
+          title: '',
+          text: '',
+          backgroundColor: '#ffffff',
+          textColor: '#000000',
+          imageUrl: null,
+          createdBy: 'Admin',
+          company: 'Example Corp',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+      }
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to save eye catcher';
+      console.error('Submit error:', errorMessage, err);
+      setError(errorMessage);
+      if (errorMessage.includes('Duplicate entry') && errorMessage.includes('for key \'title\'')) {
+        const titleMatch = errorMessage.match(/Duplicate entry '([^']+)' for key 'title'/);
+        const title = titleMatch ? titleMatch[1] : formData.title;
+        toast.error(`Eye catcher with title '${title}' already exists`, {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+      } else {
+        toast.error(errorMessage, {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -250,8 +275,9 @@ const AddEyeCatcherForm: React.FC<AddEyeCatcherFormProps> = ({
           <Button
             type="submit"
             className="px-6 py-2 bg-blue-600 text-white hover:bg-blue-800"
+            disabled={isSubmitting}
           >
-            {isEditMode ? 'Update' : 'Save'}
+            {isSubmitting ? 'Saving...' : isEditMode ? 'Update' : 'Save'}
           </Button>
         </div>
       </form>
