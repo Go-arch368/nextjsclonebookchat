@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 import GreetingHeader from './GreetingHeader';
 import AddGreetingForm from './AddGreetingForm';
 
@@ -22,18 +24,29 @@ const GreetingsView: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const API_BASE_URL = '/api/settings/greetings';
+
   useEffect(() => {
     const fetchGreetings = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        const response = await fetch(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/greetings/list`);
-        if (!response.ok) throw new Error(`Failed to fetch greetings: ${response.status}`);
-        const data = await response.json();
-        setGreetings(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error('Fetch error:', err);
-        setError('Failed to load greetings');
+        const response = await axios.get<Greeting[]>(`${API_BASE_URL}?action=list`);
+        if (!Array.isArray(response.data)) {
+          throw new Error('Invalid response format: Expected an array');
+        }
+        setGreetings(response.data);
+      } catch (err: any) {
+        const errorMessage =
+          err.response?.status === 404
+            ? 'Greetings API route not found. Please check the server configuration.'
+            : err.response?.data?.message || err.message || 'Failed to load greetings';
+        console.error('Fetch error:', errorMessage, err.response?.data);
+        setError(errorMessage);
+        toast.error(errorMessage, {
+          position: 'top-right',
+          autoClose: 3000,
+        });
         setGreetings([]);
       } finally {
         setIsLoading(false);
@@ -66,29 +79,22 @@ const GreetingsView: React.FC = () => {
       setIsLoading(true);
       setError(null);
       
-      const url = greeting.id 
-        ? `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/greetings/update`
-        : `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/greetings/save`;
-      
+      const url = greeting.id ? `${API_BASE_URL}` : `${API_BASE_URL}`;
       const method = greeting.id ? 'PUT' : 'POST';
       
-      const response = await fetch(url, {
+      const response = await axios({
         method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        url,
+        data: {
           ...greeting,
           userId: 1,
           updatedAt: new Date().toISOString(),
           ...(!greeting.id && { createdAt: new Date().toISOString() })
-        })
+        },
+        headers: { 'Content-Type': 'application/json' },
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Failed to save greeting: ${response.status}`);
-      }
-
-      const savedGreeting: Greeting = await response.json();
+      const savedGreeting: Greeting = response.data;
       setGreetings((prev) => 
         greeting.id
           ? prev.map((g) => (g.id === savedGreeting.id ? savedGreeting : g))
@@ -96,9 +102,36 @@ const GreetingsView: React.FC = () => {
       );
       setShowAddForm(false);
       setEditingGreeting(null);
-    } catch (err) {
-      console.error('Save error:', err);
-      setError('Failed to save greeting');
+      toast.success(
+        response.data?.message ||
+        (typeof response.data === 'object' && 'title' in response.data
+          ? `Greeting ${response.data.title} saved successfully!`
+          : 'Greeting saved successfully!'),
+        {
+          position: 'top-right',
+          autoClose: 3000,
+        }
+      );
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.status === 404
+          ? 'Greetings API route not found. Please check the server configuration.'
+          : err.response?.data?.message || err.message || 'Failed to save greeting';
+      console.error('Save error:', errorMessage, err.response?.data);
+      setError(errorMessage);
+      if (errorMessage.includes('Duplicate entry') && errorMessage.includes('for key \'title\'')) {
+        const titleMatch = errorMessage.match(/Duplicate entry '([^']+)' for key 'title'/);
+        const title = titleMatch ? titleMatch[1] : greeting.title;
+        toast.error(`Greeting with title '${title}' already exists`, {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+      } else {
+        toast.error(errorMessage, {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -109,20 +142,26 @@ const GreetingsView: React.FC = () => {
       setIsLoading(true);
       setError(null);
       
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/greetings/delete/${id}`,
-        { method: 'DELETE', headers: { 'Content-Type': 'application/json' } }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Failed to delete greeting: ${response.status}`);
-      }
-
+      const response = await axios.delete(`${API_BASE_URL}?id=${id}`);
       setGreetings(prev => prev.filter(g => g.id !== id));
-    } catch (err) {
-      console.error('Delete error:', err);
-      setError('Failed to delete greeting');
+      toast.success(
+        response.data?.message || 'Greeting deleted successfully!',
+        {
+          position: 'top-right',
+          autoClose: 3000,
+        }
+      );
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.status === 404
+          ? 'Greetings API route not found. Please check the server configuration.'
+          : err.response?.data?.message || err.message || 'Failed to delete greeting';
+      console.error('Delete error:', errorMessage, err.response?.data);
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        position: 'top-right',
+        autoClose: 3000,
+      });
     } finally {
       setIsLoading(false);
     }

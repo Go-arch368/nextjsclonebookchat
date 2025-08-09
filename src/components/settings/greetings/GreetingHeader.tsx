@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import { Plus, Pencil, Trash2, ArrowUp, ArrowDown, Search } from 'lucide-react';
 import { Input } from '@/ui/input';
@@ -38,6 +38,8 @@ const GreetingHeader: React.FC<GreetingHeaderProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
+
+  const API_BASE_URL = '/api/settings/greetings';
 
   const sortedGreetings = React.useMemo(() => {
     const sortableItems = [...greetings];
@@ -87,21 +89,27 @@ const GreetingHeader: React.FC<GreetingHeaderProps> = ({
   const handleClearAll = async () => {
     try {
       setError(null);
-      await axios.delete(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/greetings/clear`);
+      const response = await axios.delete(`${API_BASE_URL}?action=clear`);
       onDelete(0); // Trigger parent refresh
       setCurrentPage(1);
-      toast.success('All greetings cleared successfully!', {
-        position: 'top-right',
-        autoClose: 3000,
-      });
+      toast.success(
+        response.data?.message || 'All greetings cleared successfully!',
+        {
+          position: 'top-right',
+          autoClose: 3000,
+        }
+      );
     } catch (err: any) {
-      const message = err.response?.data?.message || 'Failed to clear greetings.';
-      setError(message);
-      toast.error(message, {
+      const errorMessage =
+        err.response?.status === 404
+          ? 'Greetings API route not found. Please check the server configuration.'
+          : err.response?.data?.message || err.message || 'Failed to clear greetings';
+      console.error('Clear error:', errorMessage, err.response?.data);
+      setError(errorMessage);
+      toast.error(errorMessage, {
         position: 'top-right',
         autoClose: 3000,
       });
-      console.error('Error clearing greetings:', err);
     }
   };
 

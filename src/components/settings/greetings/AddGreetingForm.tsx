@@ -7,6 +7,7 @@ import { Label } from '@/ui/label';
 import { Textarea } from '@/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select';
 import { MessageSquare } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 interface Greeting {
   id?: number;
@@ -33,6 +34,7 @@ const AddGreetingForm: React.FC<AddGreetingFormProps> = ({ onSave, onCancel, ini
     visible: initialGreeting?.visible !== undefined ? initialGreeting.visible : true,
   });
   const [errors, setErrors] = useState<{ title?: string; greeting?: string }>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const variables = [
@@ -69,11 +71,14 @@ const AddGreetingForm: React.FC<AddGreetingFormProps> = ({ onSave, onCancel, ini
     return newErrors;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!onSave) {
       console.error('onSave is not defined');
-      alert('Error: Save functionality is not available');
+      toast.error('Error: Save functionality is not available', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
       return;
     }
     const validationErrors = validateForm();
@@ -82,24 +87,45 @@ const AddGreetingForm: React.FC<AddGreetingFormProps> = ({ onSave, onCancel, ini
       return;
     }
 
-    onSave({
-      id: initialGreeting?.id,
-      userId: 1,
-      title: formData.title,
-      greeting: formData.greeting,
-      type: formData.type,
-      visible: formData.visible,
-      createdAt: initialGreeting?.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
-    setFormData({
-      title: '',
-      greeting: '',
-      type: 'All_Visitors',
-      visible: true,
-    });
-    setErrors({});
-    onCancel();
+    setIsSubmitting(true);
+    try {
+      await onSave({
+        id: initialGreeting?.id,
+        userId: 1,
+        title: formData.title,
+        greeting: formData.greeting,
+        type: formData.type,
+        visible: formData.visible,
+        createdAt: initialGreeting?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      setFormData({
+        title: '',
+        greeting: '',
+        type: 'All_Visitors',
+        visible: true,
+      });
+      setErrors({});
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to save greeting';
+      console.error('Submit error:', errorMessage, err);
+      if (errorMessage.includes('Duplicate entry') && errorMessage.includes('for key \'title\'')) {
+        const titleMatch = errorMessage.match(/Duplicate entry '([^']+)' for key 'title'/);
+        const title = titleMatch ? titleMatch[1] : formData.title;
+        toast.error(`Greeting with title '${title}' already exists`, {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+      } else {
+        toast.error(errorMessage, {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+      }
+    } finally {
+      setIsSubmitting(false);
+      onCancel();
+    }
   };
 
   return (
@@ -205,9 +231,9 @@ const AddGreetingForm: React.FC<AddGreetingFormProps> = ({ onSave, onCancel, ini
           <Button
             type="submit"
             className="px-6 py-2 bg-blue-600 text-white hover:bg-blue-800"
-            disabled={!onSave}
+            disabled={isSubmitting || !onSave}
           >
-            Save
+            {isSubmitting ? 'Saving...' : 'Save'}
           </Button>
         </div>
       </form>
