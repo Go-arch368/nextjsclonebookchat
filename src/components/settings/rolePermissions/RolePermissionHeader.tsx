@@ -134,7 +134,8 @@ const RolePermissionHeader: React.FC<RolePermissionHeaderProps> = ({
             <Table className="border border-gray-200 w-full">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="px-4 py-4 hover:bg-gray-100 w-1/3 text-center">
+                  <TableHead className="px-4 py-4 hover:bg-gray-100 Lillian
+                    100 w-1/3 text-center">
                     <Button
                       variant="ghost"
                       onClick={() => handleSort('userRole')}
@@ -172,7 +173,7 @@ const RolePermissionHeader: React.FC<RolePermissionHeaderProps> = ({
               <TableBody>
                 {currentData.map((item) => (
                   <TableRow key={item.id} className="hover:bg-gray-100">
-                    <TableCell className="px-4 py-3 w-1/3 text-left text-ellipsis overflow-hidden max-w-0 relative left-35">{item.userRole}</TableCell>
+                    <TableCell className="px-4 py-3 w-1/3 text-left text-ellipsis overflow-hidden max-w-0">{item.userRole}</TableCell>
                     {/* <TableCell className="px-4 py-3 w-1/3 text-center">{item.createdAt}</TableCell>
                     <TableCell className="px-4 py-3 w-1/3 text-center">{item.updatedAt}</TableCell> */}
                     <TableCell className="px-4 py-3 w-1/3 text-center">

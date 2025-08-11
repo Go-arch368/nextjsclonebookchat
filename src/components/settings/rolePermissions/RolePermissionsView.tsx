@@ -22,13 +22,11 @@ const RolePermissionsView: React.FC = () => {
   const [selectedRolePermission, setSelectedRolePermission] = useState<RolePermission | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const BASE_URL = `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/role-permissions`;
-
   // Fetch all role permissions
   const fetchRolePermissions = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get<RolePermission[]>(`${BASE_URL}/all`);
+      const response = await axios.get<RolePermission[]>('/api/v1/settings/role-permissions?action=all');
       setRolePermissions(response.data || []);
       toast.success('Role permissions fetched successfully');
     } catch (err: any) {
@@ -63,7 +61,7 @@ const RolePermissionsView: React.FC = () => {
 
   const handleSave = async (rolePermission: Omit<RolePermission, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
-      const response = await axios.post<RolePermission>(`${BASE_URL}/save`, {
+      const response = await axios.post<RolePermission>('/api/v1/settings/role-permissions?action=save', {
         ...rolePermission,
         userId: rolePermission.userId || 1, // Default userId
         createdAt: new Date().toISOString().slice(0, 19),
@@ -80,7 +78,7 @@ const RolePermissionsView: React.FC = () => {
 
   const handleUpdate = async (rolePermission: RolePermission) => {
     try {
-      const response = await axios.put<RolePermission>(`${BASE_URL}/update`, {
+      const response = await axios.put<RolePermission>('/api/v1/settings/role-permissions?action=update', {
         ...rolePermission,
         updatedAt: new Date().toISOString().slice(0, 19),
       });
@@ -96,7 +94,7 @@ const RolePermissionsView: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`${BASE_URL}/delete/${id}`);
+      await axios.delete(`/api/v1/settings/role-permissions?action=delete&id=${id}`);
       await fetchRolePermissions();
       toast.success('Role permission deleted successfully');
     } catch (err: any) {
@@ -107,7 +105,7 @@ const RolePermissionsView: React.FC = () => {
 
   const handleDeleteAll = async () => {
     try {
-      await axios.delete(`${BASE_URL}/delete/all`);
+      await axios.delete('/api/v1/settings/role-permissions?action=delete-all');
       setRolePermissions([]);
       toast.success('All role permissions deleted successfully');
     } catch (err: any) {
@@ -120,10 +118,7 @@ const RolePermissionsView: React.FC = () => {
     try {
       setIsLoading(true);
       const response = await axios.get<RolePermission[]>(
-        `${BASE_URL}/search`,
-        {
-          params: { keyword, page, size },
-        }
+        `/api/v1/settings/role-permissions?action=search&keyword=${encodeURIComponent(keyword)}&page=${page}&size=${size}`
       );
       setRolePermissions(response.data || []);
       toast.success(`Found ${response.data.length} role permission(s)`);
