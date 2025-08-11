@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { toast } from 'sonner';
 import KnowledgeBaseHeader from './KnowledgeBaseHeader';
 import AddKnowledgeBaseRecordForm from './AddKnowledgeBaseRecordForm';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 
+// TypeScript interface for the knowledge base record
 interface KnowledgeBaseRecord {
   id?: number;
   userId?: number;
@@ -19,115 +20,147 @@ interface KnowledgeBaseRecord {
 
 const KnowledgeBaseView: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
   const [knowledgeBaseRecords, setKnowledgeBaseRecords] = useState<KnowledgeBaseRecord[]>([]);
-  const [editingRecord, setEditingRecord] = useState<KnowledgeBaseRecord | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<KnowledgeBaseRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const handleAddClick = () => {
-    setEditingRecord(null);
-    setShowAddForm(true);
-    setError(null);
-  };
-
-  const handleEdit = (record: KnowledgeBaseRecord) => {
-    setEditingRecord(record);
-    setShowAddForm(true);
-    setError(null);
-  };
-
-  const handleCancel = () => {
-    setShowAddForm(false);
-    setEditingRecord(null);
-    setError(null);
-  };
-
-  const handleSave = async (record: KnowledgeBaseRecord) => {
+  // Fetch all knowledge base records
+  const fetchKnowledgeBaseRecords = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      
-      const url = record.id 
-        ? `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/knowledge-bases/update`
-        : `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/knowledge-bases/save`;
-      
-      const method = record.id ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...record,
-          userId: 1,
-          updatedAt: new Date().toISOString(),
-          ...(!record.id && { createdAt: new Date().toISOString() })
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Failed to save record: ${response.status}`);
-      }
-
-      const savedRecord: KnowledgeBaseRecord = await response.json();
-      setKnowledgeBaseRecords((prev) => 
-        record.id
-          ? prev.map((r) => (r.id === savedRecord.id ? savedRecord : r))
-          : [...prev, savedRecord]
-      );
-      setShowAddForm(false);
-      setEditingRecord(null);
+      const response = await axios.get<KnowledgeBaseRecord[]>('/api/v1/settings/knowledge-bases?action=all');
+      setKnowledgeBaseRecords(response.data || []);
+      toast.success('Knowledge base records fetched successfully');
     } catch (err: any) {
-      console.error('Save error:', err);
-      setError(err.message || 'Failed to save record');
+      const message = err.response?.data?.message || 'Failed to fetch knowledge base records';
+      setError(message);
+      toast.error(message);
+      console.error(err);
     } finally {
       setIsLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchKnowledgeBaseRecords();
+  }, []);
+
+  const handleAddClick = () => {
+    setShowAddForm(true);
+    setShowEditForm(false);
+    setSelectedRecord(null);
+  };
+
+  const handleEditClick = (record: KnowledgeBaseRecord) => {
+    setSelectedRecord(record);
+    setShowEditForm(true);
+    setShowAddForm(false);
+  };
+
+  const handleCancel = () => {
+    setShowAddForm(false);
+    setShowEditForm(false);
+    setSelectedRecord(null);
+  };
+
+  const handleSave = async (record: KnowledgeBaseRecord) => {
+    try {
+      const response = await axios.post<KnowledgeBaseRecord>('/api/v1/settings/knowledge-bases?action=save', {
+        ...record,
+        userId: record.userId || 1, // Default userId
+        createdAt: record.createdAt || new Date().toISOString().slice(0, 19),
+        updatedAt: new Date().toISOString().slice(0, 19),
+      });
+      await fetchKnowledgeBaseRecords();
+      setShowAddForm(false);
+      toast.success('Knowledge base record added successfully');
+    } catch (err: any) {
+      const message = err.response?.data?.message || 'Failed to save knowledge base record';
+      setError(message);
+      toast.error(message);
+      console.error(err);
+    }
+  };
+
+  const handleUpdate = async (record: KnowledgeBaseRecord) => {
+    try {
+      const response = await axios.put<KnowledgeBaseRecord>('/api/v1/settings/knowledge-bases?action=update', {
+        ...record,
+        updatedAt: new Date().toISOString().slice(0, 19),
+      });
+      await fetchKnowledgeBaseRecords();
+      setShowEditForm(false);
+      setSelectedRecord(null);
+      toast.success('Knowledge base record updated successfully');
+    } catch (err: any) {
+      const message = err.response?.data?.message || 'Failed to update knowledge base record';
+      setError(message);
+      toast.error(message);
+      console.error(err);
+    }
+  };
+
   const handleDelete = async (id: number) => {
+    try {
+      await axios.delete(`/api/v1/settings/knowledge-bases?action=delete&id=${id}`);
+      await fetchKnowledgeBaseRecords();
+      toast.success('Knowledge base record deleted successfully');
+    } catch (err: any) {
+      const message = err.response?.data?.message || 'Failed to delete knowledge base record';
+      setError(message);
+      toast.error(message);
+      console.error(err);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    try {
+      await axios.delete('/api/v1/settings/knowledge-bases?action=delete-all');
+      setKnowledgeBaseRecords([]);
+      toast.success('All knowledge base records deleted successfully');
+    } catch (err: any) {
+      const message = err.response?.data?.message || 'Failed to delete all knowledge base records';
+      setError(message);
+      toast.error(message);
+      console.error(err);
+    }
+  };
+
+  const handleSearch = async (keyword: string, page: number = 0, size: number = 5) => {
     try {
       setIsLoading(true);
       setError(null);
-      
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/knowledge-bases/delete/${id}`,
-        { method: 'DELETE', headers: { 'Content-Type': 'application/json' } }
+      const response = await axios.get<KnowledgeBaseRecord[]>(
+        `/api/v1/settings/knowledge-bases?action=search&keyword=${encodeURIComponent(keyword)}&page=${page}&size=${size}`
       );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Failed to delete record: ${response.status}`);
-      }
-
-      setKnowledgeBaseRecords(prev => prev.filter(r => r.id !== id));
+      setKnowledgeBaseRecords(response.data || []);
+      toast.success(`Found ${response.data.length} knowledge base record(s)`);
     } catch (err: any) {
-      console.error('Delete error:', err);
-      setError(err.message || 'Failed to delete record');
+      const message = err.response?.data?.message || 'Failed to search knowledge base records';
+      setError(message);
+      toast.error(message);
+      console.error(err);
+      setKnowledgeBaseRecords([]);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="knowledge-base-container">
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} closeOnClick />
-      {error && (
-        <div className="error-message p-4 mb-4 bg-red-100 text-red-700 rounded">
-          {error}
-        </div>
-      )}
-      
-      {showAddForm ? (
+    <div>
+      {showAddForm || showEditForm ? (
         <AddKnowledgeBaseRecordForm
-          onSave={handleSave}
+          onSave={showEditForm ? handleUpdate : handleSave}
           onCancel={handleCancel}
-          initialRecord={editingRecord}
+          initialRecord={showEditForm ? selectedRecord : null}
         />
       ) : (
         <KnowledgeBaseHeader
           onAddClick={handleAddClick}
-          onEditClick={handleEdit}
+          onEditClick={handleEditClick}
           onDelete={handleDelete}
           knowledgeBaseRecords={knowledgeBaseRecords}
           setKnowledgeBaseRecords={setKnowledgeBaseRecords}

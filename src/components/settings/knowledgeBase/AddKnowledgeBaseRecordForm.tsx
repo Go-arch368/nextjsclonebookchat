@@ -6,7 +6,7 @@ import { Input } from '@/ui/input';
 import { Label } from '@/ui/label';
 import { Textarea } from '@/ui/textarea';
 import { MessageSquare } from 'lucide-react';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 
 interface KnowledgeBaseRecord {
   id?: number;
@@ -81,10 +81,7 @@ const AddKnowledgeBaseRecordForm: React.FC<AddKnowledgeBaseRecordFormProps> = ({
     const validationErrors = validateForm();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
-      toast.error('Please fill in all required fields', {
-        position: 'top-right',
-        autoClose: 3000,
-      });
+      toast.error('Please fill in all required fields');
       return;
     }
 
@@ -95,8 +92,8 @@ const AddKnowledgeBaseRecordForm: React.FC<AddKnowledgeBaseRecordFormProps> = ({
       answerInformation: formData.answerInformation.trim(),
       keywords: formData.keywords.trim(),
       websites: formData.websites,
-      createdAt: initialRecord?.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: initialRecord?.createdAt || new Date().toISOString().slice(0, 19),
+      updatedAt: new Date().toISOString().slice(0, 19),
     });
     setFormData({
       questionTitle: '',
@@ -105,10 +102,8 @@ const AddKnowledgeBaseRecordForm: React.FC<AddKnowledgeBaseRecordFormProps> = ({
       websites: [],
     });
     setErrors({});
-    toast.success(initialRecord ? 'Record updated successfully!' : 'Record added successfully!', {
-      position: 'top-right',
-      autoClose: 3000,
-    });
+    toast.success(initialRecord ? 'Record updated successfully!' : 'Record added successfully!');
+    onCancel();
   };
 
   return (

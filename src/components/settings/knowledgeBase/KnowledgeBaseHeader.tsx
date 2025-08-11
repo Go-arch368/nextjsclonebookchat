@@ -9,7 +9,7 @@ import { Checkbox } from '@/ui/checkbox';
 import { Label } from '@/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table';
 import { Skeleton } from '@/ui/skeleton';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 
 interface KnowledgeBaseRecord {
   id?: number;
@@ -107,73 +107,6 @@ const KnowledgeBaseHeader: React.FC<KnowledgeBaseHeaderProps> = ({
     'https://zotlychattest.mobirisesite.com/',
   ];
 
-  const fetchRecords = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/knowledge-bases/all?page=${currentPage - 1}&size=${itemsPerPage}`);
-      const data = Array.isArray(response.data)
-        ? response.data
-        : Array.isArray(response.data?.content)
-        ? response.data.content
-        : [];
-      setKnowledgeBaseRecords(data);
-      setTotalPages(response.data.totalPages || Math.ceil(data.length / itemsPerPage) || 1);
-    } catch (err: any) {
-      const message = err.response?.data?.message || err.message || 'Failed to fetch records';
-      console.error('Fetch All Error:', err);
-      setError(message);
-      setKnowledgeBaseRecords([]);
-      toast.error(message, {
-        position: 'top-right',
-        autoClose: 3000,
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      if (searchQuery.trim()) {
-        const handleSearch = async () => {
-          try {
-            setIsLoading(true);
-            setError(null);
-            const response = await axios.get(
-              `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/knowledge-bases/search?keyword=${encodeURIComponent(searchQuery)}&page=${currentPage - 1}&size=${itemsPerPage}`
-            );
-            const data = 'content' in response.data ? response.data.content : Array.isArray(response.data) ? response.data : [];
-            setKnowledgeBaseRecords(data);
-            setTotalPages(response.data.totalPages || Math.ceil(data.length / itemsPerPage) || 1);
-          } catch (err: any) {
-            const message = err.response?.data?.message || err.message || 'Failed to search records';
-            console.error('Search Error:', err);
-            setError(message);
-            setKnowledgeBaseRecords([]);
-            toast.error(message, {
-              position: 'top-right',
-              autoClose: 3000,
-            });
-          } finally {
-            setIsLoading(false);
-          }
-        };
-        handleSearch();
-      } else {
-        fetchRecords();
-      }
-    }, 500);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchQuery, currentPage]);
-
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      fetchRecords();
-    }
-  }, [currentPage]);
-
   const handleSort = (column: keyof KnowledgeBaseRecord) => {
     const newDirection = sortDirection[column] === 'asc' ? 'desc' : 'asc';
     setSortDirection((prev) => ({ ...prev, [column]: newDirection }));
@@ -191,23 +124,15 @@ const KnowledgeBaseHeader: React.FC<KnowledgeBaseHeaderProps> = ({
     try {
       setIsLoading(true);
       setError(null);
-      await axios.delete(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/knowledge-bases/delete/all`, {
-        headers: { 'Content-Type': 'application/json' },
-      });
+      await axios.delete('/api/v1/settings/knowledge-bases?action=delete-all');
       setKnowledgeBaseRecords([]);
       setCurrentPage(1);
       setTotalPages(1);
-      toast.success('All records cleared successfully!', {
-        position: 'top-right',
-        autoClose: 3000,
-      });
+      toast.success('All records cleared successfully!');
     } catch (err: any) {
-      const message = err.response?.data?.message || err.message || 'Failed to clear records';
+      const message = err.response?.data?.message || 'Failed to clear records';
       setError(message);
-      toast.error(message, {
-        position: 'top-right',
-        autoClose: 3000,
-      });
+      toast.error(message);
       console.error('Error clearing records:', err);
     } finally {
       setIsLoading(false);
@@ -216,10 +141,7 @@ const KnowledgeBaseHeader: React.FC<KnowledgeBaseHeaderProps> = ({
 
   const handleDeleteSelected = async () => {
     if (selectedRows.length === 0) {
-      toast.warn('No records selected for deletion.', {
-        position: 'top-right',
-        autoClose: 3000,
-      });
+      toast.warning('No records selected for deletion.');
       return;
     }
     try {
@@ -227,9 +149,7 @@ const KnowledgeBaseHeader: React.FC<KnowledgeBaseHeaderProps> = ({
       setError(null);
       await Promise.all(
         selectedRows.map(id => 
-          axios.delete(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/knowledge-bases/delete/${id}`, {
-            headers: { 'Content-Type': 'application/json' },
-          })
+          axios.delete(`/api/v1/settings/knowledge-bases?action=delete&id=${id}`)
         )
       );
       const updated = knowledgeBaseRecords.filter(r => !selectedRows.includes(r.id!));
@@ -239,17 +159,11 @@ const KnowledgeBaseHeader: React.FC<KnowledgeBaseHeaderProps> = ({
       if ((currentPage - 1) * itemsPerPage >= updated.length && currentPage > 1) {
         setCurrentPage(prev => prev - 1);
       }
-      toast.success('Selected records deleted successfully!', {
-        position: 'top-right',
-        autoClose: 3000,
-      });
+      toast.success('Selected records deleted successfully!');
     } catch (err: any) {
-      const message = err.response?.data?.message || err.message || 'Failed to delete selected records';
+      const message = err.response?.data?.message || 'Failed to delete selected records';
       setError(message);
-      toast.error(message, {
-        position: 'top-right',
-        autoClose: 3000,
-      });
+      toast.error(message);
       console.error('Delete selected error:', err);
     } finally {
       setIsLoading(false);
@@ -306,7 +220,6 @@ const KnowledgeBaseHeader: React.FC<KnowledgeBaseHeaderProps> = ({
             <Plus className="h-5 w-5" />
             Add Record
           </Button>
-    
           <Button
             className="px-6 py-3 bg-red-500 text-white hover:bg-red-600 flex items-center gap-3 rounded-lg"
             onClick={handleClearAll}
