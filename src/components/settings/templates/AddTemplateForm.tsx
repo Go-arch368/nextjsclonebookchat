@@ -77,13 +77,13 @@ const AddTemplateForm: React.FC<AddTemplateFormProps> = ({ onSave, onCancel, edi
 
     try {
       if (editingTemplate) {
-        await axios.put(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/templates/update`, payload);
+        await axios.put('/api/v1/settings/templates?action=update', payload);
         toast.success('Template updated successfully!', {
           position: 'top-right',
           autoClose: 3000,
         });
       } else {
-        const response = await axios.post<Template>(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/templates/save`, payload);
+        const response = await axios.post<Template>('/api/v1/settings/templates?action=save', payload);
         payload.id = response.data.id; // Use server-generated ID
         toast.success('Template created successfully!', {
           position: 'top-right',
