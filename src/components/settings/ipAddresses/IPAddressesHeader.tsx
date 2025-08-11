@@ -144,7 +144,7 @@ const IPAddressesHeader: React.FC<IPAddressesHeaderProps> = ({
                       {getSortIcon('ipAddress')}
                     </Button>
                   </TableHead>
-                  {/* <TableHead className="px-4 py-4 hover:bg-gray-100 w-1/3 text-center">
+                  <TableHead className="px-4 py-4 hover:bg-gray-100 w-1/3 text-center">
                     <Button
                       variant="ghost"
                       onClick={() => handleSort('createdAt')}
@@ -163,7 +163,7 @@ const IPAddressesHeader: React.FC<IPAddressesHeaderProps> = ({
                       <span>Updated At</span>
                       {getSortIcon('updatedAt')}
                     </Button>
-                  </TableHead> */}
+                  </TableHead>
                   <TableHead className="px-4 py-4 hover:bg-gray-100 w-1/3 text-center">
                     <span>Actions</span>
                   </TableHead>
@@ -172,9 +172,9 @@ const IPAddressesHeader: React.FC<IPAddressesHeaderProps> = ({
               <TableBody>
                 {currentData.map((item) => (
                   <TableRow key={item.id} className="hover:bg-gray-100">
-                    <TableCell className="px-4 py-3 w-1/3 text-left text-ellipsis overflow-hidden max-w-0 relative left-30">{item.ipAddress}</TableCell>
-                    {/* <TableCell className="px-4 py-3 w-1/3 text-center">{item.createdAt}</TableCell>
-                    <TableCell className="px-4 py-3 w-1/3 text-center">{item.updatedAt}</TableCell> */}
+                    <TableCell className="px-4 py-3 w-1/3 text-left text-ellipsis overflow-hidden max-w-0">{item.ipAddress}</TableCell>
+                    <TableCell className="px-4 py-3 w-1/3 text-center">{item.createdAt}</TableCell>
+                    <TableCell className="px-4 py-3 w-1/3 text-center">{item.updatedAt}</TableCell>
                     <TableCell className="px-4 py-3 w-1/3 text-center">
                       <div className="flex justify-center gap-2">
                         <Button

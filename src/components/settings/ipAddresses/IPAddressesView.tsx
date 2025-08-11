@@ -22,13 +22,11 @@ const IPAddressesView: React.FC = () => {
   const [selectedIPAddress, setSelectedIPAddress] = useState<IPAddress | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const BASE_URL = `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/ip-addresses`;
-
   // Fetch all IP addresses
   const fetchIPAddresses = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get<IPAddress[]>(`${BASE_URL}/all`);
+      const response = await axios.get<IPAddress[]>('/api/v1/settings/ip-addresses?action=all');
       setIPAddresses(response.data || []);
       toast.success('IP addresses fetched successfully');
     } catch (err: any) {
@@ -63,7 +61,7 @@ const IPAddressesView: React.FC = () => {
 
   const handleSave = async (ipAddress: Omit<IPAddress, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
-      const response = await axios.post<IPAddress>(`${BASE_URL}/save`, {
+      const response = await axios.post<IPAddress>('/api/v1/settings/ip-addresses?action=save', {
         ...ipAddress,
         userId: ipAddress.userId || 1, // Default userId
         createdAt: new Date().toISOString().slice(0, 19),
@@ -80,7 +78,7 @@ const IPAddressesView: React.FC = () => {
 
   const handleUpdate = async (ipAddress: IPAddress) => {
     try {
-      const response = await axios.put<IPAddress>(`${BASE_URL}/update`, {
+      const response = await axios.put<IPAddress>('/api/v1/settings/ip-addresses?action=update', {
         ...ipAddress,
         updatedAt: new Date().toISOString().slice(0, 19),
       });
@@ -96,7 +94,7 @@ const IPAddressesView: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`${BASE_URL}/delete/${id}`);
+      await axios.delete(`/api/v1/settings/ip-addresses?action=delete&id=${id}`);
       await fetchIPAddresses();
       toast.success('IP address deleted successfully');
     } catch (err: any) {
@@ -107,7 +105,7 @@ const IPAddressesView: React.FC = () => {
 
   const handleDeleteAll = async () => {
     try {
-      await axios.delete(`${BASE_URL}/delete/all`);
+      await axios.delete('/api/v1/settings/ip-addresses?action=delete-all');
       setIPAddresses([]);
       toast.success('All IP addresses deleted successfully');
     } catch (err: any) {
@@ -120,10 +118,7 @@ const IPAddressesView: React.FC = () => {
     try {
       setIsLoading(true);
       const response = await axios.get<IPAddress[]>(
-        `${BASE_URL}/search`,
-        {
-          params: { keyword, page, size },
-        }
+        `/api/v1/settings/ip-addresses?action=search&keyword=${encodeURIComponent(keyword)}&page=${page}&size=${size}`
       );
       setIPAddresses(response.data || []);
       toast.success(`Found ${response.data.length} IP address(es)`);
