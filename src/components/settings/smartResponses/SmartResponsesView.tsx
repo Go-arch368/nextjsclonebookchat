@@ -1,13 +1,12 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { toast, ToastContainer } from 'react-toastify';
 import SmartResponsesHeader from './SmartResponsesHeader';
 import AddSmartResponseForm from './AddSmartResponseForm';
-import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import axios from 'axios';
-import { toast } from 'react-toastify';
 
 export interface SmartResponse {
   id: number;
@@ -25,8 +24,40 @@ const SmartResponsesView: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [smartResponses, setSmartResponses] = useState<SmartResponse[]>([]);
   const [editingResponse, setEditingResponse] = useState<SmartResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const API_BASE_URL = '/api/v1/settings/smart-responses';
+
+  useEffect(() => {
+    const fetchSmartResponses = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const response = await axios.get<SmartResponse[]>(`${API_BASE_URL}?action=list`);
+        if (!Array.isArray(response.data)) {
+          throw new Error('Invalid response format: Expected an array');
+        }
+        setSmartResponses(response.data);
+      } catch (err: any) {
+        const errorMessage =
+          err.response?.status === 404
+            ? 'Smart responses API route not found. Please check the server configuration.'
+            : err.response?.data?.message || err.message || 'Failed to load smart responses';
+        console.error('Fetch error:', errorMessage, err.response?.data);
+        setError(errorMessage);
+        toast.error(errorMessage, {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+        setSmartResponses([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSmartResponses();
+  }, []);
 
   const handleAddClick = () => {
     setEditingResponse(null);
@@ -51,12 +82,11 @@ const SmartResponsesView: React.FC = () => {
       setIsLoading(true);
       setError(null);
 
-      const url = newSmartResponse.id
-        ? `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/smart-responses/put`
-        : `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/smart-responses/save`;
+      const url = API_BASE_URL; // Use base URL for both POST and PUT
+      const method = newSmartResponse.id ? 'PUT' : 'POST';
 
       const response = await axios({
-        method: newSmartResponse.id ? 'PUT' : 'POST',
+        method,
         url,
         headers: { 'Content-Type': 'application/json' },
         data: {
@@ -74,18 +104,35 @@ const SmartResponsesView: React.FC = () => {
       );
       setShowAddForm(false);
       setEditingResponse(null);
-      toast.success(newSmartResponse.id ? 'Smart response updated successfully!' : 'Smart response created successfully!', {
-        position: 'top-right',
-        autoClose: 3000,
-      });
+      toast.success(
+        newSmartResponse.id ? 'Smart response updated successfully!' : 'Smart response created successfully!',
+        {
+          position: 'top-right',
+          autoClose: 3000,
+        }
+      );
     } catch (err: any) {
-      const message = err.response?.data?.message || err.message || 'Failed to save smart response';
-      console.error('Save error:', err);
-      setError(message);
-      toast.error(message, {
-        position: 'top-right',
-        autoClose: 3000,
-      });
+      const errorMessage =
+        err.response?.status === 404
+          ? 'Smart responses API route not found. Please check the server configuration.'
+          : err.response?.status === 405
+          ? 'Method not allowed. Please check the API configuration.'
+          : err.response?.data?.message || err.message || 'Failed to save smart response';
+      console.error('Save error:', errorMessage, err.response?.data);
+      setError(errorMessage);
+      if (errorMessage.includes('Duplicate entry') && errorMessage.includes('for key \'shortcuts\'')) {
+        const shortcutMatch = errorMessage.match(/Duplicate entry '([^']+)' for key 'shortcuts'/);
+        const shortcut = shortcutMatch ? shortcutMatch[1] : newSmartResponse.shortcuts.join(', ');
+        toast.error(`Shortcut "${shortcut}" already exists`, {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+      } else {
+        toast.error(errorMessage, {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -96,7 +143,7 @@ const SmartResponsesView: React.FC = () => {
       setIsLoading(true);
       setError(null);
 
-      await axios.delete(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/smart-responses/delete/${id}`, {
+      await axios.delete(`${API_BASE_URL}?id=${id}`, {
         headers: { 'Content-Type': 'application/json' },
       });
 
@@ -106,10 +153,13 @@ const SmartResponsesView: React.FC = () => {
         autoClose: 3000,
       });
     } catch (err: any) {
-      const message = err.response?.data?.message || err.message || 'Failed to delete smart response';
-      console.error('Delete error:', err);
-      setError(message);
-      toast.error(message, {
+      const errorMessage =
+        err.response?.status === 404
+          ? 'Smart responses API route not found. Please check the server configuration.'
+          : err.response?.data?.message || err.message || 'Failed to delete smart response';
+      console.error('Delete error:', errorMessage, err.response?.data);
+      setError(errorMessage);
+      toast.error(errorMessage, {
         position: 'top-right',
         autoClose: 3000,
       });

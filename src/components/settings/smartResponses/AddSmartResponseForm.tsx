@@ -1,7 +1,8 @@
 
 "use client";
-import axios from 'axios';
+
 import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
 import { Label } from '@/ui/label';
@@ -155,10 +156,7 @@ const AddSmartResponseForm: React.FC<AddSmartResponseFormProps> = ({
     };
 
     try {
-      const url = editingResponse
-        ? `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/smart-responses/put`
-        :  `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/smart-responses/save`;
-
+      const url = '/api/v1/settings/smart-responses';
       const response = await axios({
         method: editingResponse ? 'PUT' : 'POST',
         url,
@@ -173,7 +171,12 @@ const AddSmartResponseForm: React.FC<AddSmartResponseFormProps> = ({
       });
       onCancel();
     } catch (err: any) {
-      const message = err.response?.data?.message || err.message || `Failed to ${editingResponse ? 'update' : 'create'} smart response`;
+      const message =
+        err.response?.status === 404
+          ? 'Smart responses API route not found. Please check the server configuration.'
+          : err.response?.status === 405
+          ? 'Method not allowed. Please check the API configuration.'
+          : err.response?.data?.message || err.message || `Failed to ${editingResponse ? 'update' : 'create'} smart response`;
       toast.error(message, {
         position: 'top-right',
         autoClose: 3000,

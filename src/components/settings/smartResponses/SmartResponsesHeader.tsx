@@ -1,13 +1,12 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import { Plus, Upload, Download, Globe, ChevronDown, Pencil, Trash2, ArrowUp, ArrowDown, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, ArrowUp, ArrowDown, Search } from 'lucide-react';
 import { Input } from '@/ui/input';
 import { Button } from '@/ui/button';
 import { Checkbox } from '@/ui/checkbox';
-import { Label } from '@/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table';
 import { Skeleton } from '@/ui/skeleton';
 import { toast } from 'react-toastify';
@@ -34,47 +33,69 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
   setIsLoading,
   setError,
 }) => {
-  const [sortDirection, setSortDirection] = useState<Record<string, 'asc' | 'desc' | null>>({
-    shortcuts: null,
-    response: null,
-    createdBy: null,
-    company: null,
-    websites: null,
-  });
+  const [sortConfig, setSortConfig] = useState<{ key: keyof SmartResponse; direction: 'asc' | 'desc' } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [selectedUrls, setSelectedUrls] = useState<string[]>([]);
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const itemsPerPage = 10;
 
-  const urls = [
-    'http://test-zotly-to-drift-flow.com',
-    'https://drift.com',
-    'https://testbug.com',
-    'https://example.com',
-    'https://test.com',
-    'https://zotly.onrender.com',
-    'https://chatmetrics.com',
-    'https://techska.com',
-  ];
+  const API_BASE_URL = '/api/v1/settings/smart-responses';
+
+  const sortedResponses = useMemo(() => {
+    const sortableItems = [...smartResponses];
+    if (sortConfig !== null) {
+      sortableItems.sort((a, b) => {
+        const getSortValue = (item: SmartResponse, key: keyof SmartResponse) => {
+          const value = item[key];
+          if (Array.isArray(value)) {
+            return value.join(', ');
+          }
+          return String(value ?? '');
+        };
+
+        const aValue = getSortValue(a, sortConfig.key);
+        const bValue = getSortValue(b, sortConfig.key);
+        
+        if (aValue < bValue) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [smartResponses, sortConfig]);
+
+  const filteredResponses = sortedResponses.filter(
+    (response) =>
+      response.response.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      response.createdBy.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      response.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      response.shortcuts.some((shortcut) => shortcut.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      response.websites.some((website) => website.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentResponses = filteredResponses.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredResponses.length / itemsPerPage) || 1;
 
   const fetchSmartResponses = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/smart-responses/all?page=${currentPage - 1}&size=${itemsPerPage}`
-      );
-      const data = Array.isArray(response.data)
-        ? response.data
-        : Array.isArray(response.data?.content)
-        ? response.data.content
-        : [];
-      setSmartResponses(data);
-      setTotalPages(response.data.totalPages || Math.ceil(data.length / itemsPerPage) || 1);
+      const response = await axios.get<SmartResponse[]>(`${API_BASE_URL}?action=list`);
+      if (!Array.isArray(response.data)) {
+        throw new Error('Invalid response format: Expected an array');
+      }
+      setSmartResponses(response.data);
     } catch (err: any) {
-      const message = err.response?.data?.message || err.message || 'Failed to fetch smart responses';
+      const message =
+        err.response?.status === 404
+          ? 'Smart responses API route not found. Please check the server configuration.'
+          : err.response?.data?.message || err.message || 'Failed to fetch smart responses';
       console.error('Fetch All Error:', err);
       setError(message);
       setSmartResponses([]);
@@ -94,14 +115,18 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
           try {
             setIsLoading(true);
             setError(null);
-            const response = await axios.get(
-              `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/smart-responses/search?keyword=${encodeURIComponent(searchQuery)}&page=${currentPage - 1}&size=${itemsPerPage}`
+            const response = await axios.get<SmartResponse[]>(
+              `${API_BASE_URL}?action=search&keyword=${encodeURIComponent(searchQuery)}`
             );
-            const data = 'content' in response.data ? response.data.content : Array.isArray(response.data) ? response.data : [];
-            setSmartResponses(data);
-            setTotalPages(response.data.totalPages || Math.ceil(data.length / itemsPerPage) || 1);
+            if (!Array.isArray(response.data)) {
+              throw new Error('Invalid response format: Expected an array');
+            }
+            setSmartResponses(response.data);
           } catch (err: any) {
-            const message = err.response?.data?.message || err.message || 'Failed to search smart responses';
+            const message =
+              err.response?.status === 404
+                ? 'Smart responses API route not found. Please check the server configuration.'
+                : err.response?.data?.message || err.message || 'Failed to search smart responses';
             console.error('Search Error:', err);
             setError(message);
             setSmartResponses([]);
@@ -120,43 +145,34 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchQuery, currentPage]);
+  }, [searchQuery]);
 
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      fetchSmartResponses();
+  const handleSort = (key: keyof SmartResponse) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
     }
-  }, [currentPage]);
-
-  const handleSort = (column: keyof SmartResponse) => {
-    const newDirection = sortDirection[column] === 'asc' ? 'desc' : 'asc';
-    setSortDirection((prev) => ({ ...prev, [column]: newDirection }));
-    const sortedData = [...smartResponses].sort((a, b) => {
-      const aValue = Array.isArray(a[column]) ? a[column].join(', ') : a[column] || '';
-      const bValue = Array.isArray(b[column]) ? b[column].join(', ') : b[column] || '';
-      return newDirection === 'asc'
-        ? aValue.toString().localeCompare(bValue.toString())
-        : bValue.toString().localeCompare(aValue.toString());
-    });
-    setSmartResponses(sortedData);
+    setSortConfig({ key, direction });
   };
 
   const handleClearAll = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      await axios.delete(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/smart-responses/delete/all`, {
+      await axios.delete(`${API_BASE_URL}?action=clear`, {
         headers: { 'Content-Type': 'application/json' },
       });
       setSmartResponses([]);
       setCurrentPage(1);
-      setTotalPages(1);
       toast.success('All smart responses cleared successfully!', {
         position: 'top-right',
         autoClose: 3000,
       });
     } catch (err: any) {
-      const message = err.response?.data?.message || err.message || 'Failed to clear smart responses';
+      const message =
+        err.response?.status === 404
+          ? 'Smart responses API route not found. Please check the server configuration.'
+          : err.response?.data?.message || err.message || 'Failed to clear smart responses';
       setError(message);
       toast.error(message, {
         position: 'top-right',
@@ -181,7 +197,7 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
       setError(null);
       await Promise.all(
         selectedRows.map((id) =>
-          axios.delete(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/smart-responses/delete/${id}`, {
+          axios.delete(`${API_BASE_URL}?id=${id}`, {
             headers: { 'Content-Type': 'application/json' },
           })
         )
@@ -189,7 +205,6 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
       const updated = smartResponses.filter((r) => !selectedRows.includes(r.id));
       setSmartResponses(updated);
       setSelectedRows([]);
-      setTotalPages(Math.ceil(updated.length / itemsPerPage) || 1);
       if ((currentPage - 1) * itemsPerPage >= updated.length && currentPage > 1) {
         setCurrentPage((prev) => prev - 1);
       }
@@ -198,7 +213,10 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
         autoClose: 3000,
       });
     } catch (err: any) {
-      const message = err.response?.data?.message || err.message || 'Failed to delete selected smart responses';
+      const message =
+        err.response?.status === 404
+          ? 'Smart responses API route not found. Please check the server configuration.'
+          : err.response?.data?.message || err.message || 'Failed to delete selected smart responses';
       setError(message);
       toast.error(message, {
         position: 'top-right',
@@ -210,31 +228,22 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
     }
   };
 
-  const handleCheckboxChange = (url: string) => {
-    setSelectedUrls((prev) =>
-      prev.includes(url) ? prev.filter((item) => item !== url) : [...prev, url]
-    );
-  };
-
   const handleRowCheckboxChange = (id: number) => {
     setSelectedRows((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
   };
 
-  const getSortIcon = (column: string) => {
-    const direction = sortDirection[column];
-    if (direction === 'asc') return <ArrowUp className="h-4 w-4 ml-2" />;
-    if (direction === 'desc') return <ArrowDown className="h-4 w-4 ml-2" />;
-    return null;
+  const getSortIcon = (key: string) => {
+    if (!sortConfig || sortConfig.key !== key) return null;
+    return sortConfig.direction === 'asc' ? (
+      <ArrowUp className="h-4 w-4 ml-2" />
+    ) : (
+      <ArrowDown className="h-4 w-4 ml-2" />
+    );
   };
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
-
-  const currentData = smartResponses.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
 
   return (
     <div className="p-8 bg-white rounded-xl shadow-lg border border-gray-200">
@@ -260,7 +269,6 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
             <Plus className="h-5 w-5" />
             Add New
           </Button>
-          
           <Button
             className="px-6 py-3 bg-red-500 text-white hover:bg-red-600 flex items-center gap-3 rounded-lg"
             onClick={handleClearAll}
@@ -271,47 +279,6 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
           </Button>
         </div>
       </div>
-
-      {/* <div className="mt-8 flex flex-col w-[350px]">
-        <Label className="text-sm font-medium text-gray-700">Website</Label>
-        <div className="relative mt-2">
-          <div
-            className="w-full p-3 border border-gray-300 rounded-md flex items-center justify-between cursor-pointer bg-white"
-            onClick={() => setSelectedUrls((prev) => (prev.length > 0 ? [] : urls))}
-          >
-            <div className="flex items-center gap-2">
-              <Globe className="h-5 w-5 text-gray-500" />
-              <span className="text-gray-500">
-                {selectedUrls.length > 0 ? `${selectedUrls.length} selected` : 'Select websites'}
-              </span>
-            </div>
-            <ChevronDown
-              className={`h-5 w-5 text-gray-500 transform transition-transform ${selectedUrls.length > 0 ? 'rotate-180' : ''}`}
-            />
-          </div>
-          {selectedUrls.length > 0 && (
-            <div className="absolute w-full max-h-60 overflow-y-auto border border-gray-300 rounded-md bg-white shadow-lg z-10 mt-1">
-              {urls.map((url, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-2 p-3 hover:bg-gray-100 cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCheckboxChange(url);
-                  }}
-                >
-                  <Checkbox
-                    checked={selectedUrls.includes(url)}
-                    onCheckedChange={() => handleCheckboxChange(url)}
-                    className="h-4 w-4 text-blue-500"
-                  />
-                  <span className="text-sm text-gray-700 truncate">{url}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div> */}
 
       {isLoading ? (
         <div className="space-y-2 mt-8">
@@ -332,7 +299,17 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
             <TableHeader>
               <TableRow>
                 <TableHead className="px-4 py-4 hover:bg-gray-100 w-[5%] text-center">
-              
+                  <Checkbox
+                    checked={selectedRows.length === currentResponses.length && currentResponses.length > 0}
+                    onCheckedChange={() =>
+                      setSelectedRows(
+                        selectedRows.length === currentResponses.length
+                          ? []
+                          : currentResponses.map((r) => r.id)
+                      )
+                    }
+                    className="h-4 w-4 text-blue-500"
+                  />
                 </TableHead>
                 {['shortcuts', 'response', 'createdBy', 'company', 'websites'].map((col) => (
                   <TableHead key={col} className="px-4 py-4 hover:bg-gray-100 text-center">
@@ -350,10 +327,14 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {currentData.map((response) => (
+              {currentResponses.map((response) => (
                 <TableRow key={response.id} className="hover:bg-gray-100">
                   <TableCell className="px-4 py-3 text-center">
-        
+                    <Checkbox
+                      checked={selectedRows.includes(response.id)}
+                      onCheckedChange={() => handleRowCheckboxChange(response.id)}
+                      className="h-4 w-4 text-blue-500"
+                    />
                   </TableCell>
                   <TableCell className="px-4 py-3 text-center">
                     <div className="flex flex-wrap gap-1 justify-center">
