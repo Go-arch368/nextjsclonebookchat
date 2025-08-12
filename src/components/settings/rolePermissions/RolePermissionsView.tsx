@@ -1,12 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { toast } from 'sonner';
 import RolePermissionHeader from './RolePermissionHeader';
 import AddRolePermissionForm from './AddRolePermissionForm';
+import { toast } from 'sonner';
 
-// TypeScript interface for the role permission
 interface RolePermission {
   id: number;
   userId: number;
@@ -17,21 +15,21 @@ interface RolePermission {
 
 const RolePermissionsView: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
-  const [showEditForm, setShowEditForm] = useState(false);
+  const [editingRolePermission, setEditingRolePermission] = useState<RolePermission | null>(null);
   const [rolePermissions, setRolePermissions] = useState<RolePermission[]>([]);
-  const [selectedRolePermission, setSelectedRolePermission] = useState<RolePermission | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch all role permissions
   const fetchRolePermissions = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get<RolePermission[]>('/api/v1/settings/role-permissions?action=all');
-      setRolePermissions(response.data || []);
-      toast.success('Role permissions fetched successfully');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to fetch role permissions');
-      console.error(err);
+      const response = await fetch('/api/v1/settings/role-permissions');
+      if (!response.ok) {
+        throw new Error('Failed to fetch role permissions');
+      }
+      const data = await response.json();
+      setRolePermissions(data);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to fetch role permissions');
     } finally {
       setIsLoading(false);
     }
@@ -42,102 +40,107 @@ const RolePermissionsView: React.FC = () => {
   }, []);
 
   const handleAddClick = () => {
+    setEditingRolePermission(null);
     setShowAddForm(true);
-    setShowEditForm(false);
-    setSelectedRolePermission(null);
   };
 
   const handleEditClick = (rolePermission: RolePermission) => {
-    setSelectedRolePermission(rolePermission);
-    setShowEditForm(true);
-    setShowAddForm(false);
-  };
-
-  const handleCancel = () => {
-    setShowAddForm(false);
-    setShowEditForm(false);
-    setSelectedRolePermission(null);
-  };
-
-  const handleSave = async (rolePermission: Omit<RolePermission, 'id' | 'createdAt' | 'updatedAt'>) => {
-    try {
-      const response = await axios.post<RolePermission>('/api/v1/settings/role-permissions?action=save', {
-        ...rolePermission,
-        userId: rolePermission.userId || 1, // Default userId
-        createdAt: new Date().toISOString().slice(0, 19),
-        updatedAt: new Date().toISOString().slice(0, 19),
-      });
-      await fetchRolePermissions();
-      setShowAddForm(false);
-      toast.success('Role permission added successfully');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to save role permission');
-      console.error(err);
-    }
-  };
-
-  const handleUpdate = async (rolePermission: RolePermission) => {
-    try {
-      const response = await axios.put<RolePermission>('/api/v1/settings/role-permissions?action=update', {
-        ...rolePermission,
-        updatedAt: new Date().toISOString().slice(0, 19),
-      });
-      await fetchRolePermissions();
-      setShowEditForm(false);
-      setSelectedRolePermission(null);
-      toast.success('Role permission updated successfully');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to update role permission');
-      console.error(err);
-    }
+    setEditingRolePermission(rolePermission);
+    setShowAddForm(true);
   };
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`/api/v1/settings/role-permissions?action=delete&id=${id}`);
+      const response = await fetch(`/api/v1/settings/role-permissions?id=${id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete role permission');
+      }
+      
       await fetchRolePermissions();
       toast.success('Role permission deleted successfully');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to delete role permission');
-      console.error(err);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete role permission');
     }
   };
 
   const handleDeleteAll = async () => {
-    try {
-      await axios.delete('/api/v1/settings/role-permissions?action=delete-all');
-      setRolePermissions([]);
-      toast.success('All role permissions deleted successfully');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to delete all role permissions');
-      console.error(err);
+    if (confirm('Are you sure you want to delete all role permissions? This action cannot be undone.')) {
+      try {
+        const response = await fetch('/api/v1/settings/role-permissions/all', {
+          method: 'DELETE',
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to delete all role permissions');
+        }
+        
+        setRolePermissions([]);
+        toast.success('All role permissions deleted successfully');
+      } catch (error: any) {
+        toast.error(error.message || 'Failed to delete all role permissions');
+      }
     }
   };
 
-  const handleSearch = async (keyword: string, page: number = 0, size: number = 10) => {
+  const handleSearch = async (keyword: string) => {
     try {
       setIsLoading(true);
-      const response = await axios.get<RolePermission[]>(
-        `/api/v1/settings/role-permissions?action=search&keyword=${encodeURIComponent(keyword)}&page=${page}&size=${size}`
-      );
-      setRolePermissions(response.data || []);
-      toast.success(`Found ${response.data.length} role permission(s)`);
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to search role permissions');
-      console.error(err);
-      setRolePermissions([]);
+      const response = await fetch(`/api/v1/settings/role-permissions?keyword=${encodeURIComponent(keyword)}`);
+      if (!response.ok) {
+        throw new Error('Failed to search role permissions');
+      }
+      const data = await response.json();
+      setRolePermissions(data);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to search role permissions');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleSave = async (rolePermission: RolePermission) => {
+    try {
+      const url = '/api/v1/settings/role-permissions';
+      const method = editingRolePermission ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(rolePermission),
+      });
+
+      if (!response.ok) {
+        throw new Error(editingRolePermission 
+          ? 'Failed to update role permission' 
+          : 'Failed to create role permission');
+      }
+
+      toast.success(editingRolePermission 
+        ? 'Role permission updated successfully' 
+        : 'Role permission created successfully');
+      
+      await fetchRolePermissions();
+      setShowAddForm(false);
+    } catch (error: any) {
+      toast.error(error.message || 'An error occurred');
+    }
+  };
+
+  const handleCancel = () => {
+    setShowAddForm(false);
+    setEditingRolePermission(null);
+  };
+
   return (
     <div>
-      {showAddForm || showEditForm ? (
+      {showAddForm ? (
         <AddRolePermissionForm
-          onSave={showEditForm ? handleUpdate : handleSave}
+          onSave={handleSave}
           onCancel={handleCancel}
-          rolePermission={showEditForm ? selectedRolePermission : null}
+          rolePermission={editingRolePermission}
         />
       ) : (
         <RolePermissionHeader

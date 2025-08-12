@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
 import { Label } from '@/ui/label';
@@ -13,6 +12,7 @@ interface Template {
   businessCategory: string;
   businessSubcategory: string;
   createdBy: string;
+  company: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -23,84 +23,83 @@ interface AddTemplateFormProps {
   editingTemplate: Template | null;
 }
 
-const AddTemplateForm: React.FC<AddTemplateFormProps> = ({ onSave, onCancel, editingTemplate }) => {
-  const [formData, setFormData] = useState({
+const AddTemplateForm: React.FC<AddTemplateFormProps> = ({ 
+  onSave, 
+  onCancel, 
+  editingTemplate 
+}) => {
+  const [formData, setFormData] = useState<Omit<Template, 'id' | 'userId' | 'createdAt' | 'updatedAt'> & { 
+    id?: number;
+  }>({
     businessCategory: '',
     businessSubcategory: '',
+    createdBy: 'Admin',
+    company: 'Zotly',
   });
 
-  // Initialize form with editing data
   useEffect(() => {
     if (editingTemplate) {
       setFormData({
+        id: editingTemplate.id,
         businessCategory: editingTemplate.businessCategory,
         businessSubcategory: editingTemplate.businessSubcategory,
+        createdBy: editingTemplate.createdBy,
+        company: editingTemplate.company,
+      });
+    } else {
+      setFormData({
+        businessCategory: '',
+        businessSubcategory: '',
+        createdBy: 'Admin',
+        company: 'Zotly',
       });
     }
   }, [editingTemplate]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const validateForm = () => {
-    if (!formData.businessCategory.trim()) {
-      return 'Business Category is required.';
-    }
-    if (!formData.businessSubcategory.trim()) {
-      return 'Business Subcategory is required.';
-    }
-    return null;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const validationError = validateForm();
-    if (validationError) {
-      toast.error(validationError, {
-        position: 'top-right',
-        autoClose: 3000,
-      });
+    
+    if (!formData.businessCategory.trim()) {
+      toast.error('Business Category is required');
       return;
     }
 
-    const payload: Template = {
-      id: editingTemplate ? editingTemplate.id : Date.now(), // Temporary ID for new templates
-      userId: 1,
-      businessCategory: formData.businessCategory,
-      businessSubcategory: formData.businessSubcategory,
-      createdBy: 'admin',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    if (!formData.businessSubcategory.trim()) {
+      toast.error('Business Subcategory is required');
+      return;
+    }
 
     try {
-      if (editingTemplate) {
-        await axios.put('/api/v1/settings/templates?action=update', payload);
-        toast.success('Template updated successfully!', {
-          position: 'top-right',
-          autoClose: 3000,
-        });
-      } else {
-        const response = await axios.post<Template>('/api/v1/settings/templates?action=save', payload);
-        payload.id = response.data.id; // Use server-generated ID
-        toast.success('Template created successfully!', {
-          position: 'top-right',
-          autoClose: 3000,
-        });
+      const now = new Date().toISOString();
+      const payload = {
+        ...formData,
+        userId: 1, // Default user ID
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      const url = '/api/v1/settings/templates';
+      const method = editingTemplate ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(editingTemplate 
+          ? 'Failed to update template' 
+          : 'Failed to create template');
       }
+
+      toast.success(editingTemplate 
+        ? 'Template updated successfully' 
+        : 'Template created successfully');
+      
       onSave();
-      setFormData({
-        businessCategory: '',
-        businessSubcategory: '',
-      });
-    } catch (err) {
-      toast.error('Failed to save template. Please try again.', {
-        position: 'top-right',
-        autoClose: 3000,
-      });
-      console.error(err);
+    } catch (error: any) {
+      toast.error(error.message || 'An error occurred');
     }
   };
 
@@ -109,6 +108,7 @@ const AddTemplateForm: React.FC<AddTemplateFormProps> = ({ onSave, onCancel, edi
       <h1 className="text-4xl font-bold text-gray-800 mb-10">
         {editingTemplate ? 'Edit Template' : 'Add a new template'}
       </h1>
+      
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <Label htmlFor="businessCategory" className="text-sm font-medium text-gray-700">
@@ -116,28 +116,56 @@ const AddTemplateForm: React.FC<AddTemplateFormProps> = ({ onSave, onCancel, edi
           </Label>
           <Input
             id="businessCategory"
-            name="businessCategory"
             value={formData.businessCategory}
-            onChange={handleInputChange}
+            onChange={(e) => setFormData({ ...formData, businessCategory: e.target.value })}
             className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
             placeholder="Enter business category"
             required
           />
         </div>
+
         <div>
           <Label htmlFor="businessSubcategory" className="text-sm font-medium text-gray-700">
             Business Subcategory
           </Label>
           <Input
             id="businessSubcategory"
-            name="businessSubcategory"
             value={formData.businessSubcategory}
-            onChange={handleInputChange}
+            onChange={(e) => setFormData({ ...formData, businessSubcategory: e.target.value })}
             className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
             placeholder="Enter business subcategory"
             required
           />
         </div>
+
+        <div>
+          <Label htmlFor="createdBy" className="text-sm font-medium text-gray-700">
+            Created By
+          </Label>
+          <Input
+            id="createdBy"
+            value={formData.createdBy}
+            onChange={(e) => setFormData({ ...formData, createdBy: e.target.value })}
+            className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter creator name"
+            required
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="company" className="text-sm font-medium text-gray-700">
+            Company
+          </Label>
+          <Input
+            id="company"
+            value={formData.company}
+            onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+            className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter company name"
+            required
+          />
+        </div>
+
         <div className="flex justify-end gap-3 mt-8">
           <Button
             type="button"

@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
 import { Label } from '@/ui/label';
 import { toast } from 'sonner';
 
-// TypeScript interface for the IP address
 interface IPAddress {
   id: number;
   userId: number;
@@ -18,53 +17,75 @@ interface IPAddress {
 interface AddIPAddressFormProps {
   onSave: (ipAddress: IPAddress) => void;
   onCancel: () => void;
-  ipAddress?: IPAddress | null;
+  ipAddress: IPAddress | null;
 }
 
-const AddIPAddressForm: React.FC<AddIPAddressFormProps> = ({ onSave, onCancel, ipAddress }) => {
-  const [formData, setFormData] = useState({
-    ipAddress: ipAddress?.ipAddress || '',
+const AddIPAddressForm: React.FC<AddIPAddressFormProps> = ({ 
+  onSave, 
+  onCancel, 
+  ipAddress 
+}) => {
+  const [formData, setFormData] = useState<Omit<IPAddress, 'id' | 'userId' | 'createdAt' | 'updatedAt'> & { 
+    id?: number;
+  }>({
+    ipAddress: '',
   });
-  const [errors, setErrors] = useState<{
-    ipAddress?: string;
-  }>({});
+
+  const [errors, setErrors] = useState({
+    ipAddress: '',
+  });
+
+  useEffect(() => {
+    if (ipAddress) {
+      setFormData({
+        id: ipAddress.id,
+        ipAddress: ipAddress.ipAddress,
+      });
+    } else {
+      setFormData({
+        ipAddress: '',
+      });
+    }
+  }, [ipAddress]);
 
   const validateForm = () => {
-    const newErrors: typeof errors = {};
+    let valid = true;
+    const newErrors = {
+      ipAddress: '',
+    };
+
     const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+
     if (!formData.ipAddress.trim()) {
-      newErrors.ipAddress = 'IP address is required';
+      newErrors.ipAddress = 'IP Address is required';
+      valid = false;
     } else if (!ipRegex.test(formData.ipAddress)) {
       newErrors.ipAddress = 'Please enter a valid IP address (e.g., 192.168.1.1)';
+      valid = false;
     }
-    return newErrors;
-  };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: '' }));
+    setErrors(newErrors);
+    return valid;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const validationErrors = validateForm();
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      toast.error('Please fill all required fields correctly');
+    
+    if (!validateForm()) {
+      toast.error('Please fix the errors in the form');
       return;
     }
 
-    onSave({
-      id: ipAddress?.id || Date.now(),
-      userId: ipAddress?.userId || 1,
+    const now = new Date().toISOString();
+    const payload: IPAddress = {
+      id: formData.id || Date.now(),
+      userId: 1, // Should be replaced with actual user ID from auth
       ipAddress: formData.ipAddress,
-      createdAt: ipAddress?.createdAt || new Date().toISOString().slice(0, 19),
-      updatedAt: new Date().toISOString().slice(0, 19),
-    });
-    setFormData({ ipAddress: '' });
-    setErrors({});
-    onCancel();
+      createdAt: ipAddress?.createdAt || now,
+      updatedAt: now,
+    };
+
+    onSave(payload);
   };
 
   return (
@@ -72,21 +93,27 @@ const AddIPAddressForm: React.FC<AddIPAddressFormProps> = ({ onSave, onCancel, i
       <h1 className="text-4xl font-bold text-gray-800 mb-10">
         {ipAddress ? 'Edit IP Address' : 'Add a new IP address'}
       </h1>
+      
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <Label htmlFor="ipAddress" className="text-sm font-medium text-gray-700">
-            IP Address *
+            IP Address
           </Label>
           <Input
             id="ipAddress"
-            name="ipAddress"
             value={formData.ipAddress}
-            onChange={handleInputChange}
-            className={`w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500 ${errors.ipAddress ? 'border-red-500' : ''}`}
+            onChange={(e) => setFormData({ ...formData, ipAddress: e.target.value })}
+            className={`w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500 ${
+              errors.ipAddress ? 'border-red-500' : ''
+            }`}
             placeholder="Enter IP address (e.g., 192.168.1.1)"
+            required
           />
-          {errors.ipAddress && <p className="text-red-500 text-sm mt-1">{errors.ipAddress}</p>}
+          {errors.ipAddress && (
+            <p className="text-red-500 text-sm mt-1">{errors.ipAddress}</p>
+          )}
         </div>
+
         <div className="flex justify-end gap-3 mt-8">
           <Button
             type="button"

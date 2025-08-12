@@ -1,185 +1,148 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-// TypeScript interface for the role permission
-interface RolePermission {
-  id: number;
-  userId: number;
-  userRole: string;
-  createdAt: string;
-  updatedAt: string;
-}
+const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI
+  ? `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/role-permissions`
+  : 'https://zotly.onrender.com/api/v1/settings/role-permissions';
 
-// In-memory store for role permissions (replace with a database in production)
-let rolePermissions: RolePermission[] = [];
-
-// GET: Handle /all and /search
-export async function GET(request: Request) {
+export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const action = searchParams.get('action');
+    const { searchParams } = new URL(req.url);
+    const keyword = searchParams.get('keyword');
+    const page = searchParams.get('page') || '0';
+    const size = searchParams.get('size') || '10';
 
-    if (action === 'all') {
-      // GET /api/v1/settings/role-permissions?action=all
-      return NextResponse.json(rolePermissions, { status: 200 });
-    } else if (action === 'search') {
-      // GET /api/v1/settings/role-permissions?action=search&keyword=...&page=...&size=...
-      const keyword = searchParams.get('keyword')?.toLowerCase() || '';
-      const page = parseInt(searchParams.get('page') || '0', 10);
-      const size = parseInt(searchParams.get('size') || '10', 10);
-
-      const filteredRolePermissions = rolePermissions.filter(
-        (rolePermission) => rolePermission.userRole.toLowerCase().includes(keyword)
-      );
-
-      const start = page * size;
-      const end = start + size;
-      const paginatedRolePermissions = filteredRolePermissions.slice(start, end);
-
-      return NextResponse.json(paginatedRolePermissions, { status: 200 });
+    let url;
+    if (keyword) {
+      url = `${BACKEND_BASE_URL}/search?keyword=${encodeURIComponent(keyword)}&page=${page}&size=${size}`;
+    } else {
+      url = `${BACKEND_BASE_URL}/all`;
     }
 
-    return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-  } catch (error) {
-    console.error('Error handling GET request:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
-}
+    const res = await fetch(url, {
+      headers: { 'Content-Type': 'application/json' },
+    });
 
-// POST: Handle /save
-export async function POST(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const action = searchParams.get('action');
-
-    if (action !== 'save') {
-      return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`Backend responded with status ${res.status}: ${errorText}`);
+      throw new Error(`Backend responded with status ${res.status}`);
     }
 
-    const body: RolePermission = await request.json();
+    const data = await res.json();
+    return NextResponse.json(data);
 
-    // Validate required fields
-    if (!body.userRole?.trim()) {
-      return NextResponse.json({ error: 'User role is required' }, { status: 400 });
-    }
-
-    // Check for duplicate user role
-    if (rolePermissions.some((rp) => rp.userRole.toLowerCase() === body.userRole.toLowerCase())) {
-      return NextResponse.json(
-        { error: 'User role already exists' },
-        { status: 400 }
-      );
-    }
-
-    // Create new role permission
-    const newRolePermission: RolePermission = {
-      id: body.id || Date.now(), // Use provided ID or generate new one
-      userId: body.userId || 1, // Default to 1 if not provided
-      userRole: body.userRole,
-      createdAt: body.createdAt || new Date().toISOString().slice(0, 19),
-      updatedAt: new Date().toISOString().slice(0, 19),
-    };
-
-    rolePermissions.push(newRolePermission);
-
-    return NextResponse.json(newRolePermission, { status: 201 });
-  } catch (error) {
-    console.error('Error creating role permission:', error);
+  } catch (error: any) {
+    console.error('Error in GET role permissions:', error.message, error.stack);
     return NextResponse.json(
-      { error: 'Failed to create role permission' },
+      { message: error.message || 'Failed to fetch role permissions' },
       { status: 500 }
     );
   }
 }
 
-// PUT: Handle /update
-export async function PUT(request: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const action = searchParams.get('action');
-
-    if (action !== 'update') {
-      return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-    }
-
-    const body: RolePermission = await request.json();
-
-    // Validate required fields
-    if (!body.id) {
-      return NextResponse.json({ error: 'Role permission ID is required' }, { status: 400 });
-    }
-    if (!body.userRole?.trim()) {
-      return NextResponse.json({ error: 'User role is required' }, { status: 400 });
-    }
-
-    // Check for duplicate user role (excluding the current ID)
-    if (rolePermissions.some((rp) => rp.userRole.toLowerCase() === body.userRole.toLowerCase() && rp.id !== body.id)) {
-      return NextResponse.json(
-        { error: 'User role already exists' },
-        { status: 400 }
-      );
-    }
-
-    // Find and update the role permission
-    const index = rolePermissions.findIndex((rolePermission) => rolePermission.id === body.id);
-    if (index === -1) {
-      return NextResponse.json({ error: 'Role permission not found' }, { status: 404 });
-    }
-
-    const updatedRolePermission: RolePermission = {
-      ...rolePermissions[index],
-      userRole: body.userRole,
-      userId: body.userId || rolePermissions[index].userId,
-      createdAt: body.createdAt || rolePermissions[index].createdAt,
-      updatedAt: new Date().toISOString().slice(0, 19),
+    const body = await req.json();
+    const now = new Date().toISOString();
+    
+    const payload = {
+      ...body,
+      createdAt: now,
+      updatedAt: now,
+      userId: body.userId || 1, // Default user ID
     };
 
-    rolePermissions[index] = updatedRolePermission;
+    const res = await fetch(`${BACKEND_BASE_URL}/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
 
-    return NextResponse.json(updatedRolePermission, { status: 200 });
-  } catch (error) {
-    console.error('Error updating role permission:', error);
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`Backend responded with status ${res.status}: ${errorText}`);
+      throw new Error(`Backend responded with status ${res.status}`);
+    }
+
+    const data = await res.json();
+    return NextResponse.json(data);
+
+  } catch (error: any) {
+    console.error('Error in POST role permission:', error.message, error.stack);
     return NextResponse.json(
-      { error: 'Failed to update role permission' },
+      { message: error.message || 'Failed to create role permission' },
       { status: 500 }
     );
   }
 }
 
-// DELETE: Handle /delete/:id and /delete/all
-export async function DELETE(request: Request) {
+export async function PUT(req: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const action = searchParams.get('action');
+    const body = await req.json();
+    const now = new Date().toISOString();
+    
+    const payload = {
+      ...body,
+      updatedAt: now,
+    };
 
-    if (action === 'delete') {
-      // DELETE /api/v1/settings/role-permissions?action=delete&id=...
-      const id = parseInt(searchParams.get('id') || '0', 10);
-      if (isNaN(id) || id === 0) {
-        return NextResponse.json({ error: 'Invalid role permission ID' }, { status: 400 });
-      }
+    const res = await fetch(`${BACKEND_BASE_URL}/update`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
 
-      const index = rolePermissions.findIndex((rolePermission) => rolePermission.id === id);
-      if (index === -1) {
-        return NextResponse.json({ error: 'Role permission not found' }, { status: 404 });
-      }
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`Backend responded with status ${res.status}: ${errorText}`);
+      throw new Error(`Backend responded with status ${res.status}`);
+    }
 
-      rolePermissions.splice(index, 1);
+    const data = await res.json();
+    return NextResponse.json(data);
+
+  } catch (error: any) {
+    console.error('Error in PUT role permission:', error.message, error.stack);
+    return NextResponse.json(
+      { message: error.message || 'Failed to update role permission' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
       return NextResponse.json(
-        { message: 'Role permission deleted successfully' },
-        { status: 200 }
-      );
-    } else if (action === 'delete-all') {
-      // DELETE /api/v1/settings/role-permissions?action=delete-all
-      rolePermissions = [];
-      return NextResponse.json(
-        { message: 'All role permissions deleted successfully' },
-        { status: 200 }
+        { message: 'Missing role permission ID' },
+        { status: 400 }
       );
     }
 
-    return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-  } catch (error) {
-    console.error('Error handling DELETE request:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const res = await fetch(`${BACKEND_BASE_URL}/delete/${id}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`Backend responded with status ${res.status}: ${errorText}`);
+      throw new Error(`Backend responded with status ${res.status}`);
+    }
+
+    return NextResponse.json(
+      { message: `Role permission ${id} deleted successfully` },
+      { status: 200 }
+    );
+
+  } catch (error: any) {
+    console.error('Error in DELETE role permission:', error.message, error.stack);
+    return NextResponse.json(
+      { message: error.message || 'Failed to delete role permission' },
+      { status: 500 }
+    );
   }
 }

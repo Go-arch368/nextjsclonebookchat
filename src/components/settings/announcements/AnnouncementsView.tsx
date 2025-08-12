@@ -1,3 +1,4 @@
+// AnnouncementsView.tsx
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Plus, Camera, Trash2, Edit2 } from 'lucide-react';
@@ -39,44 +40,41 @@ const AnnouncementsView = () => {
     Dashboard: null,
   });
   const [isEditing, setIsEditing] = useState<{ [key: string]: boolean }>({
-    Login: false,
-    Dashboard: false,
+    Login: true,
+    Dashboard: true,
   });
 
-  // Fetch announcements on component mount
   useEffect(() => {
     fetchAnnouncements();
   }, []);
 
   const fetchAnnouncements = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/announcements/list`);
+      const response = await fetch('/api/settings/announcements');
       if (!response.ok) {
-        throw new Error(`Failed to fetch announcements: ${response.statusText}`);
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to fetch announcements');
       }
       const data: Announcement[] = await response.json();
-      const loginAnns = data.filter((ann) => ann.pageType === 'Login');
-      const dashboardAnns = data.filter((ann) => ann.pageType === 'Dashboard');
+      
+      const loginAnns = data.filter(ann => ann.pageType === 'Login');
+      const dashboardAnns = data.filter(ann => ann.pageType === 'Dashboard');
 
       setLoginAnnouncements(loginAnns);
       setDashboardAnnouncements(dashboardAnns);
 
-      // Set the most recent announcement in the input boxes
       if (loginAnns.length > 0) {
-        const latestLogin = loginAnns.sort((a, b) =>
-          new Date(b.updatedAt!).getTime() - new Date(a.updatedAt!).getTime()
+        const latestLogin = [...loginAnns].sort((a, b) =>
+          new Date(b.updatedAt || b.createdAt || '').getTime() -
+          new Date(a.updatedAt || a.createdAt || '').getTime()
         )[0];
         setLoginForm({
-          userId: 1,
-          pageType: 'Login',
-          title: latestLogin.title,
-          text: latestLogin.text,
-          imageUrl: latestLogin.imageUrl || '',
+          ...latestLogin,
           createdAt: latestLogin.createdAt || new Date().toISOString(),
           updatedAt: latestLogin.updatedAt || new Date().toISOString(),
         });
-        setEditingId((prev) => ({ ...prev, Login: latestLogin.id || null }));
-        setIsEditing((prev) => ({ ...prev, Login: false }));
+        setEditingId(prev => ({ ...prev, Login: latestLogin.id || null }));
+        setIsEditing(prev => ({ ...prev, Login: false }));
       } else {
         setLoginForm({
           userId: 1,
@@ -87,25 +85,22 @@ const AnnouncementsView = () => {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         });
-        setEditingId((prev) => ({ ...prev, Login: null }));
-        setIsEditing((prev) => ({ ...prev, Login: true })); // Enable inputs if no announcements
+        setEditingId(prev => ({ ...prev, Login: null }));
+        setIsEditing(prev => ({ ...prev, Login: true }));
       }
 
       if (dashboardAnns.length > 0) {
-        const latestDashboard = dashboardAnns.sort((a, b) =>
-          new Date(b.updatedAt!).getTime() - new Date(a.updatedAt!).getTime()
+        const latestDashboard = [...dashboardAnns].sort((a, b) =>
+          new Date(b.updatedAt || b.createdAt || '').getTime() -
+          new Date(a.updatedAt || a.createdAt || '').getTime()
         )[0];
         setDashboardForm({
-          userId: 1,
-          pageType: 'Dashboard',
-          title: latestDashboard.title,
-          text: latestDashboard.text,
-          imageUrl: latestDashboard.imageUrl || '',
+          ...latestDashboard,
           createdAt: latestDashboard.createdAt || new Date().toISOString(),
           updatedAt: latestDashboard.updatedAt || new Date().toISOString(),
         });
-        setEditingId((prev) => ({ ...prev, Dashboard: latestDashboard.id || null }));
-        setIsEditing((prev) => ({ ...prev, Dashboard: false }));
+        setEditingId(prev => ({ ...prev, Dashboard: latestDashboard.id || null }));
+        setIsEditing(prev => ({ ...prev, Dashboard: false }));
       } else {
         setDashboardForm({
           userId: 1,
@@ -116,12 +111,12 @@ const AnnouncementsView = () => {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         });
-        setEditingId((prev) => ({ ...prev, Dashboard: null }));
-        setIsEditing((prev) => ({ ...prev, Dashboard: true })); // Enable inputs if no announcements
+        setEditingId(prev => ({ ...prev, Dashboard: null }));
+        setIsEditing(prev => ({ ...prev, Dashboard: true }));
       }
     } catch (error: any) {
-      console.error('Error fetching announcements:', error.message);
-      alert(`Error fetching announcements: ${error.message}`);
+      console.error('Fetch error:', error);
+      alert(`Error: ${error.message}`);
     }
   };
 
@@ -131,43 +126,18 @@ const AnnouncementsView = () => {
   ) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Placeholder: API expects a URL, so we need an upload endpoint
-      alert('Image upload not implemented. Please provide an image upload endpoint to generate a URL.');
-      // If an upload endpoint is provided, replace with:
-      /*
-      const formData = new FormData();
-      formData.append('image', file);
-      try {
-        const response = await fetch('https://your-image-upload-endpoint', {
-          method: 'POST',
-          body: formData,
-        });
-        const { url } = await response.json();
-        setForm((prev) => ({ ...prev, imageUrl: url }));
-      } catch (error) {
-        console.error('Error uploading image:', error);
-        alert('Failed to upload image');
-      }
-      */
-      setForm((prev) => ({ ...prev, imageUrl: '' })); // Temporarily set to empty
+      const imageUrl = URL.createObjectURL(file);
+      setForm(prev => ({ ...prev, imageUrl }));
     }
   };
 
   const saveAnnouncement = async (form: Announcement) => {
     try {
-      // Validate form data
       if (!form.title || !form.text) {
-        console.error('Validation error: Title and text are required');
-        alert('Please fill in both title and text fields');
-        return;
+        throw new Error('Title and text are required');
       }
 
-      const url = editingId[form.pageType]
-        ? `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/announcements/update`
-        : `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/announcements/save`;
       const method = editingId[form.pageType] ? 'PUT' : 'POST';
-
-      // Prepare payload matching the schema
       const payload = {
         userId: form.userId,
         pageType: form.pageType,
@@ -179,69 +149,46 @@ const AnnouncementsView = () => {
         ...(editingId[form.pageType] && { id: editingId[form.pageType] }),
       };
 
-      // Log the request data for debugging
-      console.log('Saving announcement:', { url, method, payload });
-
-      const response = await fetch(url, {
+      const response = await fetch('/api/settings/announcements', {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-          // Add authentication headers if required, e.g.:
-          // 'Authorization': `Bearer ${yourToken}`,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error(`Error ${response.status}: ${response.statusText}`, errorData);
-        throw new Error(`Failed to save announcement: ${response.statusText}`);
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to save announcement');
       }
 
-      console.log('Announcement saved successfully');
-      setIsEditing((prev) => ({ ...prev, [form.pageType]: false }));
+      setIsEditing(prev => ({ ...prev, [form.pageType]: false }));
       fetchAnnouncements();
     } catch (error: any) {
-      console.error('Error saving announcement:', error.message, error);
-      alert(`Error saving announcement: ${error.message}`);
+      console.error('Save error:', error);
+      alert(`Error: ${error.message}`);
     }
   };
 
   const deleteAnnouncement = async (id: number, pageType: string) => {
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/announcements/delete/${id}`,
-        { method: 'DELETE' },
-      );
-      if (!response.ok) {
-        throw new Error(`Failed to delete announcement: ${response.statusText}`);
-      }
-      setIsEditing((prev) => ({ ...prev, [pageType]: true })); // Enable inputs after deletion
-      fetchAnnouncements();
-    } catch (error: any) {
-      console.error('Error deleting announcement:', error.message);
-      alert(`Error deleting announcement: ${error.message}`);
-    }
-  };
-
-  const clearAnnouncements = async () => {
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/announcements/clear`, {
+      const response = await fetch(`/api/settings/announcements?id=${id}`, {
         method: 'DELETE',
       });
+
       if (!response.ok) {
-        throw new Error(`Failed to clear announcements: ${response.statusText}`);
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to delete announcement');
       }
-      setIsEditing({ Login: true, Dashboard: true }); // Enable inputs for both sections
+
+      setIsEditing(prev => ({ ...prev, [pageType]: true }));
       fetchAnnouncements();
     } catch (error: any) {
-      console.error('Error clearing announcements:', error.message);
-      alert(`Error clearing announcements: ${error.message}`);
+      console.error('Delete error:', error);
+      alert(`Error: ${error.message}`);
     }
   };
 
   const startEditing = (pageType: string) => {
-    setIsEditing((prev) => ({ ...prev, [pageType]: true }));
+    setIsEditing(prev => ({ ...prev, [pageType]: true }));
   };
 
   const renderAnnouncementSection = (
@@ -261,35 +208,11 @@ const AnnouncementsView = () => {
             onClick={() => saveAnnouncement(form)}
           >
             <Plus className="h-5 w-5" />
-            <span>{editingId[pageType] && isEditing[pageType] ? 'Update' : 'Save'}</span>
-          </button>
-          <button
-            className="px-4 py-2 bg-red-200 text-red-700 rounded-full hover:bg-red-300 flex items-center gap-2"
-            onClick={clearAnnouncements}
-          >
-            <Trash2 className="h-5 w-5" />
-            <span>Clear All</span>
+            <span>{editingId[pageType] ? 'Update' : 'Save'}</span>
           </button>
         </div>
       </div>
 
-      <hr className="border-t border-gray-300 mb-10" />
-
-      {/* Original bg-gray-900 box, unchanged */}
-      <div className={`p-4 border bg-gray-900 rounded-lg ${pageType === 'Login' ? 'w-[350px]' : 'w-fit'} mb-6`}>
-        <p className={`text-white ${pageType === 'Login' ? 'text-lg leading-relaxed' : 'text-5xl p-5 leading-tight'}`}>
-          Welcome to Zotly {pageType === 'Login' ? 'Beta Testings.' : 'Beta'}
-        </p>
-        <span className="text-sm text-gray-400 px-5 pb-3 block">
-          For any feedback please email me directly at{' '}
-          <a href="mailto:terry@chatmetrics.com" className="underline">
-            terry@chatmetrics.com
-          </a>{' '}
-          or request to join our Zotly-Beta Slack Channel.
-        </span>
-      </div>
-
-      {/* Form for adding/editing announcements */}
       <div className="flex flex-wrap gap-8">
         <div className="flex flex-col gap-4">
           <div className="relative">
@@ -301,8 +224,7 @@ const AnnouncementsView = () => {
               id={`${pageType}-title`}
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
-              disabled={!isEditing[pageType]}
-              className={`w-[600px] p-2 border rounded-md text-black focus:outline-none focus:ring-2 focus:ring-gray-500 ${!isEditing[pageType] ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+              className="w-[600px] p-2 border rounded-md text-black focus:outline-none focus:ring-2 focus:ring-gray-500"
             />
             <div className="absolute right-2 top-10 flex gap-2">
               <button onClick={() => startEditing(pageType)}>
@@ -323,8 +245,7 @@ const AnnouncementsView = () => {
               id={`${pageType}-text`}
               value={form.text}
               onChange={(e) => setForm({ ...form, text: e.target.value })}
-              disabled={!isEditing[pageType]}
-              className={`w-[600px] p-2 border rounded-md text-black focus:outline-none focus:ring-2 focus:ring-gray-500 ${!isEditing[pageType] ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+              className="w-[600px] p-2 border rounded-md text-black focus:outline-none focus:ring-2 focus:ring-gray-500"
             />
           </div>
         </div>
@@ -333,27 +254,34 @@ const AnnouncementsView = () => {
           <label htmlFor={`image-upload-${pageType}`} className="block text-black text-sm font-medium mb-2">
             Image Upload
           </label>
+          <div className="flex items-center gap-4">
+            <label
+              htmlFor={`image-upload-${pageType}`}
+              className="px-6 py-4 bg-gray-200 text-gray-700 w-[180px] h-[180px] rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-gray-300 cursor-pointer"
+            >
+              {form.imageUrl ? (
+                <img src={form.imageUrl} alt="Preview" className="w-full h-full object-cover rounded-lg" />
+              ) : (
+                <Camera className="h-5 w-5" />
+              )}
+            </label>
+            {form.imageUrl && (
+              <button
+                onClick={() => setForm({ ...form, imageUrl: '' })}
+                className="p-2 bg-red-200 text-red-700 rounded-lg hover行為:bg-red-300"
+              >
+                <Trash2 className="h-5 w-5" />
+              </button>
+            )}
+          </div>
           <input
             type="file"
             id={`image-upload-${pageType}`}
             accept="image/*"
             className="hidden"
+
             onChange={(e) => handleImageUpload(e, setForm)}
-            disabled={!isEditing[pageType]}
           />
-          <label
-            htmlFor={`image-upload-${pageType}`}
-            className={`px-6 py-4 bg-gray-200 text-gray-700 w-[180px] h-[180px] rounded-lg flex flex-col items-center justify-center gap-2 ${!isEditing[pageType] ? 'cursor-not-allowed' : 'hover:bg-gray-300 cursor-pointer'}`}
-          >
-            {form.imageUrl ? (
-              <img src={form.imageUrl} alt="Preview" className="w-full h-full object-cover rounded-lg" />
-            ) : (
-              <div className="flex gap-4">
-                <Camera className="h-5 w-5" />
-                <Trash2 className="h-5 w-5" />
-              </div>
-            )}
-          </label>
         </div>
       </div>
     </section>

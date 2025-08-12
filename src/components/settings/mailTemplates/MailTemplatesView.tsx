@@ -27,11 +27,13 @@ const MailTemplatesView: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<MailTemplate | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const BASE_URL = '/api/v1/settings/mail-templates';
+
   // Fetch all templates
   const fetchTemplates = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get<MailTemplate[]>('/api/v1/settings/mail-templates?action=all');
+      const response = await axios.get<MailTemplate[]>(BASE_URL, { params: { page: 0, size: 1000 } });
       setTemplates(response.data || []);
       toast.success('Templates fetched successfully');
     } catch (err: any) {
@@ -66,7 +68,7 @@ const MailTemplatesView: React.FC = () => {
 
   const handleSave = async (template: Omit<MailTemplate, 'id' | 'createdAt' | 'modifiedAt'>) => {
     try {
-      const response = await axios.post<MailTemplate>('/api/v1/settings/mail-templates?action=save', {
+      const response = await axios.post<MailTemplate>(BASE_URL, {
         ...template,
         userId: template.userId || 1, // Default userId
         createdAt: new Date().toISOString().slice(0, 19),
@@ -83,7 +85,7 @@ const MailTemplatesView: React.FC = () => {
 
   const handleUpdate = async (template: MailTemplate) => {
     try {
-      const response = await axios.put<MailTemplate>('/api/v1/settings/mail-templates?action=update', {
+      const response = await axios.put<MailTemplate>(BASE_URL, {
         ...template,
         modifiedAt: new Date().toISOString().slice(0, 19),
       });
@@ -99,7 +101,7 @@ const MailTemplatesView: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`/api/v1/settings/mail-templates?action=delete&id=${id}`);
+      await axios.delete(`${BASE_URL}?id=${id}`);
       await fetchTemplates();
       toast.success('Template deleted successfully');
     } catch (err: any) {
@@ -110,7 +112,7 @@ const MailTemplatesView: React.FC = () => {
 
   const handleDeleteAll = async () => {
     try {
-      await axios.delete('/api/v1/settings/mail-templates?action=delete-all');
+      await axios.delete(`${BASE_URL}?action=clear`);
       setTemplates([]);
       toast.success('All templates deleted successfully');
     } catch (err: any) {
@@ -119,11 +121,14 @@ const MailTemplatesView: React.FC = () => {
     }
   };
 
-  const handleSearch = async (keyword: string, page: number = 0, size: number = 10) => {
+  const handleSearch = async (keyword: string) => {
     try {
       setIsLoading(true);
       const response = await axios.get<MailTemplate[]>(
-        `/api/v1/settings/mail-templates?action=search&keyword=${encodeURIComponent(keyword)}&page=${page}&size=${size}`
+        BASE_URL,
+        {
+          params: { keyword, page: 0, size: 1000 },
+        }
       );
       setTemplates(response.data || []);
       toast.success(`Found ${response.data.length} template(s)`);

@@ -1,210 +1,147 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-// TypeScript interface for the template
-interface Template {
-  id: number;
-  userId: number;
-  businessCategory: string;
-  businessSubcategory: string;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-}
+const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI
+  ? `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/templates`
+  : 'https://zotly.onrender.com/api/v1/settings/templates';
 
-// In-memory store for templates (replace with a database in production)
-let templates: Template[] = [];
-
-// GET: Handle /all and /search
-export async function GET(request: Request) {
+export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const action = searchParams.get('action');
+    const { searchParams } = new URL(req.url);
+    const keyword = searchParams.get('keyword');
+    const page = searchParams.get('page') || '0';
+    const size = searchParams.get('size') || '10';
 
-    if (action === 'all') {
-      // GET /api/v1/settings/templates?action=all
-      return NextResponse.json(templates, { status: 200 });
-    } else if (action === 'search') {
-      // GET /api/v1/settings/templates?action=search&keyword=...&page=...&size=...
-      const keyword = searchParams.get('keyword')?.toLowerCase() || '';
-      const page = parseInt(searchParams.get('page') || '0', 10);
-      const size = parseInt(searchParams.get('size') || '10', 10);
-
-      const filteredTemplates = templates.filter(
-        (template) =>
-          template.businessCategory.toLowerCase().includes(keyword) ||
-          template.businessSubcategory.toLowerCase().includes(keyword) ||
-          template.createdBy.toLowerCase().includes(keyword)
-      );
-
-      const start = page * size;
-      const end = start + size;
-      const paginatedTemplates = filteredTemplates.slice(start, end);
-
-      return NextResponse.json(paginatedTemplates, { status: 200 });
+    let url;
+    if (keyword) {
+      url = `${BACKEND_BASE_URL}/search?keyword=${encodeURIComponent(keyword)}&page=${page}&size=${size}`;
+    } else {
+      url = `${BACKEND_BASE_URL}/all`;
     }
 
-    return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-  } catch (error) {
-    console.error('Error handling GET request:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
-}
+    const res = await fetch(url, {
+      headers: { 'Content-Type': 'application/json' },
+    });
 
-// POST: Handle /save
-export async function POST(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const action = searchParams.get('action');
-
-    if (action !== 'save') {
-      return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`Backend responded with status ${res.status}: ${errorText}`);
+      throw new Error(`Backend responded with status ${res.status}`);
     }
 
-    const body: Template = await request.json();
+    const data = await res.json();
+    return NextResponse.json(data);
 
-    // Validate required fields
-    if (!body.businessCategory?.trim()) {
-      return NextResponse.json(
-        { error: 'Business Category is required' },
-        { status: 400 }
-      );
-    }
-    if (!body.businessSubcategory?.trim()) {
-      return NextResponse.json(
-        { error: 'Business Subcategory is required' },
-        { status: 400 }
-      );
-    }
-
-    // Create new template
-    const newTemplate: Template = {
-      id: body.id || Date.now(), // Use provided ID or generate new one
-      userId: body.userId || 1, // Default to 1 if not provided
-      businessCategory: body.businessCategory,
-      businessSubcategory: body.businessSubcategory,
-      createdBy: body.createdBy || 'admin',
-      createdAt: body.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    templates.push(newTemplate);
-
-    return NextResponse.json(newTemplate, { status: 201 });
-  } catch (error) {
-    console.error('Error creating template:', error);
+  } catch (error: any) {
+    console.error('Error in GET templates:', error.message, error.stack);
     return NextResponse.json(
-      { error: 'Failed to create template' },
+      { message: error.message || 'Failed to fetch templates' },
       { status: 500 }
     );
   }
 }
 
-// PUT: Handle /update
-export async function PUT(request: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const action = searchParams.get('action');
-
-    if (action !== 'update') {
-      return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-    }
-
-    const body: Template = await request.json();
-
-    // Validate required fields
-    if (!body.id) {
-      return NextResponse.json(
-        { error: 'Template ID is required' },
-        { status: 400 }
-      );
-    }
-    if (!body.businessCategory?.trim()) {
-      return NextResponse.json(
-        { error: 'Business Category is required' },
-        { status: 400 }
-      );
-    }
-    if (!body.businessSubcategory?.trim()) {
-      return NextResponse.json(
-        { error: 'Business Subcategory is required' },
-        { status: 400 }
-      );
-    }
-
-    // Find and update the template
-    const index = templates.findIndex((template) => template.id === body.id);
-    if (index === -1) {
-      return NextResponse.json(
-        { error: 'Template not found' },
-        { status: 404 }
-      );
-    }
-
-    const updatedTemplate: Template = {
-      ...templates[index],
-      businessCategory: body.businessCategory,
-      businessSubcategory: body.businessSubcategory,
-      updatedAt: new Date().toISOString(),
-      createdBy: body.createdBy || templates[index].createdBy,
-      userId: body.userId || templates[index].userId,
-      createdAt: body.createdAt || templates[index].createdAt,
+    const body = await req.json();
+    const now = new Date().toISOString();
+    
+    const payload = {
+      ...body,
+      createdAt: now,
+      updatedAt: now,
+      userId: body.userId || 1, // Default user ID
     };
 
-    templates[index] = updatedTemplate;
+    const res = await fetch(`${BACKEND_BASE_URL}/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
 
-    return NextResponse.json(updatedTemplate, { status: 200 });
-  } catch (error) {
-    console.error('Error updating template:', error);
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`Backend responded with status ${res.status}: ${errorText}`);
+      throw new Error(`Backend responded with status ${res.status}`);
+    }
+
+    const data = await res.json();
+    return NextResponse.json(data);
+
+  } catch (error: any) {
+    console.error('Error in POST template:', error.message, error.stack);
     return NextResponse.json(
-      { error: 'Failed to update template' },
+      { message: error.message || 'Failed to create template' },
       { status: 500 }
     );
   }
 }
 
-// DELETE: Handle /delete/:id and /delete/all
-export async function DELETE(request: Request) {
+export async function PUT(req: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const action = searchParams.get('action');
+    const body = await req.json();
+    const now = new Date().toISOString();
+    
+    const payload = {
+      ...body,
+      updatedAt: now,
+    };
 
-    if (action === 'delete') {
-      // DELETE /api/v1/settings/templates?action=delete&id=...
-      const id = parseInt(searchParams.get('id') || '0', 10);
-      if (isNaN(id) || id === 0) {
-        return NextResponse.json(
-          { error: 'Invalid Template ID' },
-          { status: 400 }
-        );
-      }
+    const res = await fetch(`${BACKEND_BASE_URL}/update`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
 
-      const index = templates.findIndex((template) => template.id === id);
-      if (index === -1) {
-        return NextResponse.json(
-          { error: 'Template not found' },
-          { status: 404 }
-        );
-      }
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`Backend responded with status ${res.status}: ${errorText}`);
+      throw new Error(`Backend responded with status ${res.status}`);
+    }
 
-      templates.splice(index, 1);
+    const data = await res.json();
+    return NextResponse.json(data);
+
+  } catch (error: any) {
+    console.error('Error in PUT template:', error.message, error.stack);
+    return NextResponse.json(
+      { message: error.message || 'Failed to update template' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
       return NextResponse.json(
-        { message: 'Template deleted successfully' },
-        { status: 200 }
-      );
-    } else if (action === 'delete-all') {
-      // DELETE /api/v1/settings/templates?action=delete-all
-      templates = [];
-      return NextResponse.json(
-        { message: 'All templates deleted successfully' },
-        { status: 200 }
+        { message: 'Missing template ID' },
+        { status: 400 }
       );
     }
 
-    return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-  } catch (error) {
-    console.error('Error handling DELETE request:', error);
+    const res = await fetch(`${BACKEND_BASE_URL}/delete/${id}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`Backend responded with status ${res.status}: ${errorText}`);
+      throw new Error(`Backend responded with status ${res.status}`);
+    }
+
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { message: `Template ${id} deleted successfully` },
+      { status: 200 }
+    );
+
+  } catch (error: any) {
+    console.error('Error in DELETE template:', error.message, error.stack);
+    return NextResponse.json(
+      { message: error.message || 'Failed to delete template' },
       { status: 500 }
     );
   }

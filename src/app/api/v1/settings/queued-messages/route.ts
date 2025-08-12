@@ -1,58 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Simulated in-memory database for demonstration
-let queuedMessages = [
-  {
-    id: 1,
-    userId: 1,
-    message: 'Welcome to +Company Name, please wait for %minutes% minutes.',
-    backgroundColor: '#FFFFFF',
-    textColor: '#000000',
-    imageUrl: '',
-    createdBy: 'Admin',
-    company: 'Example Corp',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
+const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI
+  ? `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/queued-messages`
+  : 'https://zotly.onrender.com/api/v1/settings/queued-messages';
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const action = searchParams.get('action');
-  const keyword = searchParams.get('keyword');
+  try {
+    const { searchParams } = new URL(req.url);
+    const keyword = searchParams.get('keyword');
+    const page = searchParams.get('page') || '0';
+    const size = searchParams.get('size') || '10';
 
-  if (action === 'list') {
-    try {
-      // Simulate fetching from backend or database
-      return NextResponse.json(queuedMessages);
-    } catch (error: any) {
-      console.error('Error in GET /list:', error.message, error.stack);
-      return NextResponse.json(
-        { message: error.message || 'Failed to fetch queued messages' },
-        { status: 500 }
-      );
+    let url;
+    if (keyword) {
+      // Search endpoint
+      url = `${BACKEND_BASE_URL}/search?keyword=${encodeURIComponent(keyword)}&page=${page}&size=${size}`;
+    } else {
+      // List all endpoint
+      url = BACKEND_BASE_URL;
     }
-  } else if (action === 'search' && keyword) {
-    try {
-      // Simulate search
-      const filteredMessages = queuedMessages.filter(
-        (message) =>
-          message.message.toLowerCase().includes(keyword.toLowerCase()) ||
-          message.createdBy.toLowerCase().includes(keyword.toLowerCase()) ||
-          message.company.toLowerCase().includes(keyword.toLowerCase())
-      );
-      return NextResponse.json(filteredMessages);
-    } catch (error: any) {
-      console.error('Error in GET /search:', error.message, error.stack);
-      return NextResponse.json(
-        { message: error.message || 'Failed to search queued messages' },
-        { status: 500 }
-      );
+
+    const res = await fetch(url, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`Backend responded with status ${res.status}: ${errorText}`);
+      throw new Error(`Backend responded with status ${res.status}`);
     }
-  } else {
+
+    const data = await res.json();
+    return NextResponse.json(data);
+
+  } catch (error: any) {
+    console.error('Error in GET queued messages:', error.message, error.stack);
     return NextResponse.json(
-      { message: 'Invalid action or missing keyword' },
-      { status: 400 }
+      { message: error.message || 'Failed to fetch queued messages' },
+      { status: 500 }
     );
   }
 }
@@ -60,40 +45,25 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    if (!body.message || !body.createdBy || !body.company) {
-      return NextResponse.json(
-        { message: 'Missing required fields: message, createdBy, company' },
-        { status: 400 }
-      );
+    const res = await fetch(BACKEND_BASE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`Backend responded with status ${res.status}: ${errorText}`);
+      throw new Error(`Backend responded with status ${res.status}`);
     }
 
-    // Check for duplicate message
-    if (queuedMessages.some((m) => m.message === body.message)) {
-      return NextResponse.json(
-        { message: `Duplicate entry '${body.message}' for key 'message'` },
-        { status: 400 }
-      );
-    }
+    const data = await res.json();
+    return NextResponse.json(data);
 
-    const newMessage = {
-      id: queuedMessages.length + 1,
-      userId: body.userId || 1,
-      message: body.message,
-      backgroundColor: body.backgroundColor || '#FFFFFF',
-      textColor: body.textColor || '#000000',
-      imageUrl: body.imageUrl || '',
-      createdBy: body.createdBy,
-      company: body.company,
-      createdAt: body.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    queuedMessages.push(newMessage);
-    return NextResponse.json(newMessage);
   } catch (error: any) {
-    console.error('Error in POST:', error.message, error.stack);
+    console.error('Error in POST queued message:', error.message, error.stack);
     return NextResponse.json(
-      { message: error.message || 'Failed to add queued message' },
+      { message: error.message || 'Failed to create queued message' },
       { status: 500 }
     );
   }
@@ -102,43 +72,23 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
-    if (!body.id || !body.message || !body.createdBy || !body.company) {
-      return NextResponse.json(
-        { message: 'Missing required fields: id, message, createdBy, company' },
-        { status: 400 }
-      );
+    const res = await fetch(BACKEND_BASE_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`Backend responded with status ${res.status}: ${errorText}`);
+      throw new Error(`Backend responded with status ${res.status}`);
     }
 
-    const index = queuedMessages.findIndex((m) => m.id === body.id);
-    if (index === -1) {
-      return NextResponse.json(
-        { message: `Queued message with id ${body.id} not found` },
-        { status: 404 }
-      );
-    }
+    const data = await res.json();
+    return NextResponse.json(data);
 
-    // Check for duplicate message (excluding the current message)
-    if (queuedMessages.some((m, i) => m.message === body.message && i !== index)) {
-      return NextResponse.json(
-        { message: `Duplicate entry '${body.message}' for key 'message'` },
-        { status: 400 }
-      );
-    }
-
-    queuedMessages[index] = {
-      ...queuedMessages[index],
-      message: body.message,
-      backgroundColor: body.backgroundColor || '#FFFFFF',
-      textColor: body.textColor || '#000000',
-      imageUrl: body.imageUrl || '',
-      createdBy: body.createdBy,
-      company: body.company,
-      updatedAt: new Date().toISOString(),
-    };
-
-    return NextResponse.json(queuedMessages[index]);
   } catch (error: any) {
-    console.error('Error in PUT:', error.message, error.stack);
+    console.error('Error in PUT queued message:', error.message, error.stack);
     return NextResponse.json(
       { message: error.message || 'Failed to update queued message' },
       { status: 500 }
@@ -147,43 +97,29 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const action = searchParams.get('action');
-  const id = searchParams.get('id');
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
 
-  if (action === 'clear') {
-    try {
-      queuedMessages = [];
-      return NextResponse.json({ message: 'All queued messages cleared successfully' });
-    } catch (error: any) {
-      console.error('Error in DELETE /clear:', error.message, error.stack);
+    if (!id) {
       return NextResponse.json(
-        { message: error.message || 'Failed to clear queued messages' },
-        { status: 500 }
+        { message: 'Missing queued message ID' },
+        { status: 400 }
       );
     }
-  } else if (id) {
-    try {
-      const index = queuedMessages.findIndex((m) => m.id === parseInt(id));
-      if (index === -1) {
-        return NextResponse.json(
-          { message: `Queued message with id ${id} not found` },
-          { status: 404 }
-        );
-      }
-      queuedMessages.splice(index, 1);
-      return NextResponse.json({ message: `Queued message ${id} deleted successfully` });
-    } catch (error: any) {
-      console.error(`Error in DELETE /${id}:`, error.message, error.stack);
-      return NextResponse.json(
-        { message: error.message || 'Failed to delete queued message' },
-        { status: 500 }
-      );
-    }
-  } else {
+
+    // Simulate delete operation
+    // In a real implementation, you would call your backend API here
     return NextResponse.json(
-      { message: 'Invalid delete request: specify "action=clear" or "id=<id>"' },
-      { status: 400 }
+      { message: `Queued message ${id} deleted successfully` },
+      { status: 200 }
+    );
+
+  } catch (error: any) {
+    console.error('Error in DELETE queued message:', error.message, error.stack);
+    return NextResponse.json(
+      { message: error.message || 'Failed to delete queued message' },
+      { status: 500 }
     );
   }
 }

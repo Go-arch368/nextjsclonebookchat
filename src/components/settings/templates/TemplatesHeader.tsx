@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
 import { Plus, Pencil, Trash2, ArrowUp, ArrowDown, Search } from 'lucide-react';
 import { Input } from '@/ui/input';
 import { Button } from '@/ui/button';
@@ -15,6 +14,7 @@ interface Template {
   businessCategory: string;
   businessSubcategory: string;
   createdBy: string;
+  company: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -22,160 +22,92 @@ interface Template {
 interface TemplatesHeaderProps {
   onAddClick: () => void;
   onEditClick: (template: Template) => void;
+  onDelete: (id: number) => void;
+  templates: Template[];
+  isLoading: boolean;
 }
 
 const TemplatesHeader: React.FC<TemplatesHeaderProps> = ({
   onAddClick,
   onEditClick,
+  onDelete,
+  templates,
+  isLoading,
 }) => {
-  const [tableData, setTableData] = useState<Template[]>([]);
-  const [sortDirection, setSortDirection] = useState<Record<string, 'asc' | 'desc' | null>>({
-    businessCategory: null,
-    businessSubcategory: null,
-    createdBy: null,
-  });
-  const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
+  const [sortConfig, setSortConfig] = useState<{
+    key: keyof Template;
+    direction: 'asc' | 'desc';
+  } | null>(null);
+  
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
-  // Fetch all templates on mount
-  useEffect(() => {
-    const fetchTemplates = async () => {
-      try {
-        setIsLoading(true);
-        const response = await axios.get<Template[]>('/api/v1/settings/templates?action=all');
-        setTableData(response.data);
-      } catch (err) {
-        toast.error('Failed to fetch templates. Please try again.', {
-          position: 'top-right',
-          autoClose: 3000,
-        });
-        console.error(err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchTemplates();
-  }, []);
-
-  // Handle search
-  const handleSearch = async (query: string) => {
-    try {
-      setIsLoading(true);
-      const response = await axios.get<Template[]>(
-        `/api/v1/settings/templates?action=search&keyword=${encodeURIComponent(query)}&page=${currentPage - 1}&size=10`
-      );
-      setTableData(response.data);
-    } catch (err) {
-      toast.error('Failed to search templates. Please try again.', {
-        position: 'top-right',
-        autoClose: 3000,
-      });
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Debounce search input
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      if (searchQuery) {
-        handleSearch(searchQuery);
-      } else {
-        const fetchAll = async () => {
-          try {
-            setIsLoading(true);
-            const response = await axios.get<Template[]>('/api/v1/settings/templates?action=all');
-            setTableData(response.data);
-          } catch (err) {
-            toast.error('Failed to fetch templates. Please try again.', {
-              position: 'top-right',
-              autoClose: 3000,
-            });
-            console.error(err);
-          } finally {
-            setIsLoading(false);
-          }
-        };
-        fetchAll();
-      }
-    }, 500);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchQuery, currentPage]);
-
-  const handleSort = (column: keyof Template) => {
-    const newDirection = sortDirection[column] === 'asc' ? 'desc' : 'asc';
-    setSortDirection((prev) => ({ ...prev, [column]: newDirection }));
-    const sortedData = [...tableData].sort((a, b) => {
-      const aValue = a[column] || '';
-      const bValue = b[column] || '';
-      return newDirection === 'asc'
-        ? aValue.toString().localeCompare(bValue.toString())
-        : bValue.toString().localeCompare(aValue.toString());
-    });
-    setTableData(sortedData);
-  };
-
-  const handleDelete = async (id: number) => {
-    try {
-      await axios.delete(`/api/v1/settings/templates?action=delete&id=${id}`);
-      setTableData((prev) => {
-        const newData = prev.filter((item) => item.id !== id);
-        if (newData.length <= (currentPage - 1) * 5) {
-          setCurrentPage((prev) => Math.max(1, prev - 1));
+  const sortedTemplates = React.useMemo(() => {
+    let sortableItems = [...templates];
+    if (sortConfig !== null) {
+      sortableItems.sort((a, b) => {
+        const aValue = a[sortConfig.key] || '';
+        const bValue = b[sortConfig.key] || '';
+        
+        if (aValue < bValue) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
         }
-        return newData;
+        if (aValue > bValue) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
       });
-      toast.success('Template deleted successfully!', {
-        position: 'top-right',
-        autoClose: 3000,
-      });
-    } catch (err) {
-      toast.error('Failed to delete template. Please try again.', {
-        position: 'top-right',
-        autoClose: 3000,
-      });
-      console.error(err);
     }
+    return sortableItems;
+  }, [templates, sortConfig]);
+
+  const filteredTemplates = sortedTemplates.filter(template =>
+    template.businessCategory.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    template.businessSubcategory.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    template.createdBy.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const paginatedTemplates = filteredTemplates.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const totalPages = Math.ceil(filteredTemplates.length / itemsPerPage);
+
+  const requestSort = (key: keyof Template) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig?.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortIcon = (key: keyof Template) => {
+    if (!sortConfig || sortConfig.key !== key) return null;
+    return sortConfig.direction === 'asc' 
+      ? <ArrowUp className="h-4 w-4 ml-2" /> 
+      : <ArrowDown className="h-4 w-4 ml-2" />;
   };
 
   const handleDeleteAll = async () => {
     if (confirm('Are you sure you want to delete all templates? This action cannot be undone.')) {
       try {
-        await axios.delete('/api/v1/settings/templates?action=delete-all');
-        setTableData([]);
-        setCurrentPage(1);
-        toast.success('All templates deleted successfully!', {
-          position: 'top-right',
-          autoClose: 3000,
+        const response = await fetch('/api/v1/settings/templates/all', {
+          method: 'DELETE',
         });
-      } catch (err) {
-        toast.error('Failed to delete all templates. Please try again.', {
-          position: 'top-right',
-          autoClose: 3000,
-        });
-        console.error(err);
+        
+        if (!response.ok) {
+          throw new Error('Failed to delete all templates');
+        }
+        
+        toast.success('All templates deleted successfully');
+        window.location.reload();
+      } catch (error: any) {
+        toast.error(error.message || 'Failed to delete all templates');
       }
     }
   };
-
-  const getSortIcon = (column: string) => {
-    const direction = sortDirection[column];
-    if (direction === 'asc') return <ArrowUp className="h-4 w-4 ml-2" />;
-    if (direction === 'desc') return <ArrowDown className="h-4 w-4 ml-2" />;
-    return null;
-  };
-
-  const itemsPerPage = 5;
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentData = tableData.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(tableData.length / itemsPerPage);
-
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   return (
     <div className="p-8 bg-white rounded-xl shadow-lg border border-gray-200">
@@ -202,20 +134,21 @@ const TemplatesHeader: React.FC<TemplatesHeaderProps> = ({
           <Button
             className="px-6 py-3 bg-red-500 text-white hover:bg-red-600 flex items-center gap-3 rounded-lg"
             onClick={handleDeleteAll}
-            disabled={tableData.length === 0}
+            disabled={templates.length === 0}
           >
             <Trash2 className="h-5 w-5" />
             <span>Delete All</span>
           </Button>
         </div>
       </div>
+
       {isLoading ? (
         <div className="space-y-2">
           {[...Array(5)].map((_, index) => (
             <Skeleton key={index} className="h-12 w-full" />
           ))}
         </div>
-      ) : tableData.length === 0 ? (
+      ) : templates.length === 0 ? (
         <div className="flex justify-center items-center h-64">
           <Button onClick={onAddClick}>
             <Plus className="mr-2 h-4 w-4" />
@@ -227,65 +160,66 @@ const TemplatesHeader: React.FC<TemplatesHeaderProps> = ({
           <Table className="border border-gray-200 w-full">
             <TableHeader>
               <TableRow>
-                <TableHead className="px-4 py-4 hover:bg-gray-100 w-1/4 text-center">
+                <TableHead className="px-4 py-4 hover:bg-gray-100 w-2/5 text-center">
                   <Button
                     variant="ghost"
-                    onClick={() => handleSort('businessCategory')}
+                    onClick={() => requestSort('businessCategory')}
                     className="p-0 w-full flex items-center justify-center"
                   >
-                    <span>Business category</span>
+                    <span>Business Category</span>
                     {getSortIcon('businessCategory')}
                   </Button>
                 </TableHead>
-                <TableHead className="px-4 py-4 hover:bg-gray-100 w-1/4 text-center">
+                <TableHead className="px-4 py-4 hover:bg-gray-100 w-2/5 text-center">
                   <Button
                     variant="ghost"
-                    onClick={() => handleSort('businessSubcategory')}
+                    onClick={() => requestSort('businessSubcategory')}
                     className="p-0 w-full flex items-center justify-center"
                   >
-                    <span>Business subcategory</span>
+                    <span>Business Subcategory</span>
                     {getSortIcon('businessSubcategory')}
                   </Button>
                 </TableHead>
-                <TableHead className="px-4 py-4 hover:bg-gray-100 w-1/4 text-center">
+                <TableHead className="px-4 py-4 hover:bg-gray-100 w-1/5 text-center">
                   <Button
                     variant="ghost"
-                    onClick={() => handleSort('createdBy')}
+                    onClick={() => requestSort('createdBy')}
                     className="p-0 w-full flex items-center justify-center"
                   >
                     <span>Created By</span>
                     {getSortIcon('createdBy')}
                   </Button>
                 </TableHead>
-                <TableHead className="px-4 py-4 hover:bg-gray-100 w-1/4 text-center">Details</TableHead>
+                <TableHead className="px-4 py-4 hover:bg-gray-100 w-1/5 text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {currentData.map((item) => (
+              {paginatedTemplates.map((item) => (
                 <TableRow key={item.id} className="hover:bg-gray-100">
-                  <TableCell className="px-4 py-3 w-1/4 text-left text-ellipsis overflow-hidden max-w-0">{item.businessCategory}</TableCell>
-                  <TableCell className="px-4 py-3 w-1/4 text-left text-ellipsis overflow-hidden max-w-0">{item.businessSubcategory || '-'}</TableCell>
-                  <TableCell className="px-4 py-3 w-1/4 text-center">
-                    <div className="flex flex-col items-center gap-1">
-                      <span>{item.createdBy}</span>
-                      <span className="text-sm text-gray-600">{new Date(item.updatedAt).toLocaleString()}</span>
-                    </div>
+                  <TableCell className="px-4 py-3 w-2/5 text-left text-ellipsis overflow-hidden max-w-0">
+                    {item.businessCategory}
                   </TableCell>
-                  <TableCell className="px-4 py-3 w-1/4 text-center">
-                    <div className="flex justify-center gap-2">
+                  <TableCell className="px-4 py-3 w-2/5 text-left text-ellipsis overflow-hidden max-w-0">
+                    {item.businessSubcategory || '-'}
+                  </TableCell>
+                  <TableCell className="px-4 py-3 w-1/5 truncate text-center">
+                    {item.createdBy}
+                  </TableCell>
+                  <TableCell className="px-4 py-3 w-1/5 truncate text-center">
+                    <div className="flex justify-center space-x-2">
                       <Button
                         variant="ghost"
-                        className="bg-white p-1 rounded-full"
+                        className="bg-white p-1 rounded"
                         onClick={() => onEditClick(item)}
                       >
-                        <Pencil className="h-4 w-4 text-blue-600" />
+                        <Pencil className="h-4 w-4 text-blue-500" />
                       </Button>
                       <Button
                         variant="ghost"
-                        className="bg-white p-1 rounded-full"
-                        onClick={() => handleDelete(item.id)}
+                        className="bg-white p-1 rounded"
+                        onClick={() => onDelete(item.id)}
                       >
-                        <Trash2 className="h-4 w-4 text-red-600" />
+                        <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
                     </div>
                   </TableCell>
@@ -293,18 +227,21 @@ const TemplatesHeader: React.FC<TemplatesHeaderProps> = ({
               ))}
             </TableBody>
           </Table>
-          <div className="flex justify-center mt-4 gap-1">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <Button
-                key={page}
-                variant={currentPage === page ? 'default' : 'outline'}
-                onClick={() => paginate(page)}
-                className="px-3 py-1"
-              >
-                {page}
-              </Button>
-            ))}
-          </div>
+
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-4">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <Button
+                  key={page}
+                  variant={currentPage === page ? 'default' : 'outline'}
+                  onClick={() => setCurrentPage(page)}
+                  className="mx-1"
+                >
+                  {page}
+                </Button>
+              ))}
+            </div>
+          )}
         </>
       )}
     </div>

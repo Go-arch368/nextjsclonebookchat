@@ -1,194 +1,234 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-// TypeScript interface for the knowledge base record
-interface KnowledgeBaseRecord {
-  id?: number;
-  userId?: number;
-  questionTitle: string;
-  answerInformation: string;
-  keywords: string;
-  websites: string[];
-  createdAt?: string;
-  updatedAt?: string;
-}
+const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI
+  ? `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/knowledge-bases`
+  : 'https://zotly.onrender.com/api/v1/settings/knowledge-bases';
 
-// In-memory store for knowledge base records (replace with a database in production)
-let knowledgeBaseRecords: KnowledgeBaseRecord[] = [];
-
-// GET: Handle /all and /search
-export async function GET(request: Request) {
+export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = new URL(req.url);
     const action = searchParams.get('action');
+    const keyword = searchParams.get('keyword');
+    const page = searchParams.get('page') || '0';
+    const size = searchParams.get('size') || '10';
+    const id = searchParams.get('id');
 
-    if (action === 'all') {
-      // GET /api/v1/settings/knowledge-bases?action=all
-      return NextResponse.json(knowledgeBaseRecords, { status: 200 });
-    } else if (action === 'search') {
-      // GET /api/v1/settings/knowledge-bases?action=search&keyword=...&page=...&size=...
-      const keyword = searchParams.get('keyword')?.toLowerCase() || '';
-      const page = parseInt(searchParams.get('page') || '0', 10);
-      const size = parseInt(searchParams.get('size') || '5', 10);
-
-      const filteredRecords = knowledgeBaseRecords.filter(
-        (record) =>
-          record.questionTitle.toLowerCase().includes(keyword) ||
-          record.answerInformation.toLowerCase().includes(keyword) ||
-          record.keywords.toLowerCase().includes(keyword) ||
-          record.websites.some((website) => website.toLowerCase().includes(keyword))
-      );
-
-      const start = page * size;
-      const end = start + size;
-      const paginatedRecords = filteredRecords.slice(start, end);
-
-      return NextResponse.json(paginatedRecords, { status: 200 });
-    }
-
-    return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-  } catch (error) {
-    console.error('Error handling GET request:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
-}
-
-// POST: Handle /save
-export async function POST(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const action = searchParams.get('action');
-
-    if (action !== 'save') {
-      return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-    }
-
-    const body: KnowledgeBaseRecord = await request.json();
-
-    // Validate required fields
-    if (!body.questionTitle?.trim()) {
-      return NextResponse.json({ error: 'Question/Title is required' }, { status: 400 });
-    }
-    if (!body.answerInformation?.trim()) {
-      return NextResponse.json({ error: 'Answer/Information is required' }, { status: 400 });
-    }
-    if (!body.keywords?.trim()) {
-      return NextResponse.json({ error: 'Keywords are required' }, { status: 400 });
-    }
-
-    // Create new knowledge base record
-    const newRecord: KnowledgeBaseRecord = {
-      id: body.id || Date.now(), // Use provided ID or generate new one
-      userId: body.userId || 1, // Default to 1 if not provided
-      questionTitle: body.questionTitle.trim(),
-      answerInformation: body.answerInformation.trim(),
-      keywords: body.keywords.trim(),
-      websites: body.websites || [],
-      createdAt: body.createdAt || new Date().toISOString().slice(0, 19),
-      updatedAt: new Date().toISOString().slice(0, 19),
-    };
-
-    knowledgeBaseRecords.push(newRecord);
-
-    return NextResponse.json(newRecord, { status: 201 });
-  } catch (error) {
-    console.error('Error creating knowledge base record:', error);
-    return NextResponse.json(
-      { error: 'Failed to create knowledge base record' },
-      { status: 500 }
-    );
-  }
-}
-
-// PUT: Handle /update
-export async function PUT(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const action = searchParams.get('action');
-
-    if (action !== 'update') {
-      return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-    }
-
-    const body: KnowledgeBaseRecord = await request.json();
-
-    // Validate required fields
-    if (!body.id) {
-      return NextResponse.json({ error: 'Record ID is required' }, { status: 400 });
-    }
-    if (!body.questionTitle?.trim()) {
-      return NextResponse.json({ error: 'Question/Title is required' }, { status: 400 });
-    }
-    if (!body.answerInformation?.trim()) {
-      return NextResponse.json({ error: 'Answer/Information is required' }, { status: 400 });
-    }
-    if (!body.keywords?.trim()) {
-      return NextResponse.json({ error: 'Keywords are required' }, { status: 400 });
-    }
-
-    // Find and update the knowledge base record
-    const index = knowledgeBaseRecords.findIndex((record) => record.id === body.id);
-    if (index === -1) {
-      return NextResponse.json({ error: 'Knowledge base record not found' }, { status: 404 });
-    }
-
-    const updatedRecord: KnowledgeBaseRecord = {
-      ...knowledgeBaseRecords[index],
-      questionTitle: body.questionTitle.trim(),
-      answerInformation: body.answerInformation.trim(),
-      keywords: body.keywords.trim(),
-      websites: body.websites || [],
-      userId: body.userId || knowledgeBaseRecords[index].userId,
-      createdAt: body.createdAt || knowledgeBaseRecords[index].createdAt,
-      updatedAt: new Date().toISOString().slice(0, 19),
-    };
-
-    knowledgeBaseRecords[index] = updatedRecord;
-
-    return NextResponse.json(updatedRecord, { status: 200 });
-  } catch (error) {
-    console.error('Error updating knowledge base record:', error);
-    return NextResponse.json(
-      { error: 'Failed to update knowledge base record' },
-      { status: 500 }
-    );
-  }
-}
-
-// DELETE: Handle /delete/:id and /delete/all
-export async function DELETE(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const action = searchParams.get('action');
-
-    if (action === 'delete') {
-      // DELETE /api/v1/settings/knowledge-bases?action=delete&id=...
-      const id = parseInt(searchParams.get('id') || '0', 10);
-      if (isNaN(id) || id === 0) {
-        return NextResponse.json({ error: 'Invalid record ID' }, { status: 400 });
-      }
-
-      const index = knowledgeBaseRecords.findIndex((record) => record.id === id);
-      if (index === -1) {
-        return NextResponse.json({ error: 'Knowledge base record not found' }, { status: 404 });
-      }
-
-      knowledgeBaseRecords.splice(index, 1);
+    let url;
+    if (action === 'search' && keyword) {
+      url = `${BACKEND_BASE_URL}/search?keyword=${encodeURIComponent(keyword)}&page=${page}&size=${size}`;
+    } else if (action === 'all') {
+      url = `${BACKEND_BASE_URL}/all`;
+    } else {
       return NextResponse.json(
-        { message: 'Knowledge base record deleted successfully' },
+        { message: 'Invalid action parameter' },
+        { status: 400 }
+      );
+    }
+
+    const res = await fetch(url, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`Backend responded with status ${res.status}: ${errorText}`);
+      throw new Error(`Backend responded with status ${res.status}`);
+    }
+
+    const data = await res.json();
+    return NextResponse.json(data);
+
+  } catch (error: any) {
+    console.error('Error in GET knowledge bases:', error.message, error.stack);
+    return NextResponse.json(
+      { message: error.message || 'Failed to fetch knowledge bases' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const action = searchParams.get('action');
+    
+    if (action !== 'save') {
+      return NextResponse.json(
+        { message: 'Invalid action parameter' },
+        { status: 400 }
+      );
+    }
+
+    const body = await req.json();
+    const now = new Date().toISOString();
+    
+    // Validate required fields
+    if (!body.questionTitle?.trim()) {
+      return NextResponse.json(
+        { message: 'Question/Title is required' },
+        { status: 400 }
+      );
+    }
+    if (!body.answerInformation?.trim()) {
+      return NextResponse.json(
+        { message: 'Answer/Information is required' },
+        { status: 400 }
+      );
+    }
+    if (!body.keywords?.trim()) {
+      return NextResponse.json(
+        { message: 'Keywords are required' },
+        { status: 400 }
+      );
+    }
+
+    const payload = {
+      ...body,
+      userId: body.userId || 1, // Default user ID
+      createdAt: now,
+      updatedAt: now,
+      websites: Array.isArray(body.websites) ? body.websites : [],
+    };
+
+    const res = await fetch(`${BACKEND_BASE_URL}/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`Backend responded with status ${res.status}: ${errorText}`);
+      throw new Error(`Backend responded with status ${res.status}`);
+    }
+
+    const data = await res.json();
+    return NextResponse.json(data);
+
+  } catch (error: any) {
+    console.error('Error in POST knowledge base:', error.message, error.stack);
+    return NextResponse.json(
+      { message: error.message || 'Failed to create knowledge base record' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const action = searchParams.get('action');
+    
+    if (action !== 'update') {
+      return NextResponse.json(
+        { message: 'Invalid action parameter' },
+        { status: 400 }
+      );
+    }
+
+    const body = await req.json();
+    const now = new Date().toISOString();
+    
+    // Validate required fields
+    if (!body.questionTitle?.trim()) {
+      return NextResponse.json(
+        { message: 'Question/Title is required' },
+        { status: 400 }
+      );
+    }
+    if (!body.answerInformation?.trim()) {
+      return NextResponse.json(
+        { message: 'Answer/Information is required' },
+        { status: 400 }
+      );
+    }
+    if (!body.keywords?.trim()) {
+      return NextResponse.json(
+        { message: 'Keywords are required' },
+        { status: 400 }
+      );
+    }
+
+    const payload = {
+      ...body,
+      updatedAt: now,
+      websites: Array.isArray(body.websites) ? body.websites : [],
+    };
+
+    const res = await fetch(`${BACKEND_BASE_URL}/update`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`Backend responded with status ${res.status}: ${errorText}`);
+      throw new Error(`Backend responded with status ${res.status}`);
+    }
+
+    const data = await res.json();
+    return NextResponse.json(data);
+
+  } catch (error: any) {
+    console.error('Error in PUT knowledge base:', error.message, error.stack);
+    return NextResponse.json(
+      { message: error.message || 'Failed to update knowledge base record' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const action = searchParams.get('action');
+    const id = searchParams.get('id');
+
+    if (action === 'delete' && id) {
+      const res = await fetch(`${BACKEND_BASE_URL}/delete/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error(`Backend responded with status ${res.status}: ${errorText}`);
+        throw new Error(`Backend responded with status ${res.status}`);
+      }
+
+      return NextResponse.json(
+        { message: `Knowledge base record ${id} deleted successfully` },
         { status: 200 }
       );
     } else if (action === 'delete-all') {
-      // DELETE /api/v1/settings/knowledge-bases?action=delete-all
-      knowledgeBaseRecords = [];
+      const res = await fetch(`${BACKEND_BASE_URL}/delete/all`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error(`Backend responded with status ${res.status}: ${errorText}`);
+        throw new Error(`Backend responded with status ${res.status}`);
+      }
+
       return NextResponse.json(
         { message: 'All knowledge base records deleted successfully' },
         { status: 200 }
       );
+    } else {
+      return NextResponse.json(
+        { message: 'Invalid action parameter' },
+        { status: 400 }
+      );
     }
 
-    return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-  } catch (error) {
-    console.error('Error handling DELETE request:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Error in DELETE knowledge base:', error.message, error.stack);
+    return NextResponse.json(
+      { message: error.message || 'Failed to delete knowledge base record' },
+      { status: 500 }
+    );
   }
 }

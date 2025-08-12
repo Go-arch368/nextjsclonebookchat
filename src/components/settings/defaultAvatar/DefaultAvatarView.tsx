@@ -2,40 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import axios from "axios";
 import AvatarTemplatesView from "./AvatarTemplatesView";
 import { Avatar } from "@/types/avatar";
 
-// Add axios interceptors for better error handling
-axios.interceptors.request.use(config => {
-  console.log('Request:', config.method?.toUpperCase(), config.url);
-  return config;
-}, error => {
-  console.error('Request error:', error);
-  return Promise.reject(error);
-});
-
-axios.interceptors.response.use(response => {
-  console.log('Response:', response.status, response.config.url);
-  return response;
-}, error => {
-  if (error.response) {
-    console.error('API Error:', {
-      status: error.response.status,
-      data: error.response.data,
-      url: error.config.url,
-      method: error.config.method
-    });
-  } else {
-    console.error('Network Error:', error.message);
-  }
-  return Promise.reject(error);
-});
-
-const fetchWithRetry = async (url: string, options = {}, retries = 3) => {
+const fetchWithRetry = async (url: string, options: RequestInit = {}, retries = 3) => {
   try {
-    const response = await axios({ url, ...options });
-    return response;
+    const response = await fetch(url, options);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    return await response.json();
   } catch (error) {
     if (retries <= 0) throw error;
     await new Promise(resolve => setTimeout(resolve, 1000 * (4 - retries)));
@@ -61,42 +35,25 @@ export default function DefaultAvatarView() {
   const fetchDefaultAvatar = async () => {
     try {
       setIsLoading(true);
-      const response = await fetchWithRetry(
-        `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/default-avatars/get/1`
-      );
+      const data = await fetchWithRetry('/api/settings/default-avatars?id=1');
       
-      if (response.data && typeof response.data === 'object' && 
-          response.data.avatarImageUrl !== undefined) {
+      if (data && data.avatarImageUrl !== undefined) {
         setDefaultAvatar({
-          id: response.data.id || "0",
-          userId: response.data.userId || 1,
-          name: response.data.name || "",
-          jobTitle: response.data.jobTitle || "",
-          avatarImageUrl: response.data.avatarImageUrl || ""
+          id: data.id || "0",
+          userId: data.userId || 1,
+          name: data.name || "",
+          jobTitle: data.jobTitle || "",
+          avatarImageUrl: data.avatarImageUrl || ""
         });
       } else {
-        console.warn("No valid avatar data returned:", response.data);
         toast.info("No default avatar found");
       }
     } catch (error: any) {
-      const errorDetails = {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message,
-        config: {
-          url: error.config?.url,
-          method: error.config?.method
-        }
-      };
-      console.error("Error fetching default avatar:", errorDetails);
-      
-      if (error.response?.status === 404) {
+      console.error("Error fetching default avatar:", error);
+      if (error.message.includes('404')) {
         toast.info("No default avatar found");
       } else {
-        toast.error(
-          error.response?.data?.message || 
-          "Failed to load default avatar. Please try again later."
-        );
+        toast.error(error.message || "Failed to load default avatar");
       }
     } finally {
       setIsLoading(false);
@@ -111,24 +68,16 @@ export default function DefaultAvatarView() {
 
     try {
       setIsLoading(true);
-      const payload = {
-        userId: defaultAvatar.userId,
-        name: defaultAvatar.name,
-        jobTitle: defaultAvatar.jobTitle,
-        avatarImageUrl: defaultAvatar.avatarImageUrl,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+      const response = await fetchWithRetry('/api/settings/default-avatars', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...defaultAvatar,
+          id: "1" // Using 1 as the default avatar ID
+        })
+      });
 
-      const response = await fetchWithRetry(
-        `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/default-avatars/save`,
-        {
-          method: "post",
-          data: payload
-        }
-      );
-      
-      setNewAvatar(response.data);
+      setNewAvatar(response);
       setDefaultAvatar({
         id: "0",
         userId: 1,
@@ -138,12 +87,8 @@ export default function DefaultAvatarView() {
       });
       toast.success("Default avatar saved successfully!");
     } catch (error: any) {
-      console.error("Error saving default avatar:", {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message,
-      });
-      toast.error(`Failed to save default avatar: ${error.response?.data?.message || error.message}`);
+      console.error("Error saving default avatar:", error);
+      toast.error(error.message || "Failed to save default avatar");
     } finally {
       setIsLoading(false);
     }
@@ -152,10 +97,9 @@ export default function DefaultAvatarView() {
   const handleClear = async () => {
     try {
       setIsLoading(true);
-      await fetchWithRetry(
-        `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/default-avatars/delete/1`,
-        { method: 'delete' }
-      );
+      await fetchWithRetry('/api/settings/default-avatars?id=1', {
+        method: 'DELETE'
+      });
       setDefaultAvatar({
         id: "0",
         userId: 1,
@@ -165,12 +109,8 @@ export default function DefaultAvatarView() {
       });
       toast.success("Default avatar cleared successfully!");
     } catch (error: any) {
-      console.error("Error clearing default avatar:", {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message,
-      });
-      toast.error(`Failed to clear default avatar: ${error.response?.data?.message || error.message}`);
+      console.error("Error clearing default avatar:", error);
+      toast.error(error.message || "Failed to clear default avatar");
     } finally {
       setIsLoading(false);
     }

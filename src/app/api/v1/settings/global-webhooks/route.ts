@@ -1,179 +1,127 @@
 import { NextRequest, NextResponse } from 'next/server';
-import axios from 'axios';
 
-interface GlobalWebhook {
-  id: number;
-  userId: number;
-  event: string;
-  dataTypeEnabled: boolean;
-  destination: 'TARGET_URL' | 'EMAIL' | 'BOTH';
-  email: string;
-  targetUrl: string;
-  createdBy: string;
-  company: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI || 'https://zotly.onrender.com';
+const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI
+  ? `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/global-webhooks`
+  : 'https://zotly.onrender.com/api/v1/settings/global-webhooks';
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const action = searchParams.get('action');
-  const keyword = searchParams.get('keyword');
-
   try {
-    if (action === 'list') {
-      const response = await axios.get<GlobalWebhook[]>(`${API_BASE_URL}/api/v1/settings/global-webhooks`);
-      if (!Array.isArray(response.data)) {
-        throw new Error('Invalid response format: Expected an array');
-      }
-      return NextResponse.json(response.data);
-    } else if (action === 'search' && keyword) {
-      const response = await axios.get<GlobalWebhook[]>(
-        `${API_BASE_URL}/api/v1/settings/global-webhooks/search?keyword=${encodeURIComponent(keyword)}`
-      );
-      if (!Array.isArray(response.data)) {
-        throw new Error('Invalid response format: Expected an array');
-      }
-      return NextResponse.json(response.data);
+    const { searchParams } = new URL(req.url);
+    const keyword = searchParams.get('keyword');
+    const page = searchParams.get('page') || '0';
+    const size = searchParams.get('size') || '10';
+
+    let url;
+    if (keyword) {
+      url = `${BACKEND_BASE_URL}/search?keyword=${encodeURIComponent(keyword)}&page=${page}&size=${size}`;
     } else {
-      return NextResponse.json(
-        { message: 'Invalid action or missing keyword' },
-        { status: 400 }
-      );
+      url = BACKEND_BASE_URL;
     }
+
+    const res = await fetch(url, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`Backend responded with status ${res.status}: ${errorText}`);
+      throw new Error(`Backend responded with status ${res.status}`);
+    }
+
+    const data = await res.json();
+    return NextResponse.json(data);
   } catch (error: any) {
-    console.error(`Error in GET /${action || 'unknown'}:`, error.message, error.stack);
-    const message =
-      error.response?.status === 404
-        ? 'Global Webhooks API route not found. Please check the server configuration.'
-        : error.response?.data?.message || error.message || 'Failed to fetch global webhooks';
-    return NextResponse.json({ message }, { status: error.response?.status || 500 });
+    console.error('Error in GET global webhooks:', error.message, error.stack);
+    return NextResponse.json(
+      { message: error.message || 'Failed to fetch global webhooks' },
+      { status: 500 }
+    );
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    if (
-      !body.event ||
-      !body.destination ||
-      !body.createdBy ||
-      !body.company ||
-      (body.destination === 'EMAIL' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) ||
-      (body.destination === 'TARGET_URL' && !body.targetUrl) ||
-      (body.destination === 'BOTH' && (!body.email || !body.targetUrl))
-    ) {
-      return NextResponse.json(
-        { message: 'Missing or invalid required fields: event, destination, email (for EMAIL/BOTH), targetUrl (for TARGET_URL/BOTH), createdBy, company' },
-        { status: 400 }
-      );
+    const res = await fetch(BACKEND_BASE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`Backend responded with status ${res.status}: ${errorText}`);
+      throw new Error(`Backend responded with status ${res.status}`);
     }
 
-    if (body.destination === 'TARGET_URL' || body.destination === 'BOTH') {
-      try {
-        new URL(body.targetUrl);
-      } catch {
-        return NextResponse.json(
-          { message: 'Invalid targetUrl format' },
-          { status: 400 }
-        );
-      }
-    }
-
-    const response = await axios.post<GlobalWebhook>(
-      `${API_BASE_URL}/api/v1/settings/global-webhooks`,
-      body,
-      { headers: { 'Content-Type': 'application/json' } }
-    );
-    return NextResponse.json(response.data);
+    const data = await res.json();
+    return NextResponse.json(data);
   } catch (error: any) {
-    console.error('Error in POST:', error.message, error.stack);
-    const message =
-      error.response?.status === 404
-        ? 'Global Webhooks API route not found. Please check the server configuration.'
-        : error.response?.status === 405
-        ? 'Method not allowed. Please check the API configuration.'
-        : error.response?.data?.message || error.message || 'Failed to add global webhook';
-    return NextResponse.json({ message }, { status: error.response?.status || 500 });
+    console.error('Error in POST global webhook:', error.message, error.stack);
+    return NextResponse.json(
+      { message: error.message || 'Failed to create global webhook' },
+      { status: 500 }
+    );
   }
 }
 
 export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
-    if (
-      !body.id ||
-      !body.event ||
-      !body.destination ||
-      !body.createdBy ||
-      !body.company ||
-      (body.destination === 'EMAIL' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) ||
-      (body.destination === 'TARGET_URL' && !body.targetUrl) ||
-      (body.destination === 'BOTH' && (!body.email || !body.targetUrl))
-    ) {
-      return NextResponse.json(
-        { message: 'Missing or invalid required fields: id, event, destination, email (for EMAIL/BOTH), targetUrl (for TARGET_URL/BOTH), createdBy, company' },
-        { status: 400 }
-      );
+    const res = await fetch(BACKEND_BASE_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`Backend responded with status ${res.status}: ${errorText}`);
+      throw new Error(`Backend responded with status ${res.status}`);
     }
 
-    if (body.destination === 'TARGET_URL' || body.destination === 'BOTH') {
-      try {
-        new URL(body.targetUrl);
-      } catch {
-        return NextResponse.json(
-          { message: 'Invalid targetUrl format' },
-          { status: 400 }
-        );
-      }
-    }
-
-    const response = await axios.put<GlobalWebhook>(
-      `${API_BASE_URL}/api/v1/settings/global-webhooks`,
-      body,
-      { headers: { 'Content-Type': 'application/json' } }
-    );
-    return NextResponse.json(response.data);
+    const data = await res.json();
+    return NextResponse.json(data);
   } catch (error: any) {
-    console.error('Error in PUT:', error.message, error.stack);
-    const message =
-      error.response?.status === 404
-        ? 'Global Webhooks API route not found. Please check the server configuration.'
-        : error.response?.status === 405
-        ? 'Method not allowed. Please check the API configuration.'
-        : error.response?.data?.message || error.message || 'Failed to update global webhook';
-    return NextResponse.json({ message }, { status: error.response?.status || 500 });
+    console.error('Error in PUT global webhook:', error.message, error.stack);
+    return NextResponse.json(
+      { message: error.message || 'Failed to update global webhook' },
+      { status: 500 }
+    );
   }
 }
 
 export async function DELETE(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const action = searchParams.get('action');
-  const id = searchParams.get('id');
-
   try {
-    if (action === 'clear') {
-      await axios.delete(`${API_BASE_URL}/api/v1/settings/global-webhooks/clear`);
-      return NextResponse.json({ message: 'All global webhooks cleared successfully' });
-    } else if (id) {
-      await axios.delete(`${API_BASE_URL}/api/v1/settings/global-webhooks/${id}`);
-      return NextResponse.json({ message: `Global webhook ${id} deleted successfully` });
-    } else {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
       return NextResponse.json(
-        { message: 'Invalid delete request: specify "action=clear" or "id=<id>"' },
+        { message: 'Missing global webhook ID' },
         { status: 400 }
       );
     }
+
+    const res = await fetch(`${BACKEND_BASE_URL}?id=${id}`, {
+      method: 'DELETE',
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`Backend responded with status ${res.status}: ${errorText}`);
+      throw new Error(`Backend responded with status ${res.status}`);
+    }
+
+    return NextResponse.json(
+      { message: `Global webhook ${id} deleted successfully` },
+      { status: 200 }
+    );
   } catch (error: any) {
-    console.error(`Error in DELETE /${action || id || 'unknown'}:`, error.message, error.stack);
-    const message =
-      error.response?.status === 404
-        ? 'Global Webhooks API route not found. Please check the server configuration.'
-        : error.response?.status === 405
-        ? 'Method not allowed. Please check the API configuration.'
-        : error.response?.data?.message || error.message || 'Failed to delete global webhook';
-    return NextResponse.json({ message }, { status: error.response?.status || 500 });
+    console.error('Error in DELETE global webhook:', error.message, error.stack);
+    return NextResponse.json(
+      { message: error.message || 'Failed to delete global webhook' },
+      { status: 500 }
+    );
   }
 }

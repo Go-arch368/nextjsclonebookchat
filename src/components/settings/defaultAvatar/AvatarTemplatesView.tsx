@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { Skeleton } from "@/ui/skeleton";
 import { Plus, Trash2 } from "lucide-react";
-import axios from "axios";
 import { toast } from "react-toastify";
 import { Avatar } from "@/types/avatar";
 
@@ -12,10 +11,11 @@ interface AvatarTemplatesViewProps {
   newAvatar?: Avatar | null;
 }
 
-const fetchWithRetry = async (url: string, options = {}, retries = 3) => {
+const fetchWithRetry = async (url: string, options: RequestInit = {}, retries = 3) => {
   try {
-    const response = await axios({ url, ...options });
-    return response;
+    const response = await fetch(url, options);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    return await response.json();
   } catch (error) {
     if (retries <= 0) throw error;
     await new Promise(resolve => setTimeout(resolve, 1000 * (4 - retries)));
@@ -27,7 +27,7 @@ export default function AvatarTemplatesView({ onSelectTemplate, newAvatar }: Ava
   const [isLoading, setIsLoading] = useState(true);
   const [templates, setTemplates] = useState<Avatar[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newTemplate, setNewTemplate] = useState<Omit<Avatar, "createdAt" | "updatedAt" | "id">>({
+  const [newTemplate, setNewTemplate] = useState<Omit<Avatar, "id" | "createdAt" | "updatedAt">>({
     userId: 1,
     name: "",
     jobTitle: "Support Agent",
@@ -35,7 +35,7 @@ export default function AvatarTemplatesView({ onSelectTemplate, newAvatar }: Ava
   });
   const [searchKeyword, setSearchKeyword] = useState("");
   const [page, setPage] = useState(0);
-  const [pageSize] = useState(10);
+  const pageSize = 10;
 
   useEffect(() => {
     fetchTemplates();
@@ -43,10 +43,9 @@ export default function AvatarTemplatesView({ onSelectTemplate, newAvatar }: Ava
 
   useEffect(() => {
     if (newAvatar) {
-      setTemplates((prev) => {
-        // Avoid duplicates by checking if the avatar ID already exists
-        if (prev.some((t) => t.id === newAvatar.id)) {
-          return prev.map((t) => (t.id === newAvatar.id ? newAvatar : t));
+      setTemplates(prev => {
+        if (prev.some(t => t.id === newAvatar.id)) {
+          return prev.map(t => (t.id === newAvatar.id ? newAvatar : t));
         }
         return [newAvatar, ...prev];
       });
@@ -56,119 +55,129 @@ export default function AvatarTemplatesView({ onSelectTemplate, newAvatar }: Ava
   const fetchTemplates = async () => {
     try {
       setIsLoading(true);
-      const url = searchKeyword
-        ? `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/default-avatars/search?keyword=${encodeURIComponent(
-            searchKeyword
-          )}&page=${page}&size=${pageSize}`
-        : `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/default-avatars/list`;
+      const endpoint = searchKeyword 
+        ? `/api/settings/default-avatars?keyword=${encodeURIComponent(searchKeyword)}&page=${page}&size=${pageSize}`
+        : '/api/settings/default-avatars';
+
+      const data = await fetchWithRetry(endpoint);
       
-      const response = await fetchWithRetry(url, { method: 'get' });
-
-      if (!Array.isArray(response.data)) {
-        console.error("Invalid API response: Expected an array, got:", response.data);
-        setTemplates([]);
-        toast.error("Invalid data from server");
-        return;
-      }
-
-      const validTemplates = response.data.filter(
-        (item: any): item is Avatar =>
-          item &&
-          typeof item === "object" &&
-          (typeof item.id === "string" || typeof item.id === "number") &&
-          typeof item.userId === "number" &&
-          typeof item.name === "string" &&
-          typeof item.avatarImageUrl === "string"
+      const validTemplates = data.filter((item: any): item is Avatar =>
+        item && typeof item === "object" &&
+        (typeof item.id === "string" || typeof item.id === "number") &&
+        typeof item.userId === "number" &&
+        typeof item.name === "string" &&
+        typeof item.avatarImageUrl === "string"
       );
 
       setTemplates(validTemplates);
     } catch (error: any) {
-      console.error("Error fetching templates:", {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message,
-      });
+      console.error("Error fetching templates:", error);
       setTemplates([]);
-      toast.error(error.response?.data?.message || "Failed to load avatar templates");
+      toast.error(error.message || "Failed to load avatar templates");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleAddTemplate = async () => {
-    if (!newTemplate.name || !newTemplate.avatarImageUrl) {
-      toast.error("Please fill all required fields");
-      return;
-    }
+const handleAddTemplate = async () => {
+  if (!newTemplate.name || !newTemplate.avatarImageUrl) {
+    toast.error("Please fill all required fields");
+    return;
+  }
 
-    try {
-      const tempTemplate: Avatar = {
-        id: `temp-${Date.now()}`,
+  try {
+    // Create temporary template for optimistic UI
+    const tempTemplate: Avatar = {
+      id: `temp-${Date.now()}`,
+      ...newTemplate,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setTemplates(prev => [...prev, tempTemplate]);
+
+    const response = await fetch('/api/settings/default-avatars', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         ...newTemplate,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      setTemplates((prev) => [...prev, tempTemplate]);
+        updatedAt: new Date().toISOString()
+      }),
+    });
 
-      const response = await fetchWithRetry(
-        `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/default-avatars/save`,
-        {
-          method: "post",
-          data: {
-            ...newTemplate,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          },
-        }
-      );
-
-      setNewTemplate({
-        userId: 1,
-        name: "",
-        jobTitle: "Support Agent",
-        avatarImageUrl: "",
-      });
-      setShowAddForm(false);
-
-      setTemplates((prev) =>
-        prev.map((t) =>
-          t.id === tempTemplate.id ? { ...response.data, id: response.data.id } : t
-        )
-      );
-      toast.success("Avatar template added successfully!");
-    } catch (error: any) {
-      console.error("Error adding template:", {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message,
-      });
-      toast.error(error.response?.data?.message || "Failed to add avatar template");
-      await fetchTemplates();
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to save avatar');
     }
-  };
 
-  const handleDeleteTemplate = async (template: Avatar) => {
-    if (!template.id) {
-      toast.error("Template ID not found");
-      return;
+    const savedAvatar = await response.json();
+    
+    // Replace temporary avatar with saved one
+    setTemplates(prev => 
+      prev.map(t => t.id === tempTemplate.id ? savedAvatar : t)
+    );
+    
+    setNewTemplate({
+      userId: 1,
+      name: "",
+      jobTitle: "Support Agent",
+      avatarImageUrl: "",
+    });
+    setShowAddForm(false);
+    
+    toast.success("Avatar template added successfully!");
+  } catch (error: any) {
+    // Remove temporary avatar if save failed
+    
+    
+    console.error('Save error details:', {
+      error: error.message,
+      payload: newTemplate
+    });
+    toast.error(`Failed to add avatar: ${error.message}`);
+  }
+};
+
+const handleDeleteTemplate = async (template: Avatar) => {
+  if (!template.id) {
+    toast.error("Template ID not found");
+    return;
+  }
+
+  try {
+    // Optimistic UI update
+    setTemplates(prev => prev.filter(t => t.id !== template.id));
+
+    const response = await fetch(`/api/settings/default-avatars?id=${template.id}`, {
+      method: 'DELETE'
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Deletion failed';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorMessage;
+      } catch {
+        errorMessage = response.statusText || errorMessage;
+      }
+      throw new Error(errorMessage);
     }
-    try {
-      setTemplates((prev) => prev.filter((t) => t.id !== template.id));
-      await fetchWithRetry(
-        `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/settings/default-avatars/delete/${template.id}`,
-        { method: 'delete' }
-      );
-      toast.success("Avatar template deleted successfully!");
-    } catch (error: any) {
-      console.error("Error deleting template:", {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message,
-      });
-      toast.error(error.response?.data?.message || "Failed to delete avatar template");
-      await fetchTemplates();
-    }
-  };
+
+    // Success case - no need to parse empty response
+    toast.success("Avatar template deleted successfully!");
+  } catch (error: any) {
+    // Revert optimistic update
+    setTemplates(prev => [...prev, template]);
+    
+    console.error('Delete error:', {
+      error: error.message,
+      templateId: template.id
+    });
+    
+    toast.error(`Deletion failed: ${error.message}`);
+    await fetchTemplates(); // Refresh the list
+  }
+};
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md border border-gray-200">

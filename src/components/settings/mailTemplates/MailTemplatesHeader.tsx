@@ -26,7 +26,7 @@ interface MailTemplatesHeaderProps {
   onEditClick: (template: MailTemplate) => void;
   onDelete: (id: number) => void;
   onDeleteAll: () => void;
-  onSearch: (keyword: string, page?: number, size?: number) => void;
+  onSearch: (keyword: string) => void;
   templates: MailTemplate[];
   isLoading: boolean;
 }
@@ -60,7 +60,7 @@ const MailTemplatesHeader: React.FC<MailTemplatesHeaderProps> = ({
         ? aValue.toString().localeCompare(bValue.toString())
         : bValue.toString().localeCompare(aValue.toString());
     });
-    onSearch(searchKeyword, currentPage - 1, 5);
+    // setTemplates(sortedData);
   };
 
   const getSortIcon = (column: string) => {
@@ -78,12 +78,11 @@ const MailTemplatesHeader: React.FC<MailTemplatesHeaderProps> = ({
 
   const paginate = (pageNumber: number) => {
     setCurrentPage(pageNumber);
-    onSearch(searchKeyword, pageNumber - 1, itemsPerPage);
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchKeyword(e.target.value);
-    onSearch(e.target.value, 0, itemsPerPage);
+    onSearch(e.target.value);
     setCurrentPage(1);
   };
 

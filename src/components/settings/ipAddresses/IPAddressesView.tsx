@@ -1,12 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { toast } from 'sonner';
 import IPAddressesHeader from './IPAddressesHeader';
 import AddIPAddressForm from './AddIPAddressForm';
+import { toast } from 'sonner';
 
-// TypeScript interface for the IP address
 interface IPAddress {
   id: number;
   userId: number;
@@ -17,21 +15,21 @@ interface IPAddress {
 
 const IPAddressesView: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
-  const [showEditForm, setShowEditForm] = useState(false);
+  const [editingIPAddress, setEditingIPAddress] = useState<IPAddress | null>(null);
   const [ipAddresses, setIPAddresses] = useState<IPAddress[]>([]);
-  const [selectedIPAddress, setSelectedIPAddress] = useState<IPAddress | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch all IP addresses
   const fetchIPAddresses = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get<IPAddress[]>('/api/v1/settings/ip-addresses?action=all');
-      setIPAddresses(response.data || []);
-      toast.success('IP addresses fetched successfully');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to fetch IP addresses');
-      console.error(err);
+      const response = await fetch('/api/v1/settings/ip-addresses');
+      if (!response.ok) {
+        throw new Error('Failed to fetch IP addresses');
+      }
+      const data = await response.json();
+      setIPAddresses(data);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to fetch IP addresses');
     } finally {
       setIsLoading(false);
     }
@@ -42,102 +40,107 @@ const IPAddressesView: React.FC = () => {
   }, []);
 
   const handleAddClick = () => {
+    setEditingIPAddress(null);
     setShowAddForm(true);
-    setShowEditForm(false);
-    setSelectedIPAddress(null);
   };
 
   const handleEditClick = (ipAddress: IPAddress) => {
-    setSelectedIPAddress(ipAddress);
-    setShowEditForm(true);
-    setShowAddForm(false);
-  };
-
-  const handleCancel = () => {
-    setShowAddForm(false);
-    setShowEditForm(false);
-    setSelectedIPAddress(null);
-  };
-
-  const handleSave = async (ipAddress: Omit<IPAddress, 'id' | 'createdAt' | 'updatedAt'>) => {
-    try {
-      const response = await axios.post<IPAddress>('/api/v1/settings/ip-addresses?action=save', {
-        ...ipAddress,
-        userId: ipAddress.userId || 1, // Default userId
-        createdAt: new Date().toISOString().slice(0, 19),
-        updatedAt: new Date().toISOString().slice(0, 19),
-      });
-      await fetchIPAddresses();
-      setShowAddForm(false);
-      toast.success('IP address added successfully');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to save IP address');
-      console.error(err);
-    }
-  };
-
-  const handleUpdate = async (ipAddress: IPAddress) => {
-    try {
-      const response = await axios.put<IPAddress>('/api/v1/settings/ip-addresses?action=update', {
-        ...ipAddress,
-        updatedAt: new Date().toISOString().slice(0, 19),
-      });
-      await fetchIPAddresses();
-      setShowEditForm(false);
-      setSelectedIPAddress(null);
-      toast.success('IP address updated successfully');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to update IP address');
-      console.error(err);
-    }
+    setEditingIPAddress(ipAddress);
+    setShowAddForm(true);
   };
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`/api/v1/settings/ip-addresses?action=delete&id=${id}`);
+      const response = await fetch(`/api/v1/settings/ip-addresses?id=${id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete IP address');
+      }
+      
       await fetchIPAddresses();
       toast.success('IP address deleted successfully');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to delete IP address');
-      console.error(err);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete IP address');
     }
   };
 
   const handleDeleteAll = async () => {
-    try {
-      await axios.delete('/api/v1/settings/ip-addresses?action=delete-all');
-      setIPAddresses([]);
-      toast.success('All IP addresses deleted successfully');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to delete all IP addresses');
-      console.error(err);
+    if (confirm('Are you sure you want to delete all IP addresses? This action cannot be undone.')) {
+      try {
+        const response = await fetch('/api/v1/settings/ip-addresses/all', {
+          method: 'DELETE',
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to delete all IP addresses');
+        }
+        
+        setIPAddresses([]);
+        toast.success('All IP addresses deleted successfully');
+      } catch (error: any) {
+        toast.error(error.message || 'Failed to delete all IP addresses');
+      }
     }
   };
 
-  const handleSearch = async (keyword: string, page: number = 0, size: number = 10) => {
+  const handleSearch = async (keyword: string) => {
     try {
       setIsLoading(true);
-      const response = await axios.get<IPAddress[]>(
-        `/api/v1/settings/ip-addresses?action=search&keyword=${encodeURIComponent(keyword)}&page=${page}&size=${size}`
-      );
-      setIPAddresses(response.data || []);
-      toast.success(`Found ${response.data.length} IP address(es)`);
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to search IP addresses');
-      console.error(err);
-      setIPAddresses([]);
+      const response = await fetch(`/api/v1/settings/ip-addresses?keyword=${encodeURIComponent(keyword)}`);
+      if (!response.ok) {
+        throw new Error('Failed to search IP addresses');
+      }
+      const data = await response.json();
+      setIPAddresses(data);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to search IP addresses');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleSave = async (ipAddress: IPAddress) => {
+    try {
+      const url = '/api/v1/settings/ip-addresses';
+      const method = editingIPAddress ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ipAddress),
+      });
+
+      if (!response.ok) {
+        throw new Error(editingIPAddress 
+          ? 'Failed to update IP address' 
+          : 'Failed to create IP address');
+      }
+
+      toast.success(editingIPAddress 
+        ? 'IP address updated successfully' 
+        : 'IP address created successfully');
+      
+      await fetchIPAddresses();
+      setShowAddForm(false);
+    } catch (error: any) {
+      toast.error(error.message || 'An error occurred');
+    }
+  };
+
+  const handleCancel = () => {
+    setShowAddForm(false);
+    setEditingIPAddress(null);
+  };
+
   return (
     <div>
-      {showAddForm || showEditForm ? (
+      {showAddForm ? (
         <AddIPAddressForm
-          onSave={showEditForm ? handleUpdate : handleSave}
+          onSave={handleSave}
           onCancel={handleCancel}
-          ipAddress={showEditForm ? selectedIPAddress : null}
+          ipAddress={editingIPAddress}
         />
       ) : (
         <IPAddressesHeader

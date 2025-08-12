@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
 import { Label } from '@/ui/label';
 import { toast } from 'sonner';
 
-// TypeScript interface for the role permission
 interface RolePermission {
   id: number;
   userId: number;
@@ -18,50 +17,70 @@ interface RolePermission {
 interface AddRolePermissionFormProps {
   onSave: (rolePermission: RolePermission) => void;
   onCancel: () => void;
-  rolePermission?: RolePermission | null;
+  rolePermission: RolePermission | null;
 }
 
-const AddRolePermissionForm: React.FC<AddRolePermissionFormProps> = ({ onSave, onCancel, rolePermission }) => {
-  const [formData, setFormData] = useState({
-    userRole: rolePermission?.userRole || '',
+const AddRolePermissionForm: React.FC<AddRolePermissionFormProps> = ({ 
+  onSave, 
+  onCancel, 
+  rolePermission 
+}) => {
+  const [formData, setFormData] = useState<Omit<RolePermission, 'id' | 'userId' | 'createdAt' | 'updatedAt'> & { 
+    id?: number;
+  }>({
+    userRole: '',
   });
-  const [errors, setErrors] = useState<{
-    userRole?: string;
-  }>({});
+
+  const [errors, setErrors] = useState({
+    userRole: '',
+  });
+
+  useEffect(() => {
+    if (rolePermission) {
+      setFormData({
+        id: rolePermission.id,
+        userRole: rolePermission.userRole,
+      });
+    } else {
+      setFormData({
+        userRole: '',
+      });
+    }
+  }, [rolePermission]);
 
   const validateForm = () => {
-    const newErrors: typeof errors = {};
-    if (!formData.userRole.trim()) {
-      newErrors.userRole = 'User role is required';
-    }
-    return newErrors;
-  };
+    let valid = true;
+    const newErrors = {
+      userRole: '',
+    };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: '' }));
+    if (!formData.userRole.trim()) {
+      newErrors.userRole = 'User Role is required';
+      valid = false;
+    }
+
+    setErrors(newErrors);
+    return valid;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const validationErrors = validateForm();
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      toast.error('Please fill all required fields');
+    
+    if (!validateForm()) {
+      toast.error('Please fix the errors in the form');
       return;
     }
 
-    onSave({
-      id: rolePermission?.id || Date.now(),
-      userId: rolePermission?.userId || 1,
+    const now = new Date().toISOString();
+    const payload: RolePermission = {
+      id: formData.id || Date.now(),
+      userId: 1, // Should be replaced with actual user ID from auth
       userRole: formData.userRole,
-      createdAt: rolePermission?.createdAt || new Date().toISOString().slice(0, 19),
-      updatedAt: new Date().toISOString().slice(0, 19),
-    });
-    setFormData({ userRole: '' });
-    setErrors({});
-    onCancel();
+      createdAt: rolePermission?.createdAt || now,
+      updatedAt: now,
+    };
+
+    onSave(payload);
   };
 
   return (
@@ -69,21 +88,27 @@ const AddRolePermissionForm: React.FC<AddRolePermissionFormProps> = ({ onSave, o
       <h1 className="text-4xl font-bold text-gray-800 mb-10">
         {rolePermission ? 'Edit Role Permission' : 'Add a new role permission'}
       </h1>
+      
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <Label htmlFor="userRole" className="text-sm font-medium text-gray-700">
-            User Role *
+            User Role
           </Label>
           <Input
             id="userRole"
-            name="userRole"
             value={formData.userRole}
-            onChange={handleInputChange}
-            className={`w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500 ${errors.userRole ? 'border-red-500' : ''}`}
-            placeholder="Enter user role (e.g., ADMIN)"
+            onChange={(e) => setFormData({ ...formData, userRole: e.target.value })}
+            className={`w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500 ${
+              errors.userRole ? 'border-red-500' : ''
+            }`}
+            placeholder="Enter user role (e.g., ADMIN, USER)"
+            required
           />
-          {errors.userRole && <p className="text-red-500 text-sm mt-1">{errors.userRole}</p>}
+          {errors.userRole && (
+            <p className="text-red-500 text-sm mt-1">{errors.userRole}</p>
+          )}
         </div>
+
         <div className="flex justify-end gap-3 mt-8">
           <Button
             type="button"
