@@ -47,7 +47,7 @@ const IntegrationsHeader: React.FC<IntegrationsHeaderProps> = ({
     const fetchIntegrations = async () => {
       try {
         setIsLoading(true);
-        const response = await axios.get<Integration[]>(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/integrations`);
+        const response = await axios.get('/api/v1/settings/integrations');
         setIntegrations(response.data);
       } catch (err) {
         toast.error('Failed to fetch integrations. Please try again.', {
@@ -67,8 +67,8 @@ const IntegrationsHeader: React.FC<IntegrationsHeaderProps> = ({
   const handleSearch = async (query: string) => {
     try {
       setIsLoading(true);
-      const response = await axios.get<Integration[]>(
-        `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/integrations/search?keyword=${encodeURIComponent(query)}&page=${currentPage - 1}&size=10`
+      const response = await axios.get(
+        `/api/v1/settings/integrations?keyword=${encodeURIComponent(query)}&page=${currentPage - 1}&size=10`
       );
       setIntegrations(response.data);
     } catch (err) {
@@ -91,7 +91,7 @@ const IntegrationsHeader: React.FC<IntegrationsHeaderProps> = ({
         const fetchAll = async () => {
           try {
             setIsLoading(true);
-            const response = await axios.get<Integration[]>(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/integrations`);
+            const response = await axios.get('/api/v1/settings/integrations');
             setIntegrations(response.data);
           } catch (err) {
             toast.error('Failed to fetch integrations. Please try again.', {
@@ -125,7 +125,7 @@ const IntegrationsHeader: React.FC<IntegrationsHeaderProps> = ({
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/integrations/${id}`);
+      await axios.delete(`/api/v1/settings/integrations?id=${id}`);
       setIntegrations((prev) => {
         const newData = prev.filter((item) => item.id !== id);
         if (newData.length <= (currentPage - 1) * 5) {
@@ -188,9 +188,6 @@ const IntegrationsHeader: React.FC<IntegrationsHeaderProps> = ({
           </Button>
         </div>
       </div>
-      {/* <p className="text-gray-600 mb-6">
-        Add as many Zapier or Drift integrations as needed. Each integration can be configured with a unique website and API key.
-      </p> */}
       <hr className="mt-10 mb-6" />
       {/* Zapier Section */}
       <div className="mb-4">

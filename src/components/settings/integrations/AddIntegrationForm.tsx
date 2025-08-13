@@ -61,58 +61,62 @@ const AddIntegrationForm: React.FC<AddIntegrationFormProps> = ({ onSave, onCance
     return null;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const validationError = validateForm();
-    if (validationError) {
-      toast.error(validationError, {
-        position: 'top-right',
-        autoClose: 3000,
-      });
-      return;
-    }
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  const validationError = validateForm();
+  if (validationError) {
+    toast.error(validationError, {
+      position: 'top-right',
+      autoClose: 3000,
+    });
+    return;
+  }
 
-    const payload: Integration = {
-      id: editingIntegration ? editingIntegration.id : Date.now(), // Temporary ID for new integrations
-      userId: 1,
-      service: formData.service as 'ZAPIER' | 'DRIFT',
-      website: formData.website,
-      apiKey: formData.apiKey,
-      isConfigured: formData.isConfigured,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    try {
-      if (editingIntegration) {
-        await axios.put(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/integrations`, payload);
-        toast.success('Integration updated successfully!', {
-          position: 'top-right',
-          autoClose: 3000,
-        });
-      } else {
-        const response = await axios.post<Integration>(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/integrations`, payload);
-        payload.id = response.data.id; // Use server-generated ID
-        toast.success('Integration created successfully!', {
-          position: 'top-right',
-          autoClose: 3000,
-        });
-      }
-      onSave();
-      setFormData({
-        service: '',
-        website: '',
-        apiKey: '',
-        isConfigured: false,
-      });
-    } catch (err) {
-      toast.error('Failed to save integration. Please try again.', {
-        position: 'top-right',
-        autoClose: 3000,
-      });
-      console.error(err);
-    }
+  const now = new Date().toISOString();
+  const payload = {
+    userId: 1,
+    service: formData.service as 'ZAPIER' | 'DRIFT',
+    website: formData.website,
+    apiKey: formData.apiKey,
+    isConfigured: formData.isConfigured,
+    createdAt: now,
+    updatedAt: now,
   };
+
+  try {
+    if (editingIntegration) {
+      // Include the original createdAt when updating
+      await axios.put('/api/v1/settings/integrations', {
+        ...payload,
+        id: editingIntegration.id,
+        createdAt: editingIntegration.createdAt, // Preserve original createdAt
+      });
+      toast.success('Integration updated successfully!', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+    } else {
+      await axios.post('/api/v1/settings/integrations', payload);
+      toast.success('Integration created successfully!', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+    }
+    onSave();
+    setFormData({
+      service: '',
+      website: '',
+      apiKey: '',
+      isConfigured: false,
+    });
+  } catch (err) {
+    toast.error('Failed to save integration. Please try again.', {
+      position: 'top-right',
+      autoClose: 3000,
+    });
+    console.error(err);
+  }
+};
 
   return (
     <div className="p-10 bg-white rounded-xl shadow-lg border border-gray-200">

@@ -6,7 +6,7 @@ const BACKEND_BASE_URL = 'https://zotly.onrender.com/customers';
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const action = searchParams.get('action');
-
+  
   if (action === 'list') {
     try {
       const res = await fetch(`${BACKEND_BASE_URL}/list`);

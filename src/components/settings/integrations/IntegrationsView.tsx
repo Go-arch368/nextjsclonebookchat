@@ -6,7 +6,6 @@ import AddIntegrationForm from './AddIntegrationForm';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// TypeScript interface for the integration
 interface Integration {
   id: number;
   userId: number;
