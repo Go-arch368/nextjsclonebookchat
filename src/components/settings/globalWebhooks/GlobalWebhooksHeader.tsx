@@ -80,24 +80,24 @@ const GlobalWebhooksHeader: React.FC<GlobalWebhooksHeaderProps> = ({
     }
   };
 
-  const sortedWebhooks = React.useMemo(() => {
-    let sortableItems = [...webhooks];
-    if (sortConfig !== null) {
-      sortableItems.sort((a, b) => {
-        const aValue = a[sortConfig.key] || '';
-        const bValue = b[sortConfig.key] || '';
-        
-        if (aValue < bValue) {
-          return sortConfig.direction === 'asc' ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === 'asc' ? 1 : -1;
-        }
-        return 0;
-      });
-    }
-    return sortableItems;
-  }, [webhooks, sortConfig]);
+const sortedWebhooks = React.useMemo(() => {
+  const sortableItems = [...webhooks];
+  if (sortConfig !== null) {
+    sortableItems.sort((a, b) => {
+      const aValue = a[sortConfig.key] || '';
+      const bValue = b[sortConfig.key] || '';
+      
+      if (aValue < bValue) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  }
+  return sortableItems;
+}, [webhooks, sortConfig]);
 
   const filteredWebhooks = sortedWebhooks.filter(webhook =>
     webhook.event.toLowerCase().includes(searchQuery.toLowerCase()) ||

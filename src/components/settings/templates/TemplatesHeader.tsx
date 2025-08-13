@@ -43,24 +43,24 @@ const TemplatesHeader: React.FC<TemplatesHeaderProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  const sortedTemplates = React.useMemo(() => {
-    let sortableItems = [...templates];
-    if (sortConfig !== null) {
-      sortableItems.sort((a, b) => {
-        const aValue = a[sortConfig.key] || '';
-        const bValue = b[sortConfig.key] || '';
-        
-        if (aValue < bValue) {
-          return sortConfig.direction === 'asc' ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === 'asc' ? 1 : -1;
-        }
-        return 0;
-      });
-    }
-    return sortableItems;
-  }, [templates, sortConfig]);
+const sortedTemplates = React.useMemo(() => {
+  const sortableItems = [...templates];
+  if (sortConfig !== null) {
+    sortableItems.sort((a, b) => {
+      const aValue = a[sortConfig.key] || '';
+      const bValue = b[sortConfig.key] || '';
+      
+      if (aValue < bValue) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  }
+  return sortableItems;
+}, [templates, sortConfig]);
 
   const filteredTemplates = sortedTemplates.filter(template =>
     template.businessCategory.toLowerCase().includes(searchQuery.toLowerCase()) ||

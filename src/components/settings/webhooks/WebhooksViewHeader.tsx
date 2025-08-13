@@ -45,27 +45,27 @@ const WebhooksHeader: React.FC<WebhooksHeaderProps> = ({
   const itemsPerPage = 5;
 
   const sortedWebhooks = React.useMemo(() => {
-    let sortableItems = [...webhooks];
-    if (sortConfig !== null) {
-      sortableItems.sort((a, b) => {
-        const aValue = Array.isArray(a[sortConfig.key])
-          ? JSON.stringify(a[sortConfig.key])
-          : a[sortConfig.key] || '';
-        const bValue = Array.isArray(b[sortConfig.key])
-          ? JSON.stringify(b[sortConfig.key])
-          : b[sortConfig.key] || '';
-        
-        if (aValue < bValue) {
-          return sortConfig.direction === 'asc' ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === 'asc' ? 1 : -1;
-        }
-        return 0;
-      });
-    }
-    return sortableItems;
-  }, [webhooks, sortConfig]);
+  const sortableItems = [...webhooks];
+  if (sortConfig !== null) {
+    sortableItems.sort((a, b) => {
+      const aValue = Array.isArray(a[sortConfig.key])
+        ? JSON.stringify(a[sortConfig.key])
+        : a[sortConfig.key] || '';
+      const bValue = Array.isArray(b[sortConfig.key])
+        ? JSON.stringify(b[sortConfig.key])
+        : b[sortConfig.key] || '';
+      
+      if (aValue < bValue) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  }
+  return sortableItems;
+}, [webhooks, sortConfig]);
 
   const filteredWebhooks = sortedWebhooks.filter(webhook =>
     webhook.event.toLowerCase().includes(searchQuery.toLowerCase()) ||

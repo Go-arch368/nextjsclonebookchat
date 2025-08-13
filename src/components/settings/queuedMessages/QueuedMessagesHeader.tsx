@@ -44,24 +44,24 @@ const QueuedMessagesHeader: React.FC<QueuedMessagesHeaderProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  const sortedMessages = React.useMemo(() => {
-    let sortableItems = [...queuedMessages];
-    if (sortConfig !== null) {
-      sortableItems.sort((a, b) => {
-        const aValue = a[sortConfig.key] || '';
-        const bValue = b[sortConfig.key] || '';
-        
-        if (aValue < bValue) {
-          return sortConfig.direction === 'asc' ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === 'asc' ? 1 : -1;
-        }
-        return 0;
-      });
-    }
-    return sortableItems;
-  }, [queuedMessages, sortConfig]);
+ const sortedMessages = React.useMemo(() => {
+  const sortableItems = [...queuedMessages];
+  if (sortConfig !== null) {
+    sortableItems.sort((a, b) => {
+      const aValue = a[sortConfig.key] || '';
+      const bValue = b[sortConfig.key] || '';
+      
+      if (aValue < bValue) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  }
+  return sortableItems;
+}, [queuedMessages, sortConfig]);
 
   const filteredMessages = sortedMessages.filter(message =>
     message.message.toLowerCase().includes(searchQuery.toLowerCase()) ||

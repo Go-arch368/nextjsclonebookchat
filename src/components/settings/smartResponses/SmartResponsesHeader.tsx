@@ -48,8 +48,8 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
- const sortedResponses = React.useMemo(() => {
-  let sortableItems = [...smartResponses];
+const sortedResponses = React.useMemo(() => {
+  const sortableItems = [...smartResponses];
   if (sortConfig !== null) {
     sortableItems.sort((a, b) => {
       const aValue = Array.isArray(a[sortConfig.key])

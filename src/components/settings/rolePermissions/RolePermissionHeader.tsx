@@ -44,24 +44,24 @@ const RolePermissionHeader: React.FC<RolePermissionHeaderProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  const sortedRolePermissions = React.useMemo(() => {
-    let sortableItems = [...rolePermissions];
-    if (sortConfig !== null) {
-      sortableItems.sort((a, b) => {
-        const aValue = a[sortConfig.key] || '';
-        const bValue = b[sortConfig.key] || '';
-        
-        if (aValue < bValue) {
-          return sortConfig.direction === 'asc' ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === 'asc' ? 1 : -1;
-        }
-        return 0;
-      });
-    }
-    return sortableItems;
-  }, [rolePermissions, sortConfig]);
+const sortedRolePermissions = React.useMemo(() => {
+  const sortableItems = [...rolePermissions];
+  if (sortConfig !== null) {
+    sortableItems.sort((a, b) => {
+      const aValue = a[sortConfig.key] || '';
+      const bValue = b[sortConfig.key] || '';
+      
+      if (aValue < bValue) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  }
+  return sortableItems;
+}, [rolePermissions, sortConfig]);
 
   const filteredRolePermissions = sortedRolePermissions.filter(rolePermission =>
     rolePermission.userRole.toLowerCase().includes(searchQuery.toLowerCase())
