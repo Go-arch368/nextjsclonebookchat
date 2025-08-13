@@ -6,18 +6,17 @@ import { Input } from '@/ui/input';
 import { Button } from '@/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table';
 import { Skeleton } from '@/ui/skeleton';
-import { toast } from 'react-toastify';
 
 interface Webhook {
-  id: number;
-  userId: number;
+  id?: number;
+  userId?: number;
   event: string;
   dataTypes: string[];
   targetUrl: string;
   createdBy: string;
   company: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface WebhooksHeaderProps {
@@ -49,11 +48,11 @@ const WebhooksHeader: React.FC<WebhooksHeaderProps> = ({
     let sortableItems = [...webhooks];
     if (sortConfig !== null) {
       sortableItems.sort((a, b) => {
-        const aValue = Array.isArray(a[sortConfig.key]) 
-          ? a[sortConfig.key]
+        const aValue = Array.isArray(a[sortConfig.key])
+          ? JSON.stringify(a[sortConfig.key])
           : a[sortConfig.key] || '';
-        const bValue = Array.isArray(b[sortConfig.key]) 
-          ? b[sortConfig.key]
+        const bValue = Array.isArray(b[sortConfig.key])
+          ? JSON.stringify(b[sortConfig.key])
           : b[sortConfig.key] || '';
         
         if (aValue < bValue) {
@@ -134,7 +133,8 @@ const WebhooksHeader: React.FC<WebhooksHeaderProps> = ({
           ))}
         </div>
       ) : webhooks.length === 0 ? (
-        <div className="flex justify-center items-center h-64">
+        <div className="flex flex-col justify-center items-center h-64 gap-4">
+          <p className="text-gray-500">No webhooks found</p>
           <Button onClick={onAddClick}>
             <Plus className="mr-2 h-4 w-4" />
             Create your first webhook
@@ -181,13 +181,16 @@ const WebhooksHeader: React.FC<WebhooksHeaderProps> = ({
                         variant="ghost"
                         size="icon"
                         onClick={() => onEditClick(webhook)}
+                        aria-label="Edit webhook"
                       >
                         <Pencil className="h-4 w-4 text-blue-500" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => onDelete(webhook.id)}
+                        onClick={() => webhook.id && onDelete(webhook.id)}
+                        aria-label="Delete webhook"
+                        disabled={!webhook.id}
                       >
                         <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
@@ -200,16 +203,42 @@ const WebhooksHeader: React.FC<WebhooksHeaderProps> = ({
 
           {totalPages > 1 && (
             <div className="flex justify-center mt-4">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <Button
-                  key={page}
-                  variant={currentPage === page ? 'default' : 'outline'}
-                  onClick={() => setCurrentPage(page)}
-                  className="mx-1"
-                >
-                  {page}
-                </Button>
-              ))}
+              <Button
+                variant="outline"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+                return (
+                  <Button
+                    key={pageNum}
+                    variant={currentPage === pageNum ? 'default' : 'outline'}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className="mx-1"
+                  >
+                    {pageNum}
+                  </Button>
+                );
+              })}
+              <Button
+                variant="outline"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
             </div>
           )}
         </>

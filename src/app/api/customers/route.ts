@@ -1,7 +1,7 @@
 // src/app/api/customers/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_BASE_URL = 'https://zotly.onrender.com/customers';
+const BACKEND_BASE_URL = `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/customers`;
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);

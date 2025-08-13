@@ -3,20 +3,19 @@
 import React, { useState, useEffect } from 'react';
 import WebhooksHeader from './WebhooksViewHeader';
 import AddWebhookForm from './AddWebhookForm';
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { toast } from 'react-toastify';
 
 interface Webhook {
-  id: number;
-  userId: number;
+  id?: number;
+  userId?: number;
   event: string;
   dataTypes: string[];
   targetUrl: string;
   createdBy: string;
   company: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 const WebhooksView: React.FC = () => {
@@ -31,11 +30,16 @@ const WebhooksView: React.FC = () => {
       setIsLoading(true);
       setError(null);
       const response = await fetch('/api/v1/settings/webhooks');
-      const data = await response.json();
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Failed to fetch webhooks' }));
+        throw new Error(errorData.message || 'Failed to fetch webhooks');
+      }
+      const data: Webhook[] = await response.json();
       setWebhooks(data);
-    } catch (error: any) {
-      setError(error.message || 'Failed to fetch webhooks');
-      console.error('Fetch error:', error);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to fetch webhooks';
+      setError(message);
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -66,29 +70,31 @@ const WebhooksView: React.FC = () => {
       setError(null);
 
       const method = webhook.id ? 'PUT' : 'POST';
-      const apiResponse = await fetch(`/api/v1/settings/webhooks`, {
+      const endpoint = '/api/v1/settings/webhooks';
+
+      const response = await fetch(endpoint, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(webhook),
+        body: JSON.stringify({
+          ...webhook,
+          userId: webhook.userId || 1,
+          createdAt: webhook.id ? webhook.createdAt : new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }),
       });
 
-      if (!apiResponse.ok) {
-        const errorData = await apiResponse.json().catch(() => ({}));
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Failed to save webhook' }));
         throw new Error(errorData.message || 'Failed to save webhook');
       }
 
-      const savedWebhook = await apiResponse.json();
-      setWebhooks(prev => 
-        webhook.id
-          ? prev.map(w => w.id === webhook.id ? savedWebhook : w)
-          : [...prev, savedWebhook]
-      );
-      
+      await fetchWebhooks();
       setShowAddForm(false);
-      toast.success(webhook.id ? 'Updated successfully!' : 'Created successfully!');
-    } catch (error: any) {
-      setError(error.message);
-      toast.error(error.message);
+      toast.success(webhook.id ? 'Webhook updated successfully!' : 'Webhook created successfully!');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to save webhook';
+      setError(message);
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -101,18 +107,20 @@ const WebhooksView: React.FC = () => {
 
       const response = await fetch(`/api/v1/settings/webhooks?id=${id}`, {
         method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = await response.json().catch(() => ({ message: 'Failed to delete webhook' }));
         throw new Error(errorData.message || 'Failed to delete webhook');
       }
 
-      setWebhooks(prev => prev.filter(w => w.id !== id));
-      toast.success('Deleted successfully!');
-    } catch (error: any) {
-      setError(error.message);
-      toast.error(error.message);
+      setWebhooks((prev) => prev.filter((w) => w.id !== id));
+      toast.success('Webhook deleted successfully!');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to delete webhook';
+      setError(message);
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
