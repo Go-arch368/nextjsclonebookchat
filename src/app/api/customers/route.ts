@@ -1,4 +1,4 @@
-// src/app/api/customers/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 
 const BACKEND_BASE_URL = `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/customers`;

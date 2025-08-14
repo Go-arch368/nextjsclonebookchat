@@ -1,7 +1,6 @@
-// AnnouncementsView.tsx
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Plus, Camera, Trash2, Edit2 } from 'lucide-react';
+import { Plus, Trash2, Edit2 } from 'lucide-react';
 
 interface Announcement {
   id?: number;
@@ -9,7 +8,6 @@ interface Announcement {
   pageType: string;
   title: string;
   text: string;
-  imageUrl?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -22,7 +20,6 @@ const AnnouncementsView = () => {
     pageType: 'Login',
     title: '',
     text: '',
-    imageUrl: '',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   });
@@ -31,7 +28,6 @@ const AnnouncementsView = () => {
     pageType: 'Dashboard',
     title: '',
     text: '',
-    imageUrl: '',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   });
@@ -81,7 +77,6 @@ const AnnouncementsView = () => {
           pageType: 'Login',
           title: '',
           text: '',
-          imageUrl: '',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         });
@@ -107,7 +102,6 @@ const AnnouncementsView = () => {
           pageType: 'Dashboard',
           title: '',
           text: '',
-          imageUrl: '',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         });
@@ -117,17 +111,6 @@ const AnnouncementsView = () => {
     } catch (error: any) {
       console.error('Fetch error:', error);
       alert(`Error: ${error.message}`);
-    }
-  };
-
-  const handleImageUpload = (
-    event: React.ChangeEvent<HTMLInputElement>,
-    setForm: React.Dispatch<React.SetStateAction<Announcement>>,
-  ) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setForm(prev => ({ ...prev, imageUrl }));
     }
   };
 
@@ -143,7 +126,6 @@ const AnnouncementsView = () => {
         pageType: form.pageType,
         title: form.title,
         text: form.text,
-        imageUrl: form.imageUrl || '',
         createdAt: form.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         ...(editingId[form.pageType] && { id: editingId[form.pageType] }),
@@ -213,20 +195,20 @@ const AnnouncementsView = () => {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-8">
-        <div className="flex flex-col gap-4">
-          <div className="relative">
-            <label htmlFor={`${pageType}-title`} className="block text-black text-sm font-medium mb-2">
-              Title
-            </label>
+      <div className="flex flex-col gap-4">
+        <div className="relative">
+          <label htmlFor={`${pageType}-title`} className="block text-black text-sm font-medium mb-2">
+            Title
+          </label>
+          <div className="flex items-center gap-4">
             <input
               type="text"
               id={`${pageType}-title`}
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
-              className="w-[600px] p-2 border rounded-md text-black focus:outline-none focus:ring-2 focus:ring-gray-500"
+              className="flex-grow p-2 border rounded-md text-black focus:outline-none focus:ring-2 focus:ring-gray-500"
             />
-            <div className="absolute right-2 top-10 flex gap-2">
+            <div className="flex gap-2">
               <button onClick={() => startEditing(pageType)}>
                 <Edit2 className="h-5 w-5 text-gray-700" />
               </button>
@@ -237,50 +219,16 @@ const AnnouncementsView = () => {
               )}
             </div>
           </div>
-          <div className="relative">
-            <label htmlFor={`${pageType}-text`} className="block text-black text-sm font-medium mb-2">
-              Text
-            </label>
-            <textarea
-              id={`${pageType}-text`}
-              value={form.text}
-              onChange={(e) => setForm({ ...form, text: e.target.value })}
-              className="w-[600px] p-2 border rounded-md text-black focus:outline-none focus:ring-2 focus:ring-gray-500"
-            />
-          </div>
         </div>
-
         <div>
-          <label htmlFor={`image-upload-${pageType}`} className="block text-black text-sm font-medium mb-2">
-            Image Upload
+          <label htmlFor={`${pageType}-text`} className="block text-black text-sm font-medium mb-2">
+            Text
           </label>
-          <div className="flex items-center gap-4">
-            <label
-              htmlFor={`image-upload-${pageType}`}
-              className="px-6 py-4 bg-gray-200 text-gray-700 w-[180px] h-[180px] rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-gray-300 cursor-pointer"
-            >
-              {form.imageUrl ? (
-                <img src={form.imageUrl} alt="Preview" className="w-full h-full object-cover rounded-lg" />
-              ) : (
-                <Camera className="h-5 w-5" />
-              )}
-            </label>
-            {form.imageUrl && (
-              <button
-                onClick={() => setForm({ ...form, imageUrl: '' })}
-                className="p-2 bg-red-200 text-red-700 rounded-lg hover行為:bg-red-300"
-              >
-                <Trash2 className="h-5 w-5" />
-              </button>
-            )}
-          </div>
-          <input
-            type="file"
-            id={`image-upload-${pageType}`}
-            accept="image/*"
-            className="hidden"
-
-            onChange={(e) => handleImageUpload(e, setForm)}
+          <textarea
+            id={`${pageType}-text`}
+            value={form.text}
+            onChange={(e) => setForm({ ...form, text: e.target.value })}
+            className="w-full p-2 border rounded-md text-black focus:outline-none focus:ring-2 focus:ring-gray-500 h-32"
           />
         </div>
       </div>

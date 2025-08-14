@@ -1,4 +1,4 @@
-// route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 
 const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || 'https://zotly.onrender.com';

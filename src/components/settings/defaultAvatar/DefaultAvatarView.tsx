@@ -35,7 +35,7 @@ export default function DefaultAvatarView() {
   const fetchDefaultAvatar = async () => {
     try {
       setIsLoading(true);
-      const data = await fetchWithRetry('/api/settings/default-avatars?id=1');
+      const data = await fetchWithRetry('/api/settings/default-avatars');
       
       if (data && data.avatarImageUrl !== undefined) {
         setDefaultAvatar({

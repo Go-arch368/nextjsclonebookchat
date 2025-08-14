@@ -162,11 +162,11 @@ const InactivityTimeoutsHeader: React.FC = () => {
         {/* Agent Not Responding Section */}
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-2">
-          <Checkbox
-  id="agent-checkbox"
-  checked={isCheckedAgent}
-  onCheckedChange={(checked) => setIsCheckedAgent(!!checked)}
-/>
+            <Checkbox
+              id="agent-checkbox"
+              checked={isCheckedAgent}
+              onCheckedChange={(checked) => setIsCheckedAgent(!!checked)}
+            />
             <Label htmlFor="agent-checkbox">When agent doesn't respond for</Label>
           </div>
           <Select
@@ -208,11 +208,11 @@ const InactivityTimeoutsHeader: React.FC = () => {
         {/* Archive Chat Section */}
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-2">
-           <Checkbox
-  id="agent-checkbox"
-  checked={isCheckedAgent}
-  onCheckedChange={(checked) => setIsCheckedAgent(!!checked)}
-/>
+            <Checkbox
+              id="archive-checkbox"
+              checked={isCheckedArchive}
+              onCheckedChange={(checked) => setIsCheckedArchive(!!checked)}
+            />
             <Label htmlFor="archive-checkbox">When agent doesn't respond for</Label>
           </div>
           <Select

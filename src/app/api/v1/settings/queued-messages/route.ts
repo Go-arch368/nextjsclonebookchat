@@ -108,8 +108,19 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    // Simulate delete operation
-    // In a real implementation, you would call your backend API here
+    const res = await fetch(`${BACKEND_BASE_URL}/${id}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`Backend responded with status ${res.status}: ${errorText}`);
+      throw new Error(`Backend responded with status ${res.status}`);
+    }
+
+    // If your backend returns the deleted message, you can return it
+    // Otherwise just return a success message
     return NextResponse.json(
       { message: `Queued message ${id} deleted successfully` },
       { status: 200 }
