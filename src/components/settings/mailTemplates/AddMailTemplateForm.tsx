@@ -6,8 +6,8 @@ import { Input } from '@/ui/input';
 import { Label } from '@/ui/label';
 import { Checkbox } from '@/ui/checkbox';
 import { toast } from 'sonner';
+import { useTheme } from 'next-themes';
 
-// TypeScript interface for the mail template
 interface MailTemplate {
   id: number;
   userId: number;
@@ -41,6 +41,7 @@ const AddMailTemplateForm: React.FC<AddMailTemplateFormProps> = ({ onSave, onCan
     createdBy?: string;
     modifiedBy?: string;
   }>({});
+  const { theme } = useTheme();
 
   const validateForm = () => {
     const newErrors: typeof errors = {};
@@ -102,13 +103,13 @@ const AddMailTemplateForm: React.FC<AddMailTemplateFormProps> = ({ onSave, onCan
   };
 
   return (
-    <div className="p-10 bg-white rounded-xl shadow-lg border border-gray-200">
-      <h1 className="text-4xl font-bold text-gray-800 mb-10">
+    <div className={`p-10 rounded-xl shadow-lg border ${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
+      <h1 className={`text-4xl font-bold mb-10 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
         {template ? 'Edit Mail Template' : 'Add a new mail template'}
       </h1>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <Label htmlFor="name" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="name" className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             Name *
           </Label>
           <Input
@@ -116,13 +117,13 @@ const AddMailTemplateForm: React.FC<AddMailTemplateFormProps> = ({ onSave, onCan
             name="name"
             value={formData.name}
             onChange={handleInputChange}
-            className={`w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500 ${errors.name ? 'border-red-500' : ''}`}
+            className={`w-full mt-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white focus:ring-blue-500' : 'border-gray-300 focus:ring-blue-500'} ${errors.name ? 'border-red-500' : ''}`}
             placeholder="Enter template name"
           />
           {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
         </div>
         <div>
-          <Label htmlFor="useCase" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="useCase" className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             Use Case *
           </Label>
           <Input
@@ -130,13 +131,13 @@ const AddMailTemplateForm: React.FC<AddMailTemplateFormProps> = ({ onSave, onCan
             name="useCase"
             value={formData.useCase}
             onChange={handleInputChange}
-            className={`w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500 ${errors.useCase ? 'border-red-500' : ''}`}
+            className={`w-full mt-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white focus:ring-blue-500' : 'border-gray-300 focus:ring-blue-500'} ${errors.useCase ? 'border-red-500' : ''}`}
             placeholder="Enter use case"
           />
           {errors.useCase && <p className="text-red-500 text-sm mt-1">{errors.useCase}</p>}
         </div>
         <div>
-          <Label htmlFor="createdBy" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="createdBy" className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             Created By *
           </Label>
           <Input
@@ -144,13 +145,13 @@ const AddMailTemplateForm: React.FC<AddMailTemplateFormProps> = ({ onSave, onCan
             name="createdBy"
             value={formData.createdBy}
             onChange={handleInputChange}
-            className={`w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500 ${errors.createdBy ? 'border-red-500' : ''}`}
+            className={`w-full mt-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white focus:ring-blue-500' : 'border-gray-300 focus:ring-blue-500'} ${errors.createdBy ? 'border-red-500' : ''}`}
             placeholder="Enter creator name"
           />
           {errors.createdBy && <p className="text-red-500 text-sm mt-1">{errors.createdBy}</p>}
         </div>
         <div>
-          <Label htmlFor="modifiedBy" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="modifiedBy" className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             Modified By *
           </Label>
           <Input
@@ -158,27 +159,27 @@ const AddMailTemplateForm: React.FC<AddMailTemplateFormProps> = ({ onSave, onCan
             name="modifiedBy"
             value={formData.modifiedBy}
             onChange={handleInputChange}
-            className={`w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500 ${errors.modifiedBy ? 'border-red-500' : ''}`}
+            className={`w-full mt-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white focus:ring-blue-500' : 'border-gray-300 focus:ring-blue-500'} ${errors.modifiedBy ? 'border-red-500' : ''}`}
             placeholder="Enter modifier name"
           />
           {errors.modifiedBy && <p className="text-red-500 text-sm mt-1">{errors.modifiedBy}</p>}
         </div>
         <div>
-          <Label htmlFor="active" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="active" className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             Active
           </Label>
           <Checkbox
             id="active"
             checked={formData.active}
             onCheckedChange={handleActiveChange}
-            className="mt-2"
+            className={`mt-2 ${theme === 'dark' ? 'border-gray-600' : ''}`}
           />
         </div>
         <div className="flex justify-end gap-3 mt-8">
           <Button
             type="button"
             variant="outline"
-            className="px-6 py-2 border-gray-300 text-gray-800"
+            className={`px-6 py-2 ${theme === 'dark' ? 'border-gray-700 text-white hover:bg-gray-800' : 'border-gray-300 text-gray-800'}`}
             onClick={onCancel}
           >
             Cancel

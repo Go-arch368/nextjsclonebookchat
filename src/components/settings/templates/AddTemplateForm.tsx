@@ -5,6 +5,7 @@ import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
 import { Label } from '@/ui/label';
 import { toast } from 'react-toastify';
+import { useTheme } from 'next-themes';
 
 interface Template {
   id: number;
@@ -36,6 +37,7 @@ const AddTemplateForm: React.FC<AddTemplateFormProps> = ({
     createdBy: 'Admin',
     company: 'Zotly',
   });
+  const { theme } = useTheme();
 
   useEffect(() => {
     if (editingTemplate) {
@@ -104,63 +106,63 @@ const AddTemplateForm: React.FC<AddTemplateFormProps> = ({
   };
 
   return (
-    <div className="p-10 bg-white rounded-xl shadow-lg border border-gray-200">
-      <h1 className="text-4xl font-bold text-gray-800 mb-10">
+    <div className={`p-10 rounded-xl shadow-lg border ${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
+      <h1 className={`text-4xl font-bold mb-10 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
         {editingTemplate ? 'Edit Template' : 'Add a new template'}
       </h1>
       
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <Label htmlFor="businessCategory" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="businessCategory" className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             Business Category
           </Label>
           <Input
             id="businessCategory"
             value={formData.businessCategory}
             onChange={(e) => setFormData({ ...formData, businessCategory: e.target.value })}
-            className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
+            className={`w-full mt-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white focus:ring-blue-500' : 'border-gray-300 focus:ring-blue-500'}`}
             placeholder="Enter business category"
             required
           />
         </div>
 
         <div>
-          <Label htmlFor="businessSubcategory" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="businessSubcategory" className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             Business Subcategory
           </Label>
           <Input
             id="businessSubcategory"
             value={formData.businessSubcategory}
             onChange={(e) => setFormData({ ...formData, businessSubcategory: e.target.value })}
-            className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
+            className={`w-full mt-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white focus:ring-blue-500' : 'border-gray-300 focus:ring-blue-500'}`}
             placeholder="Enter business subcategory"
             required
           />
         </div>
 
         <div>
-          <Label htmlFor="createdBy" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="createdBy" className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             Created By
           </Label>
           <Input
             id="createdBy"
             value={formData.createdBy}
             onChange={(e) => setFormData({ ...formData, createdBy: e.target.value })}
-            className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
+            className={`w-full mt-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white focus:ring-blue-500' : 'border-gray-300 focus:ring-blue-500'}`}
             placeholder="Enter creator name"
             required
           />
         </div>
 
         <div>
-          <Label htmlFor="company" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="company" className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             Company
           </Label>
           <Input
             id="company"
             value={formData.company}
             onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-            className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
+            className={`w-full mt-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white focus:ring-blue-500' : 'border-gray-300 focus:ring-blue-500'}`}
             placeholder="Enter company name"
             required
           />
@@ -170,7 +172,7 @@ const AddTemplateForm: React.FC<AddTemplateFormProps> = ({
           <Button
             type="button"
             variant="outline"
-            className="px-6 py-2 border-gray-300 text-gray-800"
+            className={`px-6 py-2 ${theme === 'dark' ? 'border-gray-700 text-white hover:bg-gray-800' : 'border-gray-300 text-gray-800'}`}
             onClick={onCancel}
           >
             Cancel

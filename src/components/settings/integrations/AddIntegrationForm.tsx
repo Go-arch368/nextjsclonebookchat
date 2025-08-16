@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useTheme } from 'next-themes';
 import axios from 'axios';
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
@@ -26,7 +27,12 @@ interface AddIntegrationFormProps {
   editingIntegration: Integration | null;
 }
 
-const AddIntegrationForm: React.FC<AddIntegrationFormProps> = ({ onSave, onCancel, editingIntegration }) => {
+const AddIntegrationForm: React.FC<AddIntegrationFormProps> = ({ 
+  onSave, 
+  onCancel, 
+  editingIntegration 
+}) => {
+  const { theme } = useTheme();
   const [formData, setFormData] = useState({
     service: '' as 'ZAPIER' | 'DRIFT' | '',
     website: '',
@@ -36,7 +42,6 @@ const AddIntegrationForm: React.FC<AddIntegrationFormProps> = ({ onSave, onCance
 
   const serviceOptions = ['ZAPIER', 'DRIFT'];
 
-  // Initialize form with editing data
   useEffect(() => {
     if (editingIntegration) {
       setFormData({
@@ -61,83 +66,82 @@ const AddIntegrationForm: React.FC<AddIntegrationFormProps> = ({ onSave, onCance
     return null;
   };
 
- const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  const validationError = validateForm();
-  if (validationError) {
-    toast.error(validationError, {
-      position: 'top-right',
-      autoClose: 3000,
-    });
-    return;
-  }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const validationError = validateForm();
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
 
-  const now = new Date().toISOString();
-  const payload = {
-    userId: 1,
-    service: formData.service as 'ZAPIER' | 'DRIFT',
-    website: formData.website,
-    apiKey: formData.apiKey,
-    isConfigured: formData.isConfigured,
-    createdAt: now,
-    updatedAt: now,
+    const now = new Date().toISOString();
+    const payload = {
+      userId: 1,
+      service: formData.service as 'ZAPIER' | 'DRIFT',
+      website: formData.website,
+      apiKey: formData.apiKey,
+      isConfigured: formData.isConfigured,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    try {
+      if (editingIntegration) {
+        await axios.put('/api/v1/settings/integrations', {
+          ...payload,
+          id: editingIntegration.id,
+          createdAt: editingIntegration.createdAt,
+        });
+        toast.success('Integration updated successfully!');
+      } else {
+        await axios.post('/api/v1/settings/integrations', payload);
+        toast.success('Integration created successfully!');
+      }
+      onSave();
+      setFormData({
+        service: '',
+        website: '',
+        apiKey: '',
+        isConfigured: false,
+      });
+    } catch (err) {
+      toast.error('Failed to save integration. Please try again.');
+      console.error(err);
+    }
   };
 
-  try {
-    if (editingIntegration) {
-      // Include the original createdAt when updating
-      await axios.put('/api/v1/settings/integrations', {
-        ...payload,
-        id: editingIntegration.id,
-        createdAt: editingIntegration.createdAt, // Preserve original createdAt
-      });
-      toast.success('Integration updated successfully!', {
-        position: 'top-right',
-        autoClose: 3000,
-      });
-    } else {
-      await axios.post('/api/v1/settings/integrations', payload);
-      toast.success('Integration created successfully!', {
-        position: 'top-right',
-        autoClose: 3000,
-      });
-    }
-    onSave();
-    setFormData({
-      service: '',
-      website: '',
-      apiKey: '',
-      isConfigured: false,
-    });
-  } catch (err) {
-    toast.error('Failed to save integration. Please try again.', {
-      position: 'top-right',
-      autoClose: 3000,
-    });
-    console.error(err);
-  }
-};
-
   return (
-    <div className="p-10 bg-white rounded-xl shadow-lg border border-gray-200">
-      <h1 className="text-4xl font-bold text-gray-800 mb-10">
+    <div className={`p-10 rounded-xl shadow-lg border ${
+      theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'
+    }`}>
+      <h1 className={`text-4xl font-bold ${
+        theme === 'dark' ? 'text-white' : 'text-gray-800'
+      } mb-10`}>
         {editingIntegration ? 'Edit Integration' : 'Add a new integration'}
       </h1>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <Label htmlFor="service" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="service" className={`text-sm font-medium ${
+            theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+          }`}>
             Service
           </Label>
           <Select
             value={formData.service}
             onValueChange={(value) => setFormData({ ...formData, service: value as 'ZAPIER' | 'DRIFT' })}
           >
-            <SelectTrigger className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500">
+            <SelectTrigger className={`w-full mt-2 ${
+              theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'border-gray-300'
+            } focus:ring-2 focus:ring-blue-500`}>
               <SelectValue placeholder="Select service" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : ''}>
               {serviceOptions.map((service) => (
-                <SelectItem key={service} value={service}>
+                <SelectItem 
+                  key={service} 
+                  value={service}
+                  className={theme === 'dark' ? 'hover:bg-gray-700' : ''}
+                >
                   {service}
                 </SelectItem>
               ))}
@@ -145,26 +149,34 @@ const AddIntegrationForm: React.FC<AddIntegrationFormProps> = ({ onSave, onCance
           </Select>
         </div>
         <div>
-          <Label htmlFor="website" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="website" className={`text-sm font-medium ${
+            theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+          }`}>
             Website
           </Label>
           <Input
             id="website"
             value={formData.website}
             onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-            className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
+            className={`w-full mt-2 ${
+              theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'border-gray-300'
+            } focus:ring-2 focus:ring-blue-500`}
             placeholder="Enter website (e.g., https://example.com)"
           />
         </div>
         <div>
-          <Label htmlFor="apiKey" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="apiKey" className={`text-sm font-medium ${
+            theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+          }`}>
             API Key
           </Label>
           <Input
             id="apiKey"
             value={formData.apiKey}
             onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
-            className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
+            className={`w-full mt-2 ${
+              theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'border-gray-300'
+            } focus:ring-2 focus:ring-blue-500`}
             placeholder="Enter API key (e.g., abc123xyz)"
           />
         </div>
@@ -174,7 +186,9 @@ const AddIntegrationForm: React.FC<AddIntegrationFormProps> = ({ onSave, onCance
             checked={formData.isConfigured}
             onCheckedChange={(checked) => setFormData({ ...formData, isConfigured: checked as boolean })}
           />
-          <Label htmlFor="isConfigured" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="isConfigured" className={`text-sm font-medium ${
+            theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+          }`}>
             Configured
           </Label>
         </div>
@@ -182,14 +196,18 @@ const AddIntegrationForm: React.FC<AddIntegrationFormProps> = ({ onSave, onCance
           <Button
             type="button"
             variant="outline"
-            className="px-6 py-2 border-gray-300 text-gray-800"
+            className={`px-6 py-2 ${
+              theme === 'dark' ? 'border-gray-600 text-white hover:bg-gray-800' : 'border-gray-300 text-gray-800 hover:bg-gray-50'
+            }`}
             onClick={onCancel}
           >
             Cancel
           </Button>
           <Button
             type="submit"
-            className="px-6 py-2 bg-blue-600 text-white hover:bg-blue-700"
+            className={`px-6 py-2 ${
+              theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-700'
+            } text-white`}
           >
             Save
           </Button>

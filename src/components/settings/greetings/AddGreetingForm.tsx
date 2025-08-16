@@ -6,7 +6,7 @@ import { Input } from '@/ui/input';
 import { Label } from '@/ui/label';
 import { Textarea } from '@/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 interface Greeting {
@@ -124,119 +124,117 @@ const AddGreetingForm: React.FC<AddGreetingFormProps> = ({ onSave, onCancel, ini
       }
     } finally {
       setIsSubmitting(false);
-      onCancel();
     }
   };
 
   return (
-    <div className="p-10 bg-white rounded-xl shadow-lg border border-gray-200">
-      <h1 className="text-4xl font-bold text-gray-800 mb-10">
-        {initialGreeting ? 'Edit Greeting' : 'Add a new greeting'}
-      </h1>
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Title */}
-        <div className="p-4">
-          <Label htmlFor="title" className="text-sm font-medium text-gray-700">Title</Label>
-          <div className="relative mt-2">
-            <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
-            <Input
-              id="title"
-              value={formData.title}
+    <div className="p-6 bg-white rounded-lg border border-gray-200">
+      <div className="space-y-4">
+        <h1 className="text-3xl font-bold">
+          {initialGreeting ? 'Edit Greeting' : 'Add New Greeting'}
+        </h1>
+        
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Title */}
+          <div className="space-y-2">
+            <Label htmlFor="title">Title</Label>
+            <div className="relative">
+              <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+              <Input
+                id="title"
+                className={`pl-10 ${errors.title ? 'border-red-500' : ''}`}
+                value={formData.title}
+                onChange={(e) => {
+                  setFormData({ ...formData, title: e.target.value });
+                  setErrors((prev) => ({ ...prev, title: '' }));
+                }}
+                placeholder="Enter greeting title"
+              />
+              {errors.title && <p className="text-red-500 text-sm">{errors.title}</p>}
+            </div>
+          </div>
+
+          {/* Greeting Type */}
+          <div className="space-y-2">
+            <Label>Greeting Type</Label>
+            <Select
+              value={formData.type}
+              onValueChange={(value) => setFormData({ ...formData, type: value })}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All_Visitors">All Visitors</SelectItem>
+                <SelectItem value="Returning_Visitors">Returning Visitors</SelectItem>
+                <SelectItem value="First_Time_Visitors">First Time Visitors</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Greeting Message */}
+          <div className="space-y-2">
+            <Label>Greeting Message</Label>
+            <div className="flex flex-wrap gap-2">
+              {variables.map((variable) => (
+                <Button
+                  key={variable}
+                  type="button"
+                  variant="outline"
+                  className="h-8 px-3 text-xs"
+                  onClick={() => insertVariable(variable)}
+                >
+                  {variable}
+                </Button>
+              ))}
+            </div>
+            <Textarea
+              ref={textareaRef}
+              className={`min-h-[150px] ${errors.greeting ? 'border-red-500' : ''}`}
+              value={formData.greeting}
               onChange={(e) => {
-                setFormData({ ...formData, title: e.target.value });
-                setErrors((prev) => ({ ...prev, title: '' }));
+                setFormData({ ...formData, greeting: e.target.value });
+                setErrors((prev) => ({ ...prev, greeting: '' }));
               }}
-              className={`w-full pl-10 border-gray-300 focus:ring-2 focus:ring-blue-500 ${errors.title ? 'border-red-500' : ''}`}
-              placeholder="Enter greeting title"
+              placeholder="Enter greeting message"
             />
-            {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
+            {errors.greeting && <p className="text-red-500 text-sm">{errors.greeting}</p>}
+            <p className="text-sm text-gray-500">
+              Set the default greeting message. Use variables to personalize the greeting.
+            </p>
           </div>
-        </div>
 
-        {/* Greeting Type */}
-        <div className="p-4">
-          <Label htmlFor="type" className="text-sm font-medium text-gray-700 mb-2">Greeting Type</Label>
-          <Select
-            value={formData.type}
-            onValueChange={(value) => setFormData({ ...formData, type: value })}
-          >
-            <SelectTrigger className="w-full rounded-full bg-gray-600 text-white focus:ring-2 focus:ring-blue-500">
-              <SelectValue placeholder="All Visitors" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="All_Visitors">All Visitors</SelectItem>
-              <SelectItem value="Returning_Visitors">Returning Visitors</SelectItem>
-              <SelectItem value="First_Time_Visitors">First Time Visitors</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Greeting Message */}
-        <div className="p-4">
-          <Label htmlFor="greeting" className="text-sm font-medium text-gray-700 mb-2">Greeting Message</Label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {variables.map((variable) => (
-              <Button
-                key={variable}
-                type="button"
-                className="bg-gray-200 text-gray-700 rounded-full px-3 py-1 text-sm hover:bg-gray-300"
-                onClick={() => insertVariable(variable)}
-              >
-                {variable}
-              </Button>
-            ))}
-          </div>
-          <Textarea
-            id="greeting"
-            value={formData.greeting}
-            onChange={(e) => {
-              setFormData({ ...formData, greeting: e.target.value });
-              setErrors((prev) => ({ ...prev, greeting: '' }));
-            }}
-            className={`w-full min-h-[150px] border-gray-300 focus:ring-2 focus:ring-blue-500 ${errors.greeting ? 'border-red-500' : ''}`}
-            placeholder="Enter greeting message"
-            ref={textareaRef}
-          />
-          {errors.greeting && <p className="text-red-500 text-sm mt-1">{errors.greeting}</p>}
-          <p className="text-sm text-gray-500 mt-2">
-            Set the default greeting message. Use variables to personalize the greeting.
-          </p>
-        </div>
-
-        {/* Visibility */}
-        <div className="p-4">
-          <Label htmlFor="visible" className="text-sm font-medium text-gray-700">Visibility</Label>
-          <div className="mt-2">
+          {/* Visibility */}
+          <div className="flex items-center space-x-2">
             <Input
               id="visible"
               type="checkbox"
               checked={formData.visible}
               onChange={(e) => setFormData({ ...formData, visible: e.target.checked })}
-              className="h-5 w-5 text-blue-600 focus:ring-blue-500"
+              className="h-4 w-4"
             />
-            <span className="ml-2 text-sm text-gray-700">Make this greeting visible</span>
+            <Label htmlFor="visible">Make this greeting visible</Label>
           </div>
-        </div>
 
-        {/* Save and Cancel Buttons */}
-        <div className="flex justify-end gap-3 mt-8">
-          <Button
-            type="button"
-            variant="outline"
-            className="px-6 py-2 border-gray-300 text-gray-800"
-            onClick={onCancel}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            className="px-6 py-2 bg-blue-600 text-white hover:bg-blue-800"
-            disabled={isSubmitting || !onSave}
-          >
-            {isSubmitting ? 'Saving...' : 'Save'}
-          </Button>
-        </div>
-      </form>
+          {/* Buttons */}
+          <div className="flex justify-end gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
+              disabled={isSubmitting || !onSave}
+            >
+              {isSubmitting ? 'Saving...' : 'Save Greeting'}
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

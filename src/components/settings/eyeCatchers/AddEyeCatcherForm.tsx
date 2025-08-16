@@ -25,6 +25,7 @@ interface AddEyeCatcherFormProps {
   onCancel: () => void;
   initialData?: EyeCatcher;
   isEditMode?: boolean;
+  theme?: string;
 }
 
 const AddEyeCatcherForm: React.FC<AddEyeCatcherFormProps> = ({
@@ -32,6 +33,7 @@ const AddEyeCatcherForm: React.FC<AddEyeCatcherFormProps> = ({
   onCancel,
   initialData,
   isEditMode = false,
+  theme = 'light',
 }) => {
   const [formData, setFormData] = useState({
     id: initialData?.id || 0,
@@ -127,11 +129,13 @@ const AddEyeCatcherForm: React.FC<AddEyeCatcherFormProps> = ({
         toast.error(`Eye catcher with title '${title}' already exists`, {
           position: 'top-right',
           autoClose: 3000,
+          theme: theme === 'dark' ? 'dark' : 'light',
         });
       } else {
         toast.error(errorMessage, {
           position: 'top-right',
           autoClose: 3000,
+          theme: theme === 'dark' ? 'dark' : 'light',
         });
       }
     } finally {
@@ -140,77 +144,117 @@ const AddEyeCatcherForm: React.FC<AddEyeCatcherFormProps> = ({
   };
 
   return (
-    <div className="p-10 bg-white rounded-xl shadow-lg border border-gray-200">
-      <h1 className="text-4xl font-bold text-gray-800 mb-10">
+    <div className={`p-10 rounded-xl shadow-lg border ${
+      theme === 'dark'
+        ? 'bg-gray-800 border-gray-700'
+        : 'bg-white border-gray-200'
+    }`}>
+      <h1 className={`text-4xl font-bold mb-10 ${
+        theme === 'dark' ? 'text-white' : 'text-gray-800'
+      }`}>
         {isEditMode ? 'Edit Eye Catcher' : 'Add a new eye catcher'}
       </h1>
       {error && (
-        <div className="p-4 mb-4 text-red-800 bg-red-100 rounded-lg">{error}</div>
+        <div className={`p-4 mb-4 rounded-lg ${
+          theme === 'dark'
+            ? 'bg-red-900 text-red-200'
+            : 'bg-red-100 text-red-800'
+        }`}>
+          {error}
+        </div>
       )}
-      <hr className="mb-10 font-bold" />
+      <hr className={`mb-10 ${
+        theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
+      }`} />
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="flex gap-6">
           {/* Input Section */}
           <div className="flex-1 space-y-6">
             {/* Title */}
             <div>
-              <Label htmlFor="title" className="text-sm font-medium text-gray-700">
+              <Label htmlFor="title" className={`text-sm font-medium ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 Title
               </Label>
               <Input
                 id="title"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
+                className={`w-full mt-2 focus:ring-2 focus:ring-blue-500 ${
+                  theme === 'dark'
+                    ? 'bg-gray-700 border-gray-600 text-white'
+                    : 'border-gray-300'
+                }`}
                 placeholder="Enter eye catcher title"
               />
             </div>
 
             {/* Text */}
             <div>
-              <Label htmlFor="text" className="text-sm font-medium text-gray-700">
+              <Label htmlFor="text" className={`text-sm font-medium ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 Text
               </Label>
               <Input
                 id="text"
                 value={formData.text}
                 onChange={(e) => setFormData({ ...formData, text: e.target.value })}
-                className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
+                className={`w-full mt-2 focus:ring-2 focus:ring-blue-500 ${
+                  theme === 'dark'
+                    ? 'bg-gray-700 border-gray-600 text-white'
+                    : 'border-gray-300'
+                }`}
                 placeholder="Enter eye catcher text"
               />
             </div>
 
             {/* Created By */}
             <div>
-              <Label htmlFor="createdBy" className="text-sm font-medium text-gray-700">
+              <Label htmlFor="createdBy" className={`text-sm font-medium ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 Created By
               </Label>
               <Input
                 id="createdBy"
                 value={formData.createdBy}
                 onChange={(e) => setFormData({ ...formData, createdBy: e.target.value })}
-                className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
+                className={`w-full mt-2 focus:ring-2 focus:ring-blue-500 ${
+                  theme === 'dark'
+                    ? 'bg-gray-700 border-gray-600 text-white'
+                    : 'border-gray-300'
+                }`}
                 placeholder="Enter creator name"
               />
             </div>
 
             {/* Company */}
             <div>
-              <Label htmlFor="company" className="text-sm font-medium text-gray-700">
+              <Label htmlFor="company" className={`text-sm font-medium ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 Company
               </Label>
               <Input
                 id="company"
                 value={formData.company}
                 onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
+                className={`w-full mt-2 focus:ring-2 focus:ring-blue-500 ${
+                  theme === 'dark'
+                    ? 'bg-gray-700 border-gray-600 text-white'
+                    : 'border-gray-300'
+                }`}
                 placeholder="Enter company name"
               />
             </div>
 
             {/* Background Color */}
             <div>
-              <Label htmlFor="backgroundColor" className="text-sm font-medium text-gray-700">
+              <Label htmlFor="backgroundColor" className={`text-sm font-medium ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 Background Color
               </Label>
               <Input
@@ -218,13 +262,15 @@ const AddEyeCatcherForm: React.FC<AddEyeCatcherFormProps> = ({
                 type="color"
                 value={formData.backgroundColor}
                 onChange={(e) => setFormData({ ...formData, backgroundColor: e.target.value })}
-                className="w-16 h-10 mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
+                className="w-16 h-10 mt-2"
               />
             </div>
 
             {/* Text Color */}
             <div>
-              <Label htmlFor="textColor" className="text-sm font-medium text-gray-700">
+              <Label htmlFor="textColor" className={`text-sm font-medium ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 Text Color
               </Label>
               <Input
@@ -232,7 +278,7 @@ const AddEyeCatcherForm: React.FC<AddEyeCatcherFormProps> = ({
                 type="color"
                 value={formData.textColor}
                 onChange={(e) => setFormData({ ...formData, textColor: e.target.value })}
-                className="w-16 h-10 mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
+                className="w-16 h-10 mt-2"
               />
             </div>
           </div>
@@ -240,10 +286,16 @@ const AddEyeCatcherForm: React.FC<AddEyeCatcherFormProps> = ({
           {/* Preview Section */}
           <div className="flex-1 space-y-6">
             <div>
-              <Label className="text-sm font-medium text-gray-700">Preview</Label>
+              <Label className={`text-sm font-medium ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                Preview
+              </Label>
               <div
-                className="w-[300px] h-[200px] mt-2 border border-gray-300 shadow-lg rounded-md p-4 flex flex-col justify-center items-center"
-                style={{ backgroundColor: formData.backgroundColor }}
+                className={`w-[300px] h-[200px] mt-2 shadow-lg rounded-md p-4 flex flex-col justify-center items-center ${
+                  theme === 'dark' ? 'border-gray-700' : 'border-gray-300'
+                }`}
+                style={{ backgroundColor: formData.backgroundColor, borderWidth: '1px' }}
               >
                 <h2
                   className="text-lg font-semibold text-center"
@@ -267,14 +319,22 @@ const AddEyeCatcherForm: React.FC<AddEyeCatcherFormProps> = ({
           <Button
             type="button"
             variant="outline"
-            className="px-6 py-2 border-gray-300 text-gray-800"
+            className={`px-6 py-2 ${
+              theme === 'dark'
+                ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                : 'border-gray-300 text-gray-800'
+            }`}
             onClick={onCancel}
           >
             Cancel
           </Button>
           <Button
             type="submit"
-            className="px-6 py-2 bg-blue-600 text-white hover:bg-blue-800"
+            className={`px-6 py-2 ${
+              theme === 'dark'
+                ? 'bg-blue-600 hover:bg-blue-700'
+                : 'bg-blue-600 hover:bg-blue-700'
+            } text-white`}
             disabled={isSubmitting}
           >
             {isSubmitting ? 'Saving...' : isEditMode ? 'Update' : 'Save'}

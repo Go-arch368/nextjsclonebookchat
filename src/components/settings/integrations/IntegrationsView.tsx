@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useTheme } from 'next-themes';
 import IntegrationsHeader from './IntegrationsHeader';
 import AddIntegrationForm from './AddIntegrationForm';
 import { ToastContainer } from 'react-toastify';
@@ -18,6 +19,7 @@ interface Integration {
 }
 
 const IntegrationsView: React.FC = () => {
+  const { theme } = useTheme();
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingIntegration, setEditingIntegration] = useState<Integration | null>(null);
 
@@ -37,7 +39,7 @@ const IntegrationsView: React.FC = () => {
   };
 
   return (
-    <div>
+    <div >
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} closeOnClick />
       {showAddForm ? (
         <AddIntegrationForm

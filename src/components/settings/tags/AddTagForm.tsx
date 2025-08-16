@@ -6,6 +6,7 @@ import { Input } from '@/ui/input';
 import { Label } from '@/ui/label';
 import { Checkbox } from '@/ui/checkbox';
 import { toast } from 'react-toastify';
+import { useTheme } from 'next-themes';
 
 interface Tag {
   id: number;
@@ -35,6 +36,7 @@ const AddTagForm: React.FC<AddTagFormProps> = ({
     createdBy: '',
     company: '',
   });
+  const { theme } = useTheme();
 
   useEffect(() => {
     if (editingTag) {
@@ -64,7 +66,7 @@ const AddTagForm: React.FC<AddTagFormProps> = ({
 
     const payload: Tag = {
       id: editingTag?.id || Date.now(),
-      userId: 1, // Should be replaced with actual user ID from auth
+      userId: 1,
       tag: formData.tag,
       isDefault: formData.isDefault,
       createdBy: formData.createdBy,
@@ -96,21 +98,21 @@ const AddTagForm: React.FC<AddTagFormProps> = ({
   };
 
   return (
-    <div className="p-10 bg-white rounded-xl shadow-lg border border-gray-200">
-      <h1 className="text-4xl font-bold text-gray-800 mb-10">
+    <div className={`p-10 rounded-xl shadow-lg border ${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
+      <h1 className={`text-4xl font-bold mb-10 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
         {editingTag ? 'Edit Tag' : 'Add a new tag'}
       </h1>
       
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <Label htmlFor="tag" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="tag" className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             Tag Name
           </Label>
           <Input
             id="tag"
             value={formData.tag}
             onChange={(e) => setFormData({ ...formData, tag: e.target.value })}
-            className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
+            className={`w-full mt-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : 'border-gray-300 text-black'}`}
             placeholder="Enter tag name"
             required
           />
@@ -122,34 +124,34 @@ const AddTagForm: React.FC<AddTagFormProps> = ({
             checked={formData.isDefault}
             onCheckedChange={(checked) => setFormData({ ...formData, isDefault: !!checked })}
           />
-          <Label htmlFor="isDefault" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="isDefault" className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             Set as default tag
           </Label>
         </div>
 
         <div>
-          <Label htmlFor="createdBy" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="createdBy" className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             Created By
           </Label>
           <Input
             id="createdBy"
             value={formData.createdBy}
             onChange={(e) => setFormData({ ...formData, createdBy: e.target.value })}
-            className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
+            className={`w-full mt-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : 'border-gray-300 text-black'}`}
             placeholder="Enter creator name"
             required
           />
         </div>
 
         <div>
-          <Label htmlFor="company" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="company" className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             Company
           </Label>
           <Input
             id="company"
             value={formData.company}
             onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-            className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
+            className={`w-full mt-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : 'border-gray-300 text-black'}`}
             placeholder="Enter company name"
             required
           />
@@ -159,7 +161,7 @@ const AddTagForm: React.FC<AddTagFormProps> = ({
           <Button
             type="button"
             variant="outline"
-            className="px-6 py-2 border-gray-300 text-gray-800"
+            className={`px-6 py-2 ${theme === 'dark' ? 'border-gray-600 text-white hover:bg-gray-800' : 'border-gray-300 text-gray-800'}`}
             onClick={onCancel}
           >
             Cancel

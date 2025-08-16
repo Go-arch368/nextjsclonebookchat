@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import QueuedMessagesHeader from './QueuedMessagesHeader';
 import AddQueuedMessageForm from './AddQueuedMessageForm';
-import { ToastContainer,toast } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useTheme } from 'next-themes';
 
 interface QueuedMessage {
   id: number;
@@ -20,6 +21,7 @@ interface QueuedMessage {
 }
 
 const QueuedMessagesView: React.FC = () => {
+  const { resolvedTheme } = useTheme();
   const [showAddForm, setShowAddForm] = useState(false);
   const [queuedMessages, setQueuedMessages] = useState<QueuedMessage[]>([]);
   const [editingMessage, setEditingMessage] = useState<QueuedMessage | null>(null);
@@ -33,6 +35,11 @@ const QueuedMessagesView: React.FC = () => {
       setQueuedMessages(data);
     } catch (error) {
       console.error('Failed to fetch messages:', error);
+      toast.error('Failed to fetch messages', {
+        position: 'top-right',
+        autoClose: 3000,
+        theme: resolvedTheme === 'dark' ? 'dark' : 'light',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -72,56 +79,77 @@ const QueuedMessagesView: React.FC = () => {
       
       fetchMessages();
       setShowAddForm(false);
+      toast.success('Message saved successfully', {
+        position: 'top-right',
+        autoClose: 3000,
+        theme: resolvedTheme === 'dark' ? 'dark' : 'light',
+      });
     } catch (error) {
       console.error('Error saving message:', error);
+      toast.error('Failed to save message', {
+        position: 'top-right',
+        autoClose: 3000,
+        theme: resolvedTheme === 'dark' ? 'dark' : 'light',
+      });
     }
   };
 
-const handleDelete = async (id: number) => {
-  try {
-    const response = await fetch(`/api/v1/settings/queued-messages?id=${id}`, {
-      method: 'DELETE',
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Failed to delete message');
+  const handleDelete = async (id: number) => {
+    try {
+      const response = await fetch(`/api/v1/settings/queued-messages?id=${id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to delete message');
+      }
+      
+      fetchMessages();
+      
+      toast.success('Message deleted successfully', {
+        position: 'top-right',
+        autoClose: 3000,
+        theme: resolvedTheme === 'dark' ? 'dark' : 'light',
+      });
+    } catch (error: any) {
+      console.error('Error deleting message:', error);
+      toast.error(error.message || 'Failed to delete message', {
+        position: 'top-right',
+        autoClose: 3000,
+        theme: resolvedTheme === 'dark' ? 'dark' : 'light',
+      });
     }
-    
-    // No need to parse JSON if we're not expecting a response body
-    fetchMessages(); // Refresh the list
-    
-    toast.success('Message deleted successfully', {
-      position: 'top-right',
-      autoClose: 3000,
-    });
-  } catch (error: any) {
-    console.error('Error deleting message:', error);
-    toast.error(error.message || 'Failed to delete message', {
-      position: 'top-right',
-      autoClose: 3000,
-    });
-  }
-};
+  };
 
   return (
-    <div>
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} closeOnClick />
-      {showAddForm ? (
-        <AddQueuedMessageForm
-          onSave={handleSave}
-          onCancel={handleCancel}
-          editingMessage={editingMessage}
-        />
-      ) : (
-        <QueuedMessagesHeader
-          onAddClick={handleAddClick}
-          onEditClick={handleEditClick}
-          onDelete={handleDelete}
-          queuedMessages={queuedMessages}
-          isLoading={isLoading}
-        />
-      )}
+    <div className={`min-h-screen ${resolvedTheme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      <ToastContainer 
+        position="top-right" 
+        autoClose={3000} 
+        hideProgressBar={false} 
+        closeOnClick
+        theme={resolvedTheme === 'dark' ? 'dark' : 'light'}
+      />
+      <div className="container mx-auto px-4 py-8">
+        {showAddForm ? (
+          <AddQueuedMessageForm
+            onSave={handleSave}
+            onCancel={handleCancel}
+            editingMessage={editingMessage}
+            theme={resolvedTheme}
+          />
+        ) : (
+          <QueuedMessagesHeader
+            onAddClick={handleAddClick}
+            onEditClick={handleEditClick}
+            onDelete={handleDelete}
+            queuedMessages={queuedMessages}
+            isLoading={isLoading}
+            theme={resolvedTheme}
+          />
+        )}
+      </div>
     </div>
   );
 };

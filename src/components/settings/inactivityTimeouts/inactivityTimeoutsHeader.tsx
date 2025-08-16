@@ -1,12 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useTheme } from 'next-themes';
 import { Checkbox } from '@/ui/checkbox';
 import { Label } from '@/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select';
 import { Input } from '@/ui/input';
 import { Button } from '@/ui/button';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
+import { Skeleton } from '@/ui/skeleton';
 
 interface InactivityTimeout {
   id?: number;
@@ -25,6 +27,7 @@ interface InactivityTimeout {
 }
 
 const InactivityTimeoutsHeader: React.FC = () => {
+  const { theme } = useTheme();
   const [isCheckedAgent, setIsCheckedAgent] = useState(false);
   const [isCheckedArchive, setIsCheckedArchive] = useState(false);
   const [agentMinutes, setAgentMinutes] = useState('0');
@@ -38,7 +41,6 @@ const InactivityTimeoutsHeader: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Generate options for minutes and seconds (0 to 59)
   const timeOptions = Array.from({ length: 60 }, (_, i) => i.toString());
 
   const fetchSettings = async () => {
@@ -53,11 +55,10 @@ const InactivityTimeoutsHeader: React.FC = () => {
       const settings = await response.json();
 
       if (settings.length > 0) {
-        // Safe sorting with date validation
         const latestSetting = [...settings].sort((a, b) => {
           const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
           const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-          return dateB - dateA; // Sort descending (newest first)
+          return dateB - dateA;
         })[0];
 
         setCurrentSettingId(latestSetting.id || null);
@@ -78,12 +79,10 @@ const InactivityTimeoutsHeader: React.FC = () => {
     }
   };
 
-  // Fetch all inactivity timeout settings on mount
   useEffect(() => {
     fetchSettings();
   }, []);
 
-  // Handle Save button click
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -128,7 +127,6 @@ const InactivityTimeoutsHeader: React.FC = () => {
       setCurrentSettingId(result.id || null);
       toast.success('Settings saved successfully!');
       
-      // Refresh the settings
       await fetchSettings();
     } catch (error: any) {
       toast.error(error.message || 'Failed to save settings');
@@ -140,22 +138,30 @@ const InactivityTimeoutsHeader: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="p-12 bg-white rounded-xl shadow-lg border border-gray-200">
+      <div className={`p-12 rounded-xl shadow-lg border ${
+        theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'
+      }`}>
         <div className="animate-pulse space-y-4">
-          <div className="h-10 w-1/3 bg-gray-200 rounded"></div>
-          <div className="h-6 w-full bg-gray-200 rounded"></div>
-          <div className="h-6 w-2/3 bg-gray-200 rounded"></div>
-          <div className="h-6 w-1/2 bg-gray-200 rounded"></div>
+          <Skeleton className={`h-10 w-1/3 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`} />
+          <Skeleton className={`h-6 w-full ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`} />
+          <Skeleton className={`h-6 w-2/3 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`} />
+          <Skeleton className={`h-6 w-1/2 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`} />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-12 bg-white rounded-xl shadow-lg border border-gray-200">
+    <div className={`p-12 rounded-xl shadow-lg border ${
+      theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'
+    }`}>
       <div className="flex flex-col gap-4">
-        <h1 className="text-3xl font-bold text-gray-800">Inactivity Timeouts</h1>
-        <hr className="border-gray-300" />
+        <h1 className={`text-3xl font-bold ${
+          theme === 'dark' ? 'text-white' : 'text-gray-800'
+        }`}>
+          Inactivity Timeouts
+        </h1>
+        <hr className={theme === 'dark' ? 'border-gray-700' : 'border-gray-300'} />
       </div>
       
       <div className="mt-6 space-y-6">
@@ -167,7 +173,9 @@ const InactivityTimeoutsHeader: React.FC = () => {
               checked={isCheckedAgent}
               onCheckedChange={(checked) => setIsCheckedAgent(!!checked)}
             />
-            <Label htmlFor="agent-checkbox">When agent doesn't respond for</Label>
+            <Label htmlFor="agent-checkbox" className={theme === 'dark' ? 'text-gray-300' : ''}>
+              When agent doesn't respond for
+            </Label>
           </div>
           <Select
             value={agentMinutes}
@@ -177,15 +185,19 @@ const InactivityTimeoutsHeader: React.FC = () => {
             <SelectTrigger className="w-[80px]">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : ''}>
               {timeOptions.map((option) => (
-                <SelectItem key={`agent-min-${option}`} value={option}>
+                <SelectItem 
+                  key={`agent-min-${option}`} 
+                  value={option}
+                  className={theme === 'dark' ? 'hover:bg-gray-700' : ''}
+                >
                   {option}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <span>minutes</span>
+          <span className={theme === 'dark' ? 'text-gray-300' : ''}>minutes</span>
           <Select
             value={agentSeconds}
             onValueChange={setAgentSeconds}
@@ -194,15 +206,19 @@ const InactivityTimeoutsHeader: React.FC = () => {
             <SelectTrigger className="w-[80px]">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : ''}>
               {timeOptions.map((option) => (
-                <SelectItem key={`agent-sec-${option}`} value={option}>
+                <SelectItem 
+                  key={`agent-sec-${option}`} 
+                  value={option}
+                  className={theme === 'dark' ? 'hover:bg-gray-700' : ''}
+                >
                   {option}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <span>seconds, put him back in the queue</span>
+          <span className={theme === 'dark' ? 'text-gray-300' : ''}>seconds, put him back in the queue</span>
         </div>
 
         {/* Archive Chat Section */}
@@ -213,7 +229,9 @@ const InactivityTimeoutsHeader: React.FC = () => {
               checked={isCheckedArchive}
               onCheckedChange={(checked) => setIsCheckedArchive(!!checked)}
             />
-            <Label htmlFor="archive-checkbox">When agent doesn't respond for</Label>
+            <Label htmlFor="archive-checkbox" className={theme === 'dark' ? 'text-gray-300' : ''}>
+              When agent doesn't respond for
+            </Label>
           </div>
           <Select
             value={archiveMinutes}
@@ -223,15 +241,19 @@ const InactivityTimeoutsHeader: React.FC = () => {
             <SelectTrigger className="w-[80px]">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : ''}>
               {timeOptions.map((option) => (
-                <SelectItem key={`archive-min-${option}`} value={option}>
+                <SelectItem 
+                  key={`archive-min-${option}`} 
+                  value={option}
+                  className={theme === 'dark' ? 'hover:bg-gray-700' : ''}
+                >
                   {option}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <span>minutes</span>
+          <span className={theme === 'dark' ? 'text-gray-300' : ''}>minutes</span>
           <Select
             value={archiveSeconds}
             onValueChange={setArchiveSeconds}
@@ -240,20 +262,24 @@ const InactivityTimeoutsHeader: React.FC = () => {
             <SelectTrigger className="w-[80px]">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : ''}>
               {timeOptions.map((option) => (
-                <SelectItem key={`archive-sec-${option}`} value={option}>
+                <SelectItem 
+                  key={`archive-sec-${option}`} 
+                  value={option}
+                  className={theme === 'dark' ? 'hover:bg-gray-700' : ''}
+                >
                   {option}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <span>seconds, archive the chat</span>
+          <span className={theme === 'dark' ? 'text-gray-300' : ''}>seconds, archive the chat</span>
         </div>
 
         {/* Visitor Inactivity Section */}
         <div className="flex flex-wrap items-center gap-2">
-          <Label>
+          <Label className={theme === 'dark' ? 'text-gray-300' : ''}>
             When there are no new messages from the visitor for
           </Label>
           <Select
@@ -263,15 +289,19 @@ const InactivityTimeoutsHeader: React.FC = () => {
             <SelectTrigger className="w-[80px]">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : ''}>
               {timeOptions.map((option) => (
-                <SelectItem key={`visitor-min-${option}`} value={option}>
+                <SelectItem 
+                  key={`visitor-min-${option}`} 
+                  value={option}
+                  className={theme === 'dark' ? 'hover:bg-gray-700' : ''}
+                >
                   {option}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <span>minutes</span>
+          <span className={theme === 'dark' ? 'text-gray-300' : ''}>minutes</span>
           <Select
             value={visitorSeconds}
             onValueChange={setVisitorSeconds}
@@ -279,26 +309,37 @@ const InactivityTimeoutsHeader: React.FC = () => {
             <SelectTrigger className="w-[80px]">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : ''}>
               {timeOptions.map((option) => (
-                <SelectItem key={`visitor-sec-${option}`} value={option}>
+                <SelectItem 
+                  key={`visitor-sec-${option}`} 
+                  value={option}
+                  className={theme === 'dark' ? 'hover:bg-gray-700' : ''}
+                >
                   {option}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <span>seconds after agent responded, put him back in the queue</span>
+          <span className={theme === 'dark' ? 'text-gray-300' : ''}>
+            seconds after agent responded, put him back in the queue
+          </span>
         </div>
 
         {/* Timeout Message Section */}
         <div className="space-y-2">
-          <Label>When agent responded send message about timeout to visitor:</Label>
+          <Label className={theme === 'dark' ? 'text-gray-300' : ''}>
+            When agent responded send message about timeout to visitor:
+          </Label>
           <Input
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Please respond in $time"
+            className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : ''}
           />
-          <p className="text-sm text-gray-500">
+          <p className={`text-sm ${
+            theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+          }`}>
             Use $time to include the countdown timer
           </p>
         </div>

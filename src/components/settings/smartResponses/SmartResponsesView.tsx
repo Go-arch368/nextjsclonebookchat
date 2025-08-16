@@ -6,6 +6,7 @@ import AddSmartResponseForm from './AddSmartResponseForm';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { toast } from 'react-toastify';
+import { useTheme } from 'next-themes';
 
 interface SmartResponse {
   id: number;
@@ -20,6 +21,7 @@ interface SmartResponse {
 }
 
 const SmartResponsesView: React.FC = () => {
+  const { resolvedTheme } = useTheme();
   const [showAddForm, setShowAddForm] = useState(false);
   const [smartResponses, setSmartResponses] = useState<SmartResponse[]>([]);
   const [editingResponse, setEditingResponse] = useState<SmartResponse | null>(null);
@@ -36,6 +38,9 @@ const SmartResponsesView: React.FC = () => {
     } catch (error: any) {
       setError(error.message || 'Failed to fetch smart responses');
       console.error('Fetch error:', error);
+      toast.error('Failed to fetch smart responses', {
+        theme: resolvedTheme === 'dark' ? 'dark' : 'light',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -60,47 +65,45 @@ const SmartResponsesView: React.FC = () => {
     setEditingResponse(null);
   };
 
+  const handleSave = async (response: SmartResponse) => {
+    try {
+      setIsLoading(true);
+      setError(null);
 
+      const method = response.id ? 'PUT' : 'POST';
+      const endpoint = '/api/v1/settings/smart-responses';
 
-const handleSave = async (response: SmartResponse) => {
-  try {
-    setIsLoading(true);
-    setError(null);
+      const apiResponse = await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(response),
+      });
 
-    const method = response.id ? 'PUT' : 'POST';
-    const endpoint = response.id 
-      ? '/api/v1/settings/smart-responses'  // This will use the PUT method
-      : '/api/v1/settings/smart-responses';
+      if (!apiResponse.ok) {
+        const errorData = await apiResponse.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to save smart response');
+      }
 
-    const apiResponse = await fetch(endpoint, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(response),
-    });
-
-    if (!apiResponse.ok) {
-      const errorData = await apiResponse.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Failed to save smart response');
+      const savedResponse = await apiResponse.json();
+      setSmartResponses(prev => 
+        response.id
+          ? prev.map(r => r.id === response.id ? savedResponse : r)
+          : [...prev, savedResponse]
+      );
+      
+      setShowAddForm(false);
+      toast.success(response.id ? 'Updated successfully!' : 'Created successfully!', {
+        theme: resolvedTheme === 'dark' ? 'dark' : 'light',
+      });
+    } catch (error: any) {
+      setError(error.message);
+      toast.error(error.message, {
+        theme: resolvedTheme === 'dark' ? 'dark' : 'light',
+      });
+    } finally {
+      setIsLoading(false);
     }
-
-    const savedResponse = await apiResponse.json();
-    setSmartResponses(prev => 
-      response.id
-        ? prev.map(r => r.id === response.id ? savedResponse : r)
-        : [...prev, savedResponse]
-    );
-    
-    setShowAddForm(false);
-    toast.success(response.id ? 'Updated successfully!' : 'Created successfully!');
-  } catch (error: any) {
-    setError(error.message);
-    toast.error(error.message);
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-
+  };
 
   const handleDelete = async (id: number) => {
     try {
@@ -117,10 +120,14 @@ const handleSave = async (response: SmartResponse) => {
       }
 
       setSmartResponses(prev => prev.filter(r => r.id !== id));
-      toast.success('Deleted successfully!');
+      toast.success('Deleted successfully!', {
+        theme: resolvedTheme === 'dark' ? 'dark' : 'light',
+      });
     } catch (error: any) {
       setError(error.message);
-      toast.error(error.message);
+      toast.error(error.message, {
+        theme: resolvedTheme === 'dark' ? 'dark' : 'light',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -141,36 +148,48 @@ const handleSave = async (response: SmartResponse) => {
       }
 
       setSmartResponses([]);
-      toast.success('All smart responses cleared!');
+      toast.success('All smart responses cleared!', {
+        theme: resolvedTheme === 'dark' ? 'dark' : 'light',
+      });
     } catch (error: any) {
       setError(error.message);
-      toast.error(error.message);
+      toast.error(error.message, {
+        theme: resolvedTheme === 'dark' ? 'dark' : 'light',
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div>
-      <ToastContainer position="top-right" autoClose={3000} />
-      {showAddForm ? (
-        <AddSmartResponseForm
-          onSave={handleSave}
-          onCancel={handleCancel}
-          editingResponse={editingResponse}
-          smartResponses={smartResponses}
-        />
-      ) : (
-        <SmartResponsesHeader
-          onAddClick={handleAddClick}
-          onEditClick={handleEditClick}
-          onDelete={handleDelete}
-          onClearAll={handleClearAll}
-          smartResponses={smartResponses}
-          isLoading={isLoading}
-          error={error}
-        />
-      )}
+    <div className={`min-h-screen ${resolvedTheme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      <ToastContainer 
+        position="top-right" 
+        autoClose={3000}
+        theme={resolvedTheme === 'dark' ? 'dark' : 'light'}
+      />
+      <div className="container mx-auto px-4 py-8">
+        {showAddForm ? (
+          <AddSmartResponseForm
+            onSave={handleSave}
+            onCancel={handleCancel}
+            editingResponse={editingResponse}
+            smartResponses={smartResponses}
+            theme={resolvedTheme}
+          />
+        ) : (
+          <SmartResponsesHeader
+            onAddClick={handleAddClick}
+            onEditClick={handleEditClick}
+            onDelete={handleDelete}
+            onClearAll={handleClearAll}
+            smartResponses={smartResponses}
+            isLoading={isLoading}
+            error={error}
+            theme={resolvedTheme}
+          />
+        )}
+      </div>
     </div>
   );
 };

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import IPAddressesHeader from './IPAddressesHeader';
 import AddIPAddressForm from './AddIPAddressForm';
 import { toast } from 'sonner';
+import { useTheme } from 'next-themes';
 
 interface IPAddress {
   id: number;
@@ -18,6 +19,7 @@ const IPAddressesView: React.FC = () => {
   const [editingIPAddress, setEditingIPAddress] = useState<IPAddress | null>(null);
   const [ipAddresses, setIPAddresses] = useState<IPAddress[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { theme } = useTheme();
 
   const fetchIPAddresses = async () => {
     try {

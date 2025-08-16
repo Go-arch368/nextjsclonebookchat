@@ -1,10 +1,14 @@
-import React from 'react'
-import InactivityTimeoutsHeader from './inactivityTimeoutsHeader'
+"use client";
+
+import { useTheme } from "next-themes";
+import InactivityTimeoutsHeader from './inactivityTimeoutsHeader';
 
 const InactivityTimeoutsView = () => {
+  const { theme } = useTheme();
+  
   return (
-    <div>
-     <InactivityTimeoutsHeader/>
+    <div className={theme === 'dark' ? 'dark' : ''}>
+      <InactivityTimeoutsHeader/>
     </div>
   )
 }

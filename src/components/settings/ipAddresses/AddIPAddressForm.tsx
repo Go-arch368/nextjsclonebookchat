@@ -5,6 +5,7 @@ import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
 import { Label } from '@/ui/label';
 import { toast } from 'sonner';
+import { useTheme } from 'next-themes';
 
 interface IPAddress {
   id: number;
@@ -34,6 +35,8 @@ const AddIPAddressForm: React.FC<AddIPAddressFormProps> = ({
   const [errors, setErrors] = useState({
     ipAddress: '',
   });
+
+  const { theme } = useTheme();
 
   useEffect(() => {
     if (ipAddress) {
@@ -79,7 +82,7 @@ const AddIPAddressForm: React.FC<AddIPAddressFormProps> = ({
     const now = new Date().toISOString();
     const payload: IPAddress = {
       id: formData.id || Date.now(),
-      userId: 1, // Should be replaced with actual user ID from auth
+      userId: 1,
       ipAddress: formData.ipAddress,
       createdAt: ipAddress?.createdAt || now,
       updatedAt: now,
@@ -89,21 +92,21 @@ const AddIPAddressForm: React.FC<AddIPAddressFormProps> = ({
   };
 
   return (
-    <div className="p-10 bg-white rounded-xl shadow-lg border border-gray-200">
-      <h1 className="text-4xl font-bold text-gray-800 mb-10">
+    <div className={`p-10 rounded-xl shadow-lg border ${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
+      <h1 className={`text-4xl font-bold mb-10 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
         {ipAddress ? 'Edit IP Address' : 'Add a new IP address'}
       </h1>
       
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <Label htmlFor="ipAddress" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="ipAddress" className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             IP Address
           </Label>
           <Input
             id="ipAddress"
             value={formData.ipAddress}
             onChange={(e) => setFormData({ ...formData, ipAddress: e.target.value })}
-            className={`w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500 ${
+            className={`w-full mt-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white focus:ring-blue-500' : 'border-gray-300 focus:ring-blue-500'} ${
               errors.ipAddress ? 'border-red-500' : ''
             }`}
             placeholder="Enter IP address (e.g., 192.168.1.1)"
@@ -118,7 +121,7 @@ const AddIPAddressForm: React.FC<AddIPAddressFormProps> = ({
           <Button
             type="button"
             variant="outline"
-            className="px-6 py-2 border-gray-300 text-gray-800"
+            className={`px-6 py-2 ${theme === 'dark' ? 'border-gray-700 text-white hover:bg-gray-800' : 'border-gray-300 text-gray-800'}`}
             onClick={onCancel}
           >
             Cancel

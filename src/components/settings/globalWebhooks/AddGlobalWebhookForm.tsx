@@ -8,6 +8,7 @@ import { Checkbox } from '@/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select';
 import { toast } from 'react-toastify';
+import { useTheme } from 'next-themes';
 
 interface GlobalWebhook {
   id: number;
@@ -43,6 +44,7 @@ const AddGlobalWebhookForm: React.FC<AddGlobalWebhookFormProps> = ({
     createdBy: '',
     company: '',
   });
+  const { theme } = useTheme();
 
   const eventOptions = [
     'NEW_CUSTOMER',
@@ -110,7 +112,7 @@ const AddGlobalWebhookForm: React.FC<AddGlobalWebhookFormProps> = ({
 
     const payload: GlobalWebhook = {
       id: editingWebhook?.id || Date.now(),
-      userId: 1, // Should be replaced with actual user ID from auth
+      userId: 1,
       event: formData.event,
       dataTypeEnabled: formData.dataTypeEnabled,
       destination: formData.destination as 'TARGET_URL' | 'EMAIL' | 'BOTH',
@@ -149,14 +151,14 @@ const AddGlobalWebhookForm: React.FC<AddGlobalWebhookFormProps> = ({
   };
 
   return (
-    <div className="p-10 bg-white rounded-xl shadow-lg border border-gray-200">
-      <h1 className="text-4xl font-bold text-gray-800 mb-10">
+    <div className={`p-10 rounded-xl shadow-lg border ${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
+      <h1 className={`text-4xl font-bold mb-10 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
         {editingWebhook ? 'Edit Global Webhook' : 'Add a new global webhook'}
       </h1>
       
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <Label className="text-sm font-medium text-gray-700">Event</Label>
+          <Label className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Event</Label>
           <RadioGroup
             value={formData.event}
             onValueChange={(value) => setFormData({ ...formData, event: value })}
@@ -165,7 +167,7 @@ const AddGlobalWebhookForm: React.FC<AddGlobalWebhookFormProps> = ({
             {eventOptions.map((event) => (
               <div key={event} className="flex items-center gap-2">
                 <RadioGroupItem value={event} id={event} />
-                <Label htmlFor={event} className="text-sm text-gray-700">
+                <Label htmlFor={event} className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                   {formatEventName(event)}
                 </Label>
               </div>
@@ -174,31 +176,35 @@ const AddGlobalWebhookForm: React.FC<AddGlobalWebhookFormProps> = ({
         </div>
 
         <div>
-          <Label className="text-sm font-medium text-gray-700">Data Type</Label>
+          <Label className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Data Type</Label>
           <div className="mt-2 flex items-center gap-2">
             <Checkbox
               id="dataTypeEnabled"
               checked={formData.dataTypeEnabled}
               onCheckedChange={(checked) => setFormData({ ...formData, dataTypeEnabled: checked as boolean })}
             />
-            <Label htmlFor="dataTypeEnabled" className="text-sm text-gray-700">
+            <Label htmlFor="dataTypeEnabled" className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
               Include customer data
             </Label>
           </div>
         </div>
 
         <div>
-          <Label className="text-sm font-medium text-gray-700">Destination</Label>
+          <Label className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Destination</Label>
           <Select
             value={formData.destination}
             onValueChange={(value) => setFormData({ ...formData, destination: value as 'TARGET_URL' | 'EMAIL' | 'BOTH' })}
           >
-            <SelectTrigger className="w-full mt-2">
+            <SelectTrigger className={`w-full mt-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : ''}`}>
               <SelectValue placeholder="Select destination" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : ''}>
               {destinationOptions.map((option) => (
-                <SelectItem key={option} value={option}>
+                <SelectItem 
+                  key={option} 
+                  value={option}
+                  className={theme === 'dark' ? 'hover:bg-gray-700' : ''}
+                >
                   {formatEventName(option)}
                 </SelectItem>
               ))}
@@ -208,7 +214,7 @@ const AddGlobalWebhookForm: React.FC<AddGlobalWebhookFormProps> = ({
 
         {(formData.destination === 'EMAIL' || formData.destination === 'BOTH') && (
           <div>
-            <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+            <Label htmlFor="email" className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
               Email
             </Label>
             <Input
@@ -216,7 +222,7 @@ const AddGlobalWebhookForm: React.FC<AddGlobalWebhookFormProps> = ({
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full mt-2"
+              className={`w-full mt-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : ''}`}
               placeholder="Enter email address"
               required
             />
@@ -225,14 +231,14 @@ const AddGlobalWebhookForm: React.FC<AddGlobalWebhookFormProps> = ({
 
         {(formData.destination === 'TARGET_URL' || formData.destination === 'BOTH') && (
           <div>
-            <Label htmlFor="targetUrl" className="text-sm font-medium text-gray-700">
+            <Label htmlFor="targetUrl" className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
               Target URL
             </Label>
             <Input
               id="targetUrl"
               value={formData.targetUrl}
               onChange={(e) => setFormData({ ...formData, targetUrl: e.target.value })}
-              className="w-full mt-2"
+              className={`w-full mt-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : ''}`}
               placeholder="Enter target URL (e.g., https://example.com/webhook)"
               required
             />
@@ -240,28 +246,28 @@ const AddGlobalWebhookForm: React.FC<AddGlobalWebhookFormProps> = ({
         )}
 
         <div>
-          <Label htmlFor="createdBy" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="createdBy" className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             Created By
           </Label>
           <Input
             id="createdBy"
             value={formData.createdBy}
             onChange={(e) => setFormData({ ...formData, createdBy: e.target.value })}
-            className="w-full mt-2"
+            className={`w-full mt-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : ''}`}
             placeholder="Enter creator name"
             required
           />
         </div>
 
         <div>
-          <Label htmlFor="company" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="company" className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             Company
           </Label>
           <Input
             id="company"
             value={formData.company}
             onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-            className="w-full mt-2"
+            className={`w-full mt-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : ''}`}
             placeholder="Enter company name"
             required
           />
@@ -271,7 +277,7 @@ const AddGlobalWebhookForm: React.FC<AddGlobalWebhookFormProps> = ({
           <Button
             type="button"
             variant="outline"
-            className="px-6 py-2 border-gray-300 text-gray-800"
+            className={`px-6 py-2 ${theme === 'dark' ? 'border-gray-700 text-white hover:bg-gray-800' : 'border-gray-300 text-gray-800'}`}
             onClick={onCancel}
           >
             Cancel

@@ -5,6 +5,7 @@ import TagsViewHeader from './TagsViewHeader';
 import AddTagForm from './AddTagForm';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useTheme } from 'next-themes';
 
 interface Tag {
   id: number;
@@ -20,6 +21,7 @@ interface Tag {
 const TagsView: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
+  const { theme } = useTheme();
 
   const handleAddClick = () => {
     setEditingTag(null);
@@ -38,7 +40,13 @@ const TagsView: React.FC = () => {
 
   return (
     <div>
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} closeOnClick />
+      <ToastContainer 
+        position="top-right" 
+        autoClose={3000} 
+        hideProgressBar={false} 
+        closeOnClick
+        theme={theme === 'dark' ? 'dark' : 'light'}
+      />
       {showAddForm ? (
         <AddTagForm
           onSave={() => setShowAddForm(false)}

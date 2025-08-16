@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit2 } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
 interface Announcement {
   id?: number;
@@ -13,6 +14,7 @@ interface Announcement {
 }
 
 const AnnouncementsView = () => {
+  const { resolvedTheme } = useTheme();
   const [loginAnnouncements, setLoginAnnouncements] = useState<Announcement[]>([]);
   const [dashboardAnnouncements, setDashboardAnnouncements] = useState<Announcement[]>([]);
   const [loginForm, setLoginForm] = useState<Announcement>({
@@ -71,17 +73,6 @@ const AnnouncementsView = () => {
         });
         setEditingId(prev => ({ ...prev, Login: latestLogin.id || null }));
         setIsEditing(prev => ({ ...prev, Login: false }));
-      } else {
-        setLoginForm({
-          userId: 1,
-          pageType: 'Login',
-          title: '',
-          text: '',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        });
-        setEditingId(prev => ({ ...prev, Login: null }));
-        setIsEditing(prev => ({ ...prev, Login: true }));
       }
 
       if (dashboardAnns.length > 0) {
@@ -96,17 +87,6 @@ const AnnouncementsView = () => {
         });
         setEditingId(prev => ({ ...prev, Dashboard: latestDashboard.id || null }));
         setIsEditing(prev => ({ ...prev, Dashboard: false }));
-      } else {
-        setDashboardForm({
-          userId: 1,
-          pageType: 'Dashboard',
-          title: '',
-          text: '',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        });
-        setEditingId(prev => ({ ...prev, Dashboard: null }));
-        setIsEditing(prev => ({ ...prev, Dashboard: true }));
       }
     } catch (error: any) {
       console.error('Fetch error:', error);
@@ -150,7 +130,9 @@ const AnnouncementsView = () => {
     }
   };
 
-  const deleteAnnouncement = async (id: number, pageType: string) => {
+  const deleteAnnouncement = async (id: number | null, pageType: string) => {
+    if (!id) return;
+    
     try {
       const response = await fetch(`/api/settings/announcements?id=${id}`, {
         method: 'DELETE',
@@ -179,15 +161,25 @@ const AnnouncementsView = () => {
     form: Announcement,
     setForm: React.Dispatch<React.SetStateAction<Announcement>>,
   ) => (
-    <section className="p-6 bg-white rounded-lg shadow-md border border-gray-200 mt-6">
+    <section className={`p-6 rounded-lg shadow-md mt-6 ${
+      resolvedTheme === 'dark' 
+        ? 'bg-gray-800 border border-gray-700' 
+        : 'bg-white border border-gray-200'
+    }`}>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold text-gray-800">
+        <h2 className={`text-3xl font-bold ${
+          resolvedTheme === 'dark' ? 'text-white' : 'text-gray-800'
+        }`}>
           Announcements for {pageType} Page
         </h2>
         <div className="flex gap-4">
           <button
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 flex items-center gap-2"
             onClick={() => saveAnnouncement(form)}
+            className={`px-4 py-2 rounded-full flex items-center gap-2 ${
+              resolvedTheme === 'dark'
+                ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                : 'bg-blue-500 hover:bg-blue-600 text-white'
+            }`}
           >
             <Plus className="h-5 w-5" />
             <span>{editingId[pageType] ? 'Update' : 'Save'}</span>
@@ -197,7 +189,9 @@ const AnnouncementsView = () => {
 
       <div className="flex flex-col gap-4">
         <div className="relative">
-          <label htmlFor={`${pageType}-title`} className="block text-black text-sm font-medium mb-2">
+          <label htmlFor={`${pageType}-title`} className={`block text-sm font-medium mb-2 ${
+            resolvedTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+          }`}>
             Title
           </label>
           <div className="flex items-center gap-4">
@@ -206,29 +200,49 @@ const AnnouncementsView = () => {
               id={`${pageType}-title`}
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
-              className="flex-grow p-2 border rounded-md text-black focus:outline-none focus:ring-2 focus:ring-gray-500"
+              className={`flex-grow p-2 rounded-md focus:outline-none focus:ring-2 ${
+                resolvedTheme === 'dark'
+                  ? 'bg-gray-700 border border-gray-600 text-white focus:ring-blue-500'
+                  : 'bg-white border border-gray-300 text-black focus:ring-blue-500'
+              }`}
             />
             <div className="flex gap-2">
-              <button onClick={() => startEditing(pageType)}>
-                <Edit2 className="h-5 w-5 text-gray-700" />
+              <button 
+                onClick={() => startEditing(pageType)}
+                aria-label={`Edit ${pageType} announcement`}
+              >
+                <Edit2 className={`h-5 w-5 ${
+                  resolvedTheme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                }`} />
               </button>
               {editingId[pageType] && (
-                <button onClick={() => deleteAnnouncement(editingId[pageType]!, pageType)}>
-                  <Trash2 className="h-5 w-5 text-red-500" />
+                <button 
+                  onClick={() => deleteAnnouncement(editingId[pageType], pageType)}
+                  aria-label={`Delete ${pageType} announcement`}
+                >
+                  <Trash2 className={`h-5 w-5 ${
+                    resolvedTheme === 'dark' ? 'text-red-400' : 'text-red-600'
+                  }`} />
                 </button>
               )}
             </div>
           </div>
         </div>
         <div>
-          <label htmlFor={`${pageType}-text`} className="block text-black text-sm font-medium mb-2">
+          <label htmlFor={`${pageType}-text`} className={`block text-sm font-medium mb-2 ${
+            resolvedTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+          }`}>
             Text
           </label>
           <textarea
             id={`${pageType}-text`}
             value={form.text}
             onChange={(e) => setForm({ ...form, text: e.target.value })}
-            className="w-full p-2 border rounded-md text-black focus:outline-none focus:ring-2 focus:ring-gray-500 h-32"
+            className={`w-full p-2 rounded-md focus:outline-none focus:ring-2 h-32 ${
+              resolvedTheme === 'dark'
+                ? 'bg-gray-700 border border-gray-600 text-white focus:ring-blue-500'
+                : 'bg-white border border-gray-300 text-black focus:ring-blue-500'
+            }`}
           />
         </div>
       </div>

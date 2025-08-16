@@ -6,6 +6,7 @@ import { Input } from '@/ui/input';
 import { Label } from '@/ui/label';
 import { Checkbox } from '@/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/ui/radio-group';
+import { useTheme } from 'next-themes';
 
 interface Webhook {
   id?: number;
@@ -39,6 +40,7 @@ const AddWebhookForm: React.FC<AddWebhookFormProps> = ({
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { theme } = useTheme();
 
   const eventOptions = [
     'CHAT_STARTS',
@@ -121,17 +123,23 @@ const AddWebhookForm: React.FC<AddWebhookFormProps> = ({
   };
 
   return (
-    <div className="p-10 bg-white rounded-xl shadow-lg border border-gray-200">
-      <h1 className="text-2xl font-bold text-gray-800 mb-4">
+    <div className={`p-10 rounded-xl shadow-lg border ${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
+      <h1 className={`text-2xl font-bold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
         {editingWebhook ? 'Edit Webhook' : 'Add New Webhook'}
       </h1>
-      <hr className="border-gray-300 mb-6" />
+      <hr className={`${theme === 'dark' ? 'border-gray-700' : 'border-gray-300'} mb-6`} />
       
       <form onSubmit={handleSubmit} className="space-y-6">
-        {errors.submit && <p className="text-red-500 text-sm">{errors.submit}</p>}
+        {errors.submit && (
+          <p className={`text-sm ${theme === 'dark' ? 'text-red-400' : 'text-red-500'}`}>
+            {errors.submit}
+          </p>
+        )}
 
         <div>
-          <Label className="text-sm font-medium text-gray-700">Event *</Label>
+          <Label className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+            Event *
+          </Label>
           <RadioGroup
             value={formData.event}
             onValueChange={(value) => setFormData({ ...formData, event: value })}
@@ -144,17 +152,26 @@ const AddWebhookForm: React.FC<AddWebhookFormProps> = ({
                   id={event} 
                   disabled={isSubmitting} 
                 />
-                <Label htmlFor={event} className="text-sm text-gray-700">
+                <Label 
+                  htmlFor={event} 
+                  className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+                >
                   {event.replace('_', ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())}
                 </Label>
               </div>
             ))}
           </RadioGroup>
-          {errors.event && <p className="text-red-500 text-sm mt-1">{errors.event}</p>}
+          {errors.event && (
+            <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-red-400' : 'text-red-500'}`}>
+              {errors.event}
+            </p>
+          )}
         </div>
 
         <div>
-          <Label className="text-sm font-medium text-gray-700">Data Types *</Label>
+          <Label className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+            Data Types *
+          </Label>
           <div className="mt-2 space-y-2">
             {dataTypeOptions.map((dataType) => (
               <div key={dataType} className="flex items-center gap-2">
@@ -164,58 +181,92 @@ const AddWebhookForm: React.FC<AddWebhookFormProps> = ({
                   onCheckedChange={(checked) => handleDataTypeChange(dataType, checked as boolean)}
                   disabled={isSubmitting}
                 />
-                <Label htmlFor={dataType} className="text-sm text-gray-700">
+                <Label 
+                  htmlFor={dataType} 
+                  className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+                >
                   {dataType}
                 </Label>
               </div>
             ))}
           </div>
-          {errors.dataTypes && <p className="text-red-500 text-sm mt-1">{errors.dataTypes}</p>}
+          {errors.dataTypes && (
+            <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-red-400' : 'text-red-500'}`}>
+              {errors.dataTypes}
+            </p>
+          )}
         </div>
 
         <div>
-          <Label htmlFor="targetUrl" className="text-sm font-medium text-gray-700">
+          <Label 
+            htmlFor="targetUrl" 
+            className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+          >
             Target URL *
           </Label>
           <Input
             id="targetUrl"
             value={formData.targetUrl}
             onChange={(e) => setFormData({ ...formData, targetUrl: e.target.value })}
-            className={`w-full mt-2 ${errors.targetUrl ? 'border-red-500' : 'border-gray-300'}`}
+            className={`w-full mt-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : ''} ${
+              errors.targetUrl ? (theme === 'dark' ? 'border-red-500' : 'border-red-500') : 'border-gray-300'
+            }`}
             placeholder="https://example.com/webhook"
             disabled={isSubmitting}
           />
-          {errors.targetUrl && <p className="text-red-500 text-sm mt-1">{errors.targetUrl}</p>}
+          {errors.targetUrl && (
+            <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-red-400' : 'text-red-500'}`}>
+              {errors.targetUrl}
+            </p>
+          )}
         </div>
 
         <div>
-          <Label htmlFor="createdBy" className="text-sm font-medium text-gray-700">
+          <Label 
+            htmlFor="createdBy" 
+            className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+          >
             Created By *
           </Label>
           <Input
             id="createdBy"
             value={formData.createdBy}
             onChange={(e) => setFormData({ ...formData, createdBy: e.target.value })}
-            className={`w-full mt-2 ${errors.createdBy ? 'border-red-500' : 'border-gray-300'}`}
+            className={`w-full mt-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : ''} ${
+              errors.createdBy ? (theme === 'dark' ? 'border-red-500' : 'border-red-500') : 'border-gray-300'
+            }`}
             placeholder="admin"
             disabled={isSubmitting}
           />
-          {errors.createdBy && <p className="text-red-500 text-sm mt-1">{errors.createdBy}</p>}
+          {errors.createdBy && (
+            <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-red-400' : 'text-red-500'}`}>
+              {errors.createdBy}
+            </p>
+          )}
         </div>
 
         <div>
-          <Label htmlFor="company" className="text-sm font-medium text-gray-700">
+          <Label 
+            htmlFor="company" 
+            className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+          >
             Company *
           </Label>
           <Input
             id="company"
             value={formData.company}
             onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-            className={`w-full mt-2 ${errors.company ? 'border-red-500' : 'border-gray-300'}`}
+            className={`w-full mt-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : ''} ${
+              errors.company ? (theme === 'dark' ? 'border-red-500' : 'border-red-500') : 'border-gray-300'
+            }`}
             placeholder="Your Company"
             disabled={isSubmitting}
           />
-          {errors.company && <p className="text-red-500 text-sm mt-1">{errors.company}</p>}
+          {errors.company && (
+            <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-red-400' : 'text-red-500'}`}>
+              {errors.company}
+            </p>
+          )}
         </div>
 
         <div className="flex justify-end gap-3 pt-6">
@@ -224,6 +275,7 @@ const AddWebhookForm: React.FC<AddWebhookFormProps> = ({
             variant="outline"
             onClick={onCancel}
             disabled={isSubmitting}
+            className={theme === 'dark' ? 'border-gray-700' : ''}
           >
             Cancel
           </Button>

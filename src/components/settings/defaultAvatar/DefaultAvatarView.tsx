@@ -1,9 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { toast } from "react-toastify";
+import { useTheme } from "next-themes";
+import { toast } from "sonner";
 import AvatarTemplatesView from "./AvatarTemplatesView";
 import { Avatar } from "@/types/avatar";
+import { Button } from "@/ui/button";
+import { Input } from "@/ui/input";
+import { Label } from "@/ui/label";
+import { Skeleton } from "@/ui/skeleton";
 
 const fetchWithRetry = async (url: string, options: RequestInit = {}, retries = 3) => {
   try {
@@ -18,6 +23,7 @@ const fetchWithRetry = async (url: string, options: RequestInit = {}, retries = 
 };
 
 export default function DefaultAvatarView() {
+  const { theme } = useTheme();
   const [defaultAvatar, setDefaultAvatar] = useState<Avatar>({
     id: "0",
     userId: 1,
@@ -127,37 +133,47 @@ export default function DefaultAvatarView() {
 
   return (
     <div className="space-y-6">
-      <div className="p-10 bg-white rounded-lg shadow-md border border-gray-200">
-        <h2 className="text-3xl font-bold text-gray-800 mb-6">
+      <div className={`p-6 rounded-lg shadow-md border ${
+        theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'
+      }`}>
+        <h2 className={`text-3xl font-bold mb-6 ${
+          theme === 'dark' ? 'text-white' : 'text-gray-800'
+        }`}>
           Default Avatar for Chat Widgets
         </h2>
-        <hr />
+        <hr className={theme === 'dark' ? 'border-gray-700' : 'border-gray-200'} />
         <div className="flex flex-col lg:flex-row items-center justify-between mt-6 space-y-6 lg:space-y-0 lg:space-x-10">
           <div className="flex items-center space-x-8 w-full">
             <div className="relative">
               {isLoading ? (
-                <div className="w-24 h-24 bg-gray-300 rounded-full animate-pulse" />
+                <Skeleton className="w-24 h-24 rounded-full" />
               ) : defaultAvatar.avatarImageUrl ? (
                 <img
                   src={defaultAvatar.avatarImageUrl}
                   alt="Avatar"
-                  className="w-24 h-24 rounded-full object-cover border border-gray-300"
+                  className={`w-24 h-24 rounded-full object-cover border ${
+                    theme === 'dark' ? 'border-gray-600' : 'border-gray-300'
+                  }`}
                   onError={(e) => {
                     e.currentTarget.src =
                       "data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22800%22%20height%3D%22800%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20800%20800%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%20type%3D%22text%2Fcss%22%3E%23holder_1850b9a5d0e%20text%20%7B%20fill%3A%23AAAAAA%3Bfont-weight%3Abold%3Bfont-family%3AArial%2C%20Helvetica%2C%20Open%20Sans%2C%20sans-serif%2C%20monospace%3Bfont-size%3A40pt%20%7D%20%3C%2Fstyle%3E%3C%2Fdefs%3E%3Cg%20id%3D%22holder_1850b9a5d0e%22%3E%3Crect%20width%3D%22800%22%20height%3D%22800%22%20fill%3D%22%23EEEEEE%22%3E%3C%2Frect%3E%3Cg%3E%3Ctext%20x%3D%22285.9140625%22%20y%3D%22432.3%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E";
                   }}
                 />
               ) : (
-                <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center">
-                  <span className="text-gray-500">No Image</span>
+                <div className={`w-24 h-24 rounded-full flex items-center justify-center ${
+                  theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'
+                }`}>
+                  <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>
+                    No Image
+                  </span>
                 </div>
               )}
             </div>
 
             <div className="flex-1 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
-                <input
+                <Label className={theme === 'dark' ? 'text-gray-300' : ''}>Name *</Label>
+                <Input
                   type="text"
                   value={defaultAvatar.name}
                   onChange={(e) =>
@@ -166,14 +182,14 @@ export default function DefaultAvatarView() {
                       name: e.target.value,
                     }))
                   }
-                  className="w-full p-2 border border-gray-300 rounded-md"
+                  className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : ''}`}
                   disabled={isLoading}
                   placeholder="e.g. Customer Support"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Job Title *</label>
-                <input
+                <Label className={theme === 'dark' ? 'text-gray-300' : ''}>Job Title *</Label>
+                <Input
                   type="text"
                   value={defaultAvatar.jobTitle}
                   onChange={(e) =>
@@ -182,14 +198,14 @@ export default function DefaultAvatarView() {
                       jobTitle: e.target.value,
                     }))
                   }
-                  className="w-full p-2 border border-gray-300 rounded-md"
+                  className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : ''}`}
                   disabled={isLoading}
                   placeholder="e.g. Support Agent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Image URL *</label>
-                <input
+                <Label className={theme === 'dark' ? 'text-gray-300' : ''}>Image URL *</Label>
+                <Input
                   type="text"
                   value={defaultAvatar.avatarImageUrl}
                   onChange={(e) =>
@@ -198,7 +214,7 @@ export default function DefaultAvatarView() {
                       avatarImageUrl: e.target.value,
                     }))
                   }
-                  className="w-full p-2 border border-gray-300 rounded-md"
+                  className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : ''}`}
                   placeholder="https://example.com/avatar.jpg"
                   disabled={isLoading}
                 />
@@ -207,7 +223,7 @@ export default function DefaultAvatarView() {
           </div>
 
           <div className="flex gap-3 w-full lg:w-auto">
-            <button
+            <Button
               onClick={handleSave}
               disabled={
                 isLoading ||
@@ -215,20 +231,19 @@ export default function DefaultAvatarView() {
                 !defaultAvatar.jobTitle ||
                 !defaultAvatar.avatarImageUrl
               }
-              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
               {isLoading ? "Saving..." : "Save"}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="outline"
               onClick={handleClear}
               disabled={
                 isLoading ||
                 (!defaultAvatar.name && !defaultAvatar.jobTitle && !defaultAvatar.avatarImageUrl)
               }
-              className="px-6 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 disabled:opacity-50"
             >
               Clear
-            </button>
+            </Button>
           </div>
         </div>
       </div>

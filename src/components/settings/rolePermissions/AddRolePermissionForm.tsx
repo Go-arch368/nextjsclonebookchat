@@ -1,6 +1,7 @@
-"use client";
+'use client'
 
 import React, { useState, useEffect } from 'react';
+import { useTheme } from 'next-themes';
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
 import { Label } from '@/ui/label';
@@ -25,6 +26,7 @@ const AddRolePermissionForm: React.FC<AddRolePermissionFormProps> = ({
   onCancel, 
   rolePermission 
 }) => {
+  const { theme } = useTheme();
   const [formData, setFormData] = useState<Omit<RolePermission, 'id' | 'userId' | 'createdAt' | 'updatedAt'> & { 
     id?: number;
   }>({
@@ -74,7 +76,7 @@ const AddRolePermissionForm: React.FC<AddRolePermissionFormProps> = ({
     const now = new Date().toISOString();
     const payload: RolePermission = {
       id: formData.id || Date.now(),
-      userId: 1, // Should be replaced with actual user ID from auth
+      userId: 1,
       userRole: formData.userRole,
       createdAt: rolePermission?.createdAt || now,
       updatedAt: now,
@@ -84,23 +86,29 @@ const AddRolePermissionForm: React.FC<AddRolePermissionFormProps> = ({
   };
 
   return (
-    <div className="p-10 bg-white rounded-xl shadow-lg border border-gray-200">
-      <h1 className="text-4xl font-bold text-gray-800 mb-10">
+    <div className={`p-10 rounded-xl shadow-lg border ${
+      theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'
+    }`}>
+      <h1 className={`text-4xl font-bold mb-10 ${
+        theme === 'dark' ? 'text-white' : 'text-gray-800'
+      }`}>
         {rolePermission ? 'Edit Role Permission' : 'Add a new role permission'}
       </h1>
       
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <Label htmlFor="userRole" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="userRole" className={theme === 'dark' ? 'text-gray-300' : ''}>
             User Role
           </Label>
           <Input
             id="userRole"
             value={formData.userRole}
             onChange={(e) => setFormData({ ...formData, userRole: e.target.value })}
-            className={`w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500 ${
-              errors.userRole ? 'border-red-500' : ''
-            }`}
+            className={`w-full mt-2 focus:ring-2 ${
+              theme === 'dark' 
+                ? 'bg-gray-800 border-gray-700 text-white focus:ring-blue-500' 
+                : 'border-gray-300 focus:ring-blue-500'
+            } ${errors.userRole ? 'border-red-500' : ''}`}
             placeholder="Enter user role (e.g., ADMIN, USER)"
             required
           />
@@ -113,15 +121,12 @@ const AddRolePermissionForm: React.FC<AddRolePermissionFormProps> = ({
           <Button
             type="button"
             variant="outline"
-            className="px-6 py-2 border-gray-300 text-gray-800"
+            className={theme === 'dark' ? 'border-gray-600' : ''}
             onClick={onCancel}
           >
             Cancel
           </Button>
-          <Button
-            type="submit"
-            className="px-6 py-2 bg-blue-600 text-white hover:bg-blue-800"
-          >
+          <Button type="submit">
             {rolePermission ? 'Update' : 'Save'}
           </Button>
         </div>

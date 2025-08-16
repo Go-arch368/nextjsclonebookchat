@@ -5,6 +5,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import AddEyeCatcherForm from './AddEyeCatcherForm';
 import EyeCatcherHeader from './EyeCatherHeader';
+import { useTheme } from 'next-themes';
 
 interface EyeCatcher {
   id: number;
@@ -21,6 +22,7 @@ interface EyeCatcher {
 }
 
 const EyeCatchersView: React.FC = () => {
+  const { resolvedTheme } = useTheme();
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [editingEyeCatcher, setEditingEyeCatcher] = useState<EyeCatcher | null>(null);
@@ -53,6 +55,7 @@ const EyeCatchersView: React.FC = () => {
       toast.error(errorMessage, {
         position: 'top-right',
         autoClose: 3000,
+        theme: resolvedTheme === 'dark' ? 'dark' : 'light',
       });
       setEyeCatchers([]);
     } finally {
@@ -108,6 +111,7 @@ const EyeCatchersView: React.FC = () => {
         {
           position: 'top-right',
           autoClose: 3000,
+          theme: resolvedTheme === 'dark' ? 'dark' : 'light',
         }
       );
     } catch (err: any) {
@@ -123,11 +127,13 @@ const EyeCatchersView: React.FC = () => {
         toast.error(`Eye catcher with title '${title}' already exists`, {
           position: 'top-right',
           autoClose: 3000,
+          theme: resolvedTheme === 'dark' ? 'dark' : 'light',
         });
       } else {
         toast.error(errorMessage, {
           position: 'top-right',
           autoClose: 3000,
+          theme: resolvedTheme === 'dark' ? 'dark' : 'light',
         });
       }
     } finally {
@@ -166,6 +172,7 @@ const EyeCatchersView: React.FC = () => {
         {
           position: 'top-right',
           autoClose: 3000,
+          theme: resolvedTheme === 'dark' ? 'dark' : 'light',
         }
       );
     } catch (err: any) {
@@ -181,11 +188,13 @@ const EyeCatchersView: React.FC = () => {
         toast.error(`Eye catcher with title '${title}' already exists`, {
           position: 'top-right',
           autoClose: 3000,
+          theme: resolvedTheme === 'dark' ? 'dark' : 'light',
         });
       } else {
         toast.error(errorMessage, {
           position: 'top-right',
           autoClose: 3000,
+          theme: resolvedTheme === 'dark' ? 'dark' : 'light',
         });
       }
     } finally {
@@ -194,33 +203,44 @@ const EyeCatchersView: React.FC = () => {
   };
 
   return (
-    <div>
-      {error && (
-        <div className="p-4 mb-4 text-red-800 bg-red-100 rounded-lg">{error}</div>
-      )}
-      {showAddForm ? (
-        <AddEyeCatcherForm
-          onSave={handleSave}
-          onCancel={handleCancel}
-          isEditMode={false}
-        />
-      ) : showEditForm && editingEyeCatcher ? (
-        <AddEyeCatcherForm
-          onSave={handleUpdate as (eyeCatcher: EyeCatcher | Omit<EyeCatcher, 'id' | 'imageUrl'>) => void}
-          onCancel={handleCancel}
-          initialData={editingEyeCatcher}
-          isEditMode={true}
-        />
-      ) : (
-        <EyeCatcherHeader
-          onAddClick={handleAddClick}
-          onEditClick={handleEditClick}
-          eyeCatchers={eyeCatchers}
-          onRefresh={fetchEyeCatchers}
-          isLoading={isLoading}
-          setError={setError}
-        />
-      )}
+    <div className={`min-h-screen ${resolvedTheme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      <div className="container mx-auto px-4 py-8">
+        {error && (
+          <div className={`p-4 mb-4 rounded-lg ${
+            resolvedTheme === 'dark'
+              ? 'bg-red-900 text-red-200'
+              : 'bg-red-100 text-red-800'
+          }`}>
+            {error}
+          </div>
+        )}
+        {showAddForm ? (
+          <AddEyeCatcherForm
+            onSave={handleSave}
+            onCancel={handleCancel}
+            isEditMode={false}
+            theme={resolvedTheme}
+          />
+        ) : showEditForm && editingEyeCatcher ? (
+          <AddEyeCatcherForm
+            onSave={handleUpdate as (eyeCatcher: EyeCatcher | Omit<EyeCatcher, 'id' | 'imageUrl'>) => void}
+            onCancel={handleCancel}
+            initialData={editingEyeCatcher}
+            isEditMode={true}
+            theme={resolvedTheme}
+          />
+        ) : (
+          <EyeCatcherHeader
+            onAddClick={handleAddClick}
+            onEditClick={handleEditClick}
+            eyeCatchers={eyeCatchers}
+            onRefresh={fetchEyeCatchers}
+            isLoading={isLoading}
+            setError={setError}
+            theme={resolvedTheme}
+          />
+        )}
+      </div>
     </div>
   );
 };

@@ -5,8 +5,8 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import MailTemplatesHeader from './MailTemplatesHeader';
 import AddMailTemplateForm from './AddMailTemplateForm';
+import { useTheme } from 'next-themes';
 
-// TypeScript interface for the mail template
 interface MailTemplate {
   id: number;
   userId: number;
@@ -26,10 +26,10 @@ const MailTemplatesView: React.FC = () => {
   const [templates, setTemplates] = useState<MailTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<MailTemplate | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { theme } = useTheme();
 
   const BASE_URL = '/api/v1/settings/mail-templates';
 
-  // Fetch all templates
   const fetchTemplates = async () => {
     try {
       setIsLoading(true);
@@ -70,7 +70,7 @@ const MailTemplatesView: React.FC = () => {
     try {
       const response = await axios.post<MailTemplate>(BASE_URL, {
         ...template,
-        userId: template.userId || 1, // Default userId
+        userId: template.userId || 1,
         createdAt: new Date().toISOString().slice(0, 19),
         modifiedAt: new Date().toISOString().slice(0, 19),
       });
@@ -126,9 +126,7 @@ const MailTemplatesView: React.FC = () => {
       setIsLoading(true);
       const response = await axios.get<MailTemplate[]>(
         BASE_URL,
-        {
-          params: { keyword, page: 0, size: 1000 },
-        }
+        { params: { keyword, page: 0, size: 1000 } }
       );
       setTemplates(response.data || []);
       toast.success(`Found ${response.data.length} template(s)`);

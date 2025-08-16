@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useTheme } from 'next-themes';
 import KnowledgeBaseHeader from './KnowledgeBaseHeader';
 import AddKnowledgeBaseRecordForm from './AddKnowledgeBaseRecordForm';
 import { toast } from 'sonner';
@@ -17,6 +18,7 @@ interface KnowledgeBaseRecord {
 }
 
 const KnowledgeBaseView: React.FC = () => {
+  const { theme } = useTheme();
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingRecord, setEditingRecord] = useState<KnowledgeBaseRecord | null>(null);
   const [knowledgeBaseRecords, setKnowledgeBaseRecords] = useState<KnowledgeBaseRecord[]>([]);
@@ -26,83 +28,16 @@ const KnowledgeBaseView: React.FC = () => {
     try {
       setIsLoading(true);
       const response = await fetch('/api/v1/settings/knowledge-bases?action=all');
-      if (!response.ok) {
-        throw new Error('Failed to fetch knowledge base records');
-      }
-      const data = await response.json();
-      setKnowledgeBaseRecords(data);
+      if (!response.ok) throw new Error('Failed to fetch records');
+      setKnowledgeBaseRecords(await response.json());
     } catch (error: any) {
-      toast.error(error.message || 'Failed to fetch knowledge base records');
+      toast.error(error.message || 'Failed to fetch records');
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchKnowledgeBaseRecords();
-  }, []);
-
-  const handleAddClick = () => {
-    setEditingRecord(null);
-    setShowAddForm(true);
-  };
-
-  const handleEditClick = (record: KnowledgeBaseRecord) => {
-    setEditingRecord(record);
-    setShowAddForm(true);
-  };
-
-  const handleDelete = async (id: number) => {
-    try {
-      const response = await fetch(`/api/v1/settings/knowledge-bases?action=delete&id=${id}`, {
-        method: 'DELETE',
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to delete knowledge base record');
-      }
-      
-      await fetchKnowledgeBaseRecords();
-      toast.success('Knowledge base record deleted successfully');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to delete knowledge base record');
-    }
-  };
-
-  const handleDeleteAll = async () => {
-    if (confirm('Are you sure you want to delete all knowledge base records? This action cannot be undone.')) {
-      try {
-        const response = await fetch('/api/v1/settings/knowledge-bases?action=delete-all', {
-          method: 'DELETE',
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to delete all knowledge base records');
-        }
-        
-        setKnowledgeBaseRecords([]);
-        toast.success('All knowledge base records deleted successfully');
-      } catch (error: any) {
-        toast.error(error.message || 'Failed to delete all knowledge base records');
-      }
-    }
-  };
-
-  const handleSearch = async (keyword: string) => {
-    try {
-      setIsLoading(true);
-      const response = await fetch(`/api/v1/settings/knowledge-bases?action=search&keyword=${encodeURIComponent(keyword)}`);
-      if (!response.ok) {
-        throw new Error('Failed to search knowledge base records');
-      }
-      const data = await response.json();
-      setKnowledgeBaseRecords(data);
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to search knowledge base records');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  useEffect(() => { fetchKnowledgeBaseRecords(); }, []);
 
   const handleSave = async (record: KnowledgeBaseRecord) => {
     try {
@@ -116,16 +51,11 @@ const KnowledgeBaseView: React.FC = () => {
         body: JSON.stringify(record),
       });
 
-      if (!response.ok) {
-        throw new Error(editingRecord 
-          ? 'Failed to update knowledge base record' 
-          : 'Failed to create knowledge base record');
-      }
+      if (!response.ok) throw new Error(
+        editingRecord ? 'Failed to update record' : 'Failed to create record'
+      );
 
-      toast.success(editingRecord 
-        ? 'Knowledge base record updated successfully' 
-        : 'Knowledge base record created successfully');
-      
+      toast.success(editingRecord ? 'Record updated' : 'Record created');
       await fetchKnowledgeBaseRecords();
       setShowAddForm(false);
     } catch (error: any) {
@@ -133,26 +63,69 @@ const KnowledgeBaseView: React.FC = () => {
     }
   };
 
-  const handleCancel = () => {
-    setShowAddForm(false);
-    setEditingRecord(null);
-  };
-
   return (
-    <div>
+    <div className={`${theme === 'dark' ? 'dark' : ''}`}>
       {showAddForm ? (
         <AddKnowledgeBaseRecordForm
           onSave={handleSave}
-          onCancel={handleCancel}
+          onCancel={() => {
+            setShowAddForm(false);
+            setEditingRecord(null);
+          }}
           initialRecord={editingRecord}
         />
       ) : (
         <KnowledgeBaseHeader
-          onAddClick={handleAddClick}
-          onEditClick={handleEditClick}
-          onDelete={handleDelete}
-          onDeleteAll={handleDeleteAll}
-          onSearch={handleSearch}
+          onAddClick={() => {
+            setEditingRecord(null);
+            setShowAddForm(true);
+          }}
+          onEditClick={(record) => {
+            setEditingRecord(record);
+            setShowAddForm(true);
+          }}
+          onDelete={async (id) => {
+            try {
+              const response = await fetch(
+                `/api/v1/settings/knowledge-bases?action=delete&id=${id}`,
+                { method: 'DELETE' }
+              );
+              if (!response.ok) throw new Error('Failed to delete');
+              await fetchKnowledgeBaseRecords();
+              toast.success('Record deleted');
+            } catch (error: any) {
+              toast.error(error.message || 'Delete failed');
+            }
+          }}
+          onDeleteAll={async () => {
+            if (confirm('Delete all records? This cannot be undone.')) {
+              try {
+                const response = await fetch(
+                  '/api/v1/settings/knowledge-bases?action=delete-all',
+                  { method: 'DELETE' }
+                );
+                if (!response.ok) throw new Error('Failed to delete all');
+                setKnowledgeBaseRecords([]);
+                toast.success('All records deleted');
+              } catch (error: any) {
+                toast.error(error.message || 'Delete all failed');
+              }
+            }
+          }}
+          onSearch={async (keyword) => {
+            try {
+              setIsLoading(true);
+              const response = await fetch(
+                `/api/v1/settings/knowledge-bases?action=search&keyword=${encodeURIComponent(keyword)}`
+              );
+              if (!response.ok) throw new Error('Search failed');
+              setKnowledgeBaseRecords(await response.json());
+            } catch (error: any) {
+              toast.error(error.message || 'Search failed');
+            } finally {
+              setIsLoading(false);
+            }
+          }}
           knowledgeBaseRecords={knowledgeBaseRecords}
           isLoading={isLoading}
         />

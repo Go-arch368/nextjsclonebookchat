@@ -5,6 +5,7 @@ import WebhooksHeader from './WebhooksViewHeader';
 import AddWebhookForm from './AddWebhookForm';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useTheme } from 'next-themes';
 
 interface Webhook {
   id?: number;
@@ -24,6 +25,7 @@ const WebhooksView: React.FC = () => {
   const [editingWebhook, setEditingWebhook] = useState<Webhook | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { theme } = useTheme();
 
   const fetchWebhooks = async () => {
     try {
@@ -128,7 +130,11 @@ const WebhooksView: React.FC = () => {
 
   return (
     <div>
-      <ToastContainer position="top-right" autoClose={3000} />
+      <ToastContainer 
+        position="top-right" 
+        autoClose={3000}
+        theme={theme === 'dark' ? 'dark' : 'light'}
+      />
       {showAddForm ? (
         <AddWebhookForm
           onSave={handleSave}

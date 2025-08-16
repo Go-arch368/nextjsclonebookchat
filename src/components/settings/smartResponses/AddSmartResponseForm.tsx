@@ -8,7 +8,6 @@ import { Checkbox } from '@/ui/checkbox';
 import { Textarea } from '@/ui/textarea';
 import { toast } from 'react-toastify';
 
-
 interface SmartResponse {
   id: number;
   userId: number;
@@ -26,6 +25,7 @@ interface AddSmartResponseFormProps {
   onCancel: () => void;
   editingResponse: SmartResponse | null;
   smartResponses: SmartResponse[];
+  theme?: string;
 }
 
 const AddSmartResponseForm: React.FC<AddSmartResponseFormProps> = ({
@@ -33,6 +33,7 @@ const AddSmartResponseForm: React.FC<AddSmartResponseFormProps> = ({
   onCancel,
   editingResponse,
   smartResponses,
+  theme = 'light',
 }) => {
   const [formData, setFormData] = useState({
     shortcuts: '',
@@ -133,47 +134,53 @@ const AddSmartResponseForm: React.FC<AddSmartResponseFormProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
- // ... (other imports and code)
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!validateForm()) return;
+    setIsSubmitting(true);
+    try {
+      const shortcuts = formData.shortcuts.split(',').map(s => s.trim()).filter(s => s);
+      const payload: SmartResponse = {
+        id: editingResponse?.id || 0,
+        userId: 1,
+        response: formData.response.trim(),
+        shortcuts,
+        websites: formData.websites,
+        createdBy: formData.createdBy.trim(),
+        company: formData.company.trim(),
+        createdAt: editingResponse?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
 
-  setIsSubmitting(true);
-  try {
-    const shortcuts = formData.shortcuts.split(',').map(s => s.trim()).filter(s => s);
-    const payload: SmartResponse = {
-      id: editingResponse?.id || 0,
-      userId: 1, // Replace with actual user ID from auth
-      response: formData.response.trim(),
-      shortcuts,
-      websites: formData.websites,
-      createdBy: formData.createdBy.trim(),
-      company: formData.company.trim(),
-      createdAt: editingResponse?.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    onSave(payload);
-  } catch (error: any) {
-    toast.error(error.message || 'Failed to save smart response');
-  } finally {
-    setIsSubmitting(false);
-  }
-};
-
-// ... (rest of the code)
+      onSave(payload);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to save smart response', {
+        theme: theme === 'dark' ? 'dark' : 'light',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
-    <div className="p-10 bg-white rounded-xl shadow-lg border border-gray-200">
-      <h1 className="text-4xl font-bold text-gray-800 mb-10">
+    <div className={`p-10 rounded-xl shadow-lg border ${
+      theme === 'dark'
+        ? 'bg-gray-800 border-gray-700'
+        : 'bg-white border-gray-200'
+    }`}>
+      <h1 className={`text-4xl font-bold mb-10 ${
+        theme === 'dark' ? 'text-white' : 'text-gray-800'
+      }`}>
         {editingResponse ? 'Edit Smart Response' : 'Add New Smart Response'}
       </h1>
       
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Shortcuts Field */}
         <div>
-          <Label htmlFor="shortcuts">Shortcuts *</Label>
+          <Label htmlFor="shortcuts" className={theme === 'dark' ? 'text-gray-300' : ''}>
+            Shortcuts *
+          </Label>
           <Input
             id="shortcuts"
             value={formData.shortcuts}
@@ -182,17 +189,27 @@ const handleSubmit = async (e: React.FormEvent) => {
               setErrors(prev => ({ ...prev, shortcuts: '' }));
             }}
             placeholder="Comma separated shortcuts (e.g., thanks, inquiry)"
-            className={errors.shortcuts ? 'border-red-500' : ''}
+            className={`${errors.shortcuts ? 'border-red-500' : ''} ${
+              theme === 'dark'
+                ? 'bg-gray-700 border-gray-600 text-white'
+                : ''
+            }`}
           />
-          {errors.shortcuts && <p className="text-red-500 text-sm mt-1">{errors.shortcuts}</p>}
-          <p className="text-xs text-gray-500 mt-1">
+          {errors.shortcuts && (
+            <p className="text-red-500 text-sm mt-1">{errors.shortcuts}</p>
+          )}
+          <p className={`text-xs mt-1 ${
+            theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+          }`}>
             Use #shortcut during chat to trigger this response
           </p>
         </div>
 
         {/* Response Field */}
         <div>
-          <Label htmlFor="response">Response *</Label>
+          <Label htmlFor="response" className={theme === 'dark' ? 'text-gray-300' : ''}>
+            Response *
+          </Label>
           <div className="flex flex-wrap gap-2 mb-2">
             {variables.map(variable => (
               <Button
@@ -201,6 +218,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                 variant="outline"
                 size="sm"
                 onClick={() => handleVariableClick(variable)}
+                className={theme === 'dark' ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : ''}
               >
                 {variable}
               </Button>
@@ -214,15 +232,23 @@ const handleSubmit = async (e: React.FormEvent) => {
               setFormData(prev => ({ ...prev, response: e.target.value }));
               setErrors(prev => ({ ...prev, response: '' }));
             }}
-            className={`min-h-[150px] ${errors.response ? 'border-red-500' : ''}`}
+            className={`min-h-[150px] ${errors.response ? 'border-red-500' : ''} ${
+              theme === 'dark'
+                ? 'bg-gray-700 border-gray-600 text-white'
+                : ''
+            }`}
             placeholder="Enter your response message..."
           />
-          {errors.response && <p className="text-red-500 text-sm mt-1">{errors.response}</p>}
+          {errors.response && (
+            <p className="text-red-500 text-sm mt-1">{errors.response}</p>
+          )}
         </div>
 
         {/* Created By Field */}
         <div>
-          <Label htmlFor="createdBy">Created By *</Label>
+          <Label htmlFor="createdBy" className={theme === 'dark' ? 'text-gray-300' : ''}>
+            Created By *
+          </Label>
           <Input
             id="createdBy"
             value={formData.createdBy}
@@ -230,14 +256,22 @@ const handleSubmit = async (e: React.FormEvent) => {
               setFormData(prev => ({ ...prev, createdBy: e.target.value }));
               setErrors(prev => ({ ...prev, createdBy: '' }));
             }}
-            className={errors.createdBy ? 'border-red-500' : ''}
+            className={`${errors.createdBy ? 'border-red-500' : ''} ${
+              theme === 'dark'
+                ? 'bg-gray-700 border-gray-600 text-white'
+                : ''
+            }`}
           />
-          {errors.createdBy && <p className="text-red-500 text-sm mt-1">{errors.createdBy}</p>}
+          {errors.createdBy && (
+            <p className="text-red-500 text-sm mt-1">{errors.createdBy}</p>
+          )}
         </div>
 
         {/* Company Field */}
         <div>
-          <Label htmlFor="company">Company *</Label>
+          <Label htmlFor="company" className={theme === 'dark' ? 'text-gray-300' : ''}>
+            Company *
+          </Label>
           <Input
             id="company"
             value={formData.company}
@@ -245,14 +279,22 @@ const handleSubmit = async (e: React.FormEvent) => {
               setFormData(prev => ({ ...prev, company: e.target.value }));
               setErrors(prev => ({ ...prev, company: '' }));
             }}
-            className={errors.company ? 'border-red-500' : ''}
+            className={`${errors.company ? 'border-red-500' : ''} ${
+              theme === 'dark'
+                ? 'bg-gray-700 border-gray-600 text-white'
+                : ''
+            }`}
           />
-          {errors.company && <p className="text-red-500 text-sm mt-1">{errors.company}</p>}
+          {errors.company && (
+            <p className="text-red-500 text-sm mt-1">{errors.company}</p>
+          )}
         </div>
 
         {/* Websites Field */}
         <div>
-          <Label>Websites</Label>
+          <Label className={theme === 'dark' ? 'text-gray-300' : ''}>
+            Websites
+          </Label>
           <div className="grid grid-cols-2 gap-2 mt-2">
             {websiteOptions.map(website => (
               <div key={website} className="flex items-center space-x-2">
@@ -261,7 +303,12 @@ const handleSubmit = async (e: React.FormEvent) => {
                   checked={formData.websites.includes(website)}
                   onCheckedChange={(checked) => handleWebsiteChange(website, checked as boolean)}
                 />
-                <label htmlFor={`website-${website}`} className="text-sm">
+                <label 
+                  htmlFor={`website-${website}`} 
+                  className={`text-sm ${
+                    theme === 'dark' ? 'text-gray-300' : ''
+                  }`}
+                >
                   {website}
                 </label>
               </div>
@@ -276,10 +323,15 @@ const handleSubmit = async (e: React.FormEvent) => {
             variant="outline"
             onClick={onCancel}
             disabled={isSubmitting}
+            className={theme === 'dark' ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : ''}
           >
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button 
+            type="submit" 
+            disabled={isSubmitting}
+            className={theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700' : ''}
+          >
             {isSubmitting ? (
               <>
                 <svg className="animate-spin -ml-1 mr-2 h-4 w-4" viewBox="0 0 24 24">

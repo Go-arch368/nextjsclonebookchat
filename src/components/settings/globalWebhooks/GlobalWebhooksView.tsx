@@ -5,6 +5,7 @@ import GlobalWebhooksHeader from './GlobalWebhooksHeader';
 import AddGlobalWebhookForm from './AddGlobalWebhookForm';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useTheme } from 'next-themes';
 
 interface GlobalWebhook {
   id: number;
@@ -23,6 +24,7 @@ interface GlobalWebhook {
 const GlobalWebhooksView: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingWebhook, setEditingWebhook] = useState<GlobalWebhook | null>(null);
+  const { theme } = useTheme();
 
   const handleAddClick = () => {
     setEditingWebhook(null);
@@ -41,7 +43,13 @@ const GlobalWebhooksView: React.FC = () => {
 
   return (
     <div>
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} closeOnClick />
+      <ToastContainer 
+        position="top-right" 
+        autoClose={3000} 
+        hideProgressBar={false} 
+        closeOnClick
+        theme={theme === 'dark' ? 'dark' : 'light'}
+      />
       {showAddForm ? (
         <AddGlobalWebhookForm
           onSave={() => setShowAddForm(false)}

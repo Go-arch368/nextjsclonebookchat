@@ -5,6 +5,7 @@ import TemplatesHeader from './TemplatesHeader';
 import AddTemplateForm from './AddTemplateForm';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useTheme } from 'next-themes';
 
 interface Template {
   id: number;
@@ -22,6 +23,7 @@ const TemplatesView: React.FC = () => {
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { theme } = useTheme();
 
   const fetchTemplates = async () => {
     try {
@@ -82,7 +84,13 @@ const TemplatesView: React.FC = () => {
 
   return (
     <div>
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} closeOnClick />
+      <ToastContainer 
+        position="top-right" 
+        autoClose={3000} 
+        hideProgressBar={false} 
+        closeOnClick
+        theme={theme === 'dark' ? 'dark' : 'light'}
+      />
       {showAddForm ? (
         <AddTemplateForm
           onSave={handleSave}

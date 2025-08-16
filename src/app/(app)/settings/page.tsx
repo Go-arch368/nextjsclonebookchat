@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import clsx from "clsx";
 import {
   MessageSquareText,
   CircleUserRound,
@@ -61,12 +60,12 @@ export default function EngagePage() {
   >("defaultAvatar");
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)]">
+    <div className="flex h-[calc(100vh-3.5rem)] bg-sidebar-background text-sidebar-foreground">
       {/* Left Sidebar */}
-      <div className="w-[220px] border-r bg-gray-100 dark:bg-zinc-900 flex flex-col overflow-y-auto no-scrollbar">
-        <h2 className="text-xl font-semibold p-4 dark:text-white">Settings</h2>
+      <div className="w-[220px] border-r border-sidebar-border flex flex-col overflow-y-auto no-scrollbar">
+        <h2 className="text-lg font-semibold p-4">Settings</h2>
         <div className="flex-1">
-          <nav className="flex flex-col gap-2 p-4 pt-0">
+          <nav className="flex flex-col gap-1 p-2">
             {[
               { name: "announcements", label: "Announcements", icon: MessageSquareText },
               { name: "defaultAvatar", label: "Default Avatar", icon: CircleUserRound },
@@ -89,18 +88,14 @@ export default function EngagePage() {
               <button
                 key={tab.name}
                 onClick={() => setActiveTab(tab.name as typeof activeTab)}
-                className={clsx(
-                  "flex items-center gap-2 text-left px-3 py-2 rounded-md text-sm font-medium capitalize",
-                  {
-                    "bg-blue-100 text-blue-900 dark:bg-blue-800 dark:text-white":
-                      activeTab === tab.name,
-                    "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800":
-                      activeTab !== tab.name,
-                  }
-                )}
+                data-slot="sidebar-menu-button"
+                data-sidebar="menu-button"
+                data-size="default"
+                data-active={activeTab === tab.name ? "true" : "false"}
+                className="peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground h-8 text-sm data-[active=true]:bg-gradient-to-r data-[active=true]:from-indigo-500 data-[active=true]:to-purple-600 data-[active=true]:text-white data-[active=true]:shadow-lg"
               >
-                <tab.icon className="h-5 w-5" />
-                {tab.label}
+                <tab.icon className="lucide lucide-server mr-2" aria-hidden="true" />
+                <span>{tab.label}</span>
               </button>
             ))}
           </nav>
@@ -108,7 +103,7 @@ export default function EngagePage() {
       </div>
 
       {/* Right Content View */}
-      <div className="flex-1 p-4 bg-gray-100 overflow-y-auto">
+      <div className="flex-1 p-6 overflow-y-auto bg-background text-foreground">
         {activeTab === "announcements" && <AnnouncementsView />}
         {activeTab === "defaultAvatar" && <DefaultAvatarView />}
         {activeTab === "greetings" && <GreetingsView />}

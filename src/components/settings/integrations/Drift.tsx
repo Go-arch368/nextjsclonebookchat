@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useTheme } from 'next-themes';
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select';
@@ -24,6 +25,7 @@ interface Integration {
 }
 
 const Drift: React.FC<DriftProps> = ({ integrations, onConfigure, onEdit }) => {
+  const { theme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIntegrationId, setSelectedIntegrationId] = useState<string | null>(null);
 
@@ -42,30 +44,48 @@ const Drift: React.FC<DriftProps> = ({ integrations, onConfigure, onEdit }) => {
               value={`Drift Integrations (${integrations.length})`}
               readOnly
               onClick={handleInputClick}
-              className="w-full border bg-sky-300 text-black font-bold border-gray-300 hover:bg-white focus:ring-2 focus:ring-blue-500 p-6 pr-10 cursor-pointer"
+              className={`w-full border ${
+                theme === 'dark' ? 'bg-sky-800 text-white hover:bg-sky-900' : 'bg-sky-300 text-black hover:bg-white'
+              } font-bold ${
+                theme === 'dark' ? 'border-gray-700' : 'border-gray-300'
+              } focus:ring-2 focus:ring-blue-500 p-6 pr-10 cursor-pointer`}
             />
             <ChevronDown
-              className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-black pointer-events-none"
+              className={`absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 ${
+                theme === 'dark' ? 'text-white' : 'text-black'
+              } pointer-events-none`}
               aria-hidden="true"
             />
           </div>
           {isOpen && (
-            <div className="mt-12 p-6 bg-sky-300 shadow-lg rounded-lg text-center">
+            <div className={`mt-12 p-6 ${
+              theme === 'dark' ? 'bg-sky-900 border-gray-700' : 'bg-sky-300 border-gray-200'
+            } shadow-lg rounded-lg text-center`}>
               {integrations.length > 0 ? (
                 <>
-                  <p className="mb-4 text-gray-600">
+                  <p className={`mb-4 ${
+                    theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                  }`}>
                     Manage multiple Drift integrations. Select an integration to view or edit its details.
                   </p>
                   <Select
                     value={selectedIntegrationId || ''}
                     onValueChange={(value) => setSelectedIntegrationId(value)}
                   >
-                    <SelectTrigger className="w-full mb-4 border-gray-300 focus:ring-2 focus:ring-blue-500">
+                    <SelectTrigger className={`w-full mb-4 ${
+                      theme === 'dark' ? 'bg-sky-800 border-gray-700' : 'border-gray-300'
+                    } focus:ring-2 focus:ring-blue-500`}>
                       <SelectValue placeholder={`Select from ${integrations.length} Drift integrations`} />
                     </SelectTrigger>
-                    <SelectContent className="max-h-60 overflow-y-auto">
+                    <SelectContent className={`max-h-60 overflow-y-auto ${
+                      theme === 'dark' ? 'bg-gray-800 border-gray-700' : ''
+                    }`}>
                       {integrations.map((integration) => (
-                        <SelectItem key={integration.id} value={integration.id.toString()}>
+                        <SelectItem 
+                          key={integration.id} 
+                          value={integration.id.toString()}
+                          className={theme === 'dark' ? 'hover:bg-gray-700' : ''}
+                        >
                           {integration.website}
                         </SelectItem>
                       ))}
@@ -73,22 +93,40 @@ const Drift: React.FC<DriftProps> = ({ integrations, onConfigure, onEdit }) => {
                   </Select>
                   {selectedIntegration ? (
                     <>
-                      <p className="mb-2 font-bold text-2xl">Drift Integration Details</p>
-                      <p>Website: {selectedIntegration.website}</p>
-                      <p>API Key: {selectedIntegration.apiKey}</p>
-                      <p>Status: {selectedIntegration.isConfigured ? 'Configured' : 'Not Configured'}</p>
+                      <p className={`mb-2 font-bold text-2xl ${
+                        theme === 'dark' ? 'text-white' : 'text-gray-800'
+                      }`}>
+                        Drift Integration Details
+                      </p>
+                      <p className={theme === 'dark' ? 'text-gray-300' : ''}>
+                        Website: {selectedIntegration.website}
+                      </p>
+                      <p className={theme === 'dark' ? 'text-gray-300' : ''}>
+                        API Key: {selectedIntegration.apiKey}
+                      </p>
+                      <p className={theme === 'dark' ? 'text-gray-300' : ''}>
+                        Status: {selectedIntegration.isConfigured ? 'Configured' : 'Not Configured'}
+                      </p>
                       <Button
-                        className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                        className={`mt-4 ${
+                          theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-700'
+                        } text-white px-4 py-2 rounded`}
                         onClick={() => onEdit(selectedIntegration)}
                       >
                         Edit Integration
                       </Button>
                     </>
                   ) : (
-                    <p className="mb-2 font-bold text-xl">Select an integration to view details</p>
+                    <p className={`mb-2 font-bold text-xl ${
+                      theme === 'dark' ? 'text-white' : 'text-gray-800'
+                    }`}>
+                      Select an integration to view details
+                    </p>
                   )}
                   <Button
-                    className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                    className={`mt-4 ${
+                      theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-700'
+                    } text-white px-4 py-2 rounded`}
                     onClick={onConfigure}
                   >
                     Add New Drift Integration
@@ -96,10 +134,18 @@ const Drift: React.FC<DriftProps> = ({ integrations, onConfigure, onEdit }) => {
                 </>
               ) : (
                 <>
-                  <p className="mb-2 font-bold text-2xl">Drift Integration Not Configured</p>
-                  <p>It looks like Drift is not integrated with your account. Add as many integrations as needed.</p>
+                  <p className={`mb-2 font-bold text-2xl ${
+                    theme === 'dark' ? 'text-white' : 'text-gray-800'
+                  }`}>
+                    Drift Integration Not Configured
+                  </p>
+                  <p className={theme === 'dark' ? 'text-gray-300' : ''}>
+                    It looks like Drift is not integrated with your account. Add as many integrations as needed.
+                  </p>
                   <Button
-                    className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                    className={`mt-4 ${
+                      theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-700'
+                    } text-white px-4 py-2 rounded`}
                     onClick={onConfigure}
                   >
                     Configure Drift

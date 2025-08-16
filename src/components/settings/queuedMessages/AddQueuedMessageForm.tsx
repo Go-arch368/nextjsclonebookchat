@@ -23,12 +23,14 @@ interface AddQueuedMessageFormProps {
   onSave: (queuedMessage: QueuedMessage) => void;
   onCancel: () => void;
   editingMessage: QueuedMessage | null;
+  theme?: string;
 }
 
 const AddQueuedMessageForm: React.FC<AddQueuedMessageFormProps> = ({ 
   onSave, 
   onCancel, 
-  editingMessage 
+  editingMessage,
+  theme = 'light'
 }) => {
   const [formData, setFormData] = useState<Omit<QueuedMessage, 'id' | 'userId' | 'createdAt' | 'updatedAt'> & { 
     id?: number;
@@ -91,7 +93,7 @@ const AddQueuedMessageForm: React.FC<AddQueuedMessageFormProps> = ({
     
     const payload: QueuedMessage = {
       id: formData.id || Date.now(),
-      userId: 1, // Should be replaced with actual user ID from auth
+      userId: 1,
       message: formData.message,
       backgroundColor: formData.backgroundColor,
       textColor: formData.textColor,
@@ -106,27 +108,45 @@ const AddQueuedMessageForm: React.FC<AddQueuedMessageFormProps> = ({
   };
 
   return (
-    <div className="p-10 bg-white rounded-xl shadow-lg border border-gray-200">
-      <h1 className="text-4xl font-bold text-gray-800 mb-10">
+    <div className={`p-10 rounded-xl shadow-lg border ${
+      theme === 'dark'
+        ? 'bg-gray-800 border-gray-700'
+        : 'bg-white border-gray-200'
+    }`}>
+      <h1 className={`text-4xl font-bold mb-10 ${
+        theme === 'dark' ? 'text-white' : 'text-gray-800'
+      }`}>
         {editingMessage ? 'Edit Queued Message' : 'Add a new queued message'}
       </h1>
       
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <p className="text-sm text-gray-600">
-          When all agents hit their limit or routing is set to manual, new visitors will be queued.
-        </p>
+      <p className={`text-sm ${
+        theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+      }`}>
+        When all agents hit their limit or routing is set to manual, new visitors will be queued.
+      </p>
 
+      <form onSubmit={handleSubmit} className="space-y-6 mt-6">
         <div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Queued message</h2>
+          <h2 className={`text-xl font-semibold mb-4 ${
+            theme === 'dark' ? 'text-white' : 'text-gray-800'
+          }`}>
+            Queued message
+          </h2>
           
-          <Label htmlFor="message" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="message" className={`text-sm font-medium ${
+            theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+          }`}>
             Message
           </Label>
           <Input
             id="message"
             value={formData.message}
             onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-            className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
+            className={`w-full mt-2 focus:ring-2 focus:ring-blue-500 ${
+              theme === 'dark'
+                ? 'bg-gray-700 border-gray-600 text-white'
+                : 'border-gray-300'
+            }`}
             placeholder="Insert text here..."
             required
           />
@@ -135,7 +155,11 @@ const AddQueuedMessageForm: React.FC<AddQueuedMessageFormProps> = ({
             <Button
               type="button"
               variant="outline"
-              className="px-3 py-1 text-sm border-gray-300 text-gray-700"
+              className={`px-3 py-1 text-sm ${
+                theme === 'dark'
+                  ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                  : 'border-gray-300 text-gray-700'
+              }`}
               onClick={() => handleVariableClick('%number%')}
             >
               +number
@@ -143,7 +167,11 @@ const AddQueuedMessageForm: React.FC<AddQueuedMessageFormProps> = ({
             <Button
               type="button"
               variant="outline"
-              className="px-3 py-1 text-sm border-gray-300 text-gray-700"
+              className={`px-3 py-1 text-sm ${
+                theme === 'dark'
+                  ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                  : 'border-gray-300 text-gray-700'
+              }`}
               onClick={() => handleVariableClick('%minutes%')}
             >
               +minutes
@@ -151,14 +179,22 @@ const AddQueuedMessageForm: React.FC<AddQueuedMessageFormProps> = ({
           </div>
 
           <div className="mt-4">
-            <Label className="text-sm font-medium text-gray-700">Available variables:</Label>
+            <Label className={`text-sm font-medium ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+            }`}>
+              Available variables:
+            </Label>
             <div className="flex flex-wrap gap-2 mt-2">
               {variables.map((variable) => (
                 <Button
                   key={variable}
                   type="button"
                   variant="outline"
-                  className="px-3 py-1 text-sm border-gray-300 text-gray-700"
+                  className={`px-3 py-1 text-sm ${
+                    theme === 'dark'
+                      ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                      : 'border-gray-300 text-gray-700'
+                  }`}
                   onClick={() => handleVariableClick(variable)}
                 >
                   {variable}
@@ -169,7 +205,9 @@ const AddQueuedMessageForm: React.FC<AddQueuedMessageFormProps> = ({
         </div>
 
         <div>
-          <Label htmlFor="backgroundColor" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="backgroundColor" className={`text-sm font-medium ${
+            theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+          }`}>
             Background Color
           </Label>
           <Input
@@ -177,13 +215,15 @@ const AddQueuedMessageForm: React.FC<AddQueuedMessageFormProps> = ({
             type="color"
             value={formData.backgroundColor}
             onChange={(e) => setFormData({ ...formData, backgroundColor: e.target.value })}
-            className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
+            className="w-full mt-2"
             required
           />
         </div>
 
         <div>
-          <Label htmlFor="textColor" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="textColor" className={`text-sm font-medium ${
+            theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+          }`}>
             Text Color
           </Label>
           <Input
@@ -191,47 +231,65 @@ const AddQueuedMessageForm: React.FC<AddQueuedMessageFormProps> = ({
             type="color"
             value={formData.textColor}
             onChange={(e) => setFormData({ ...formData, textColor: e.target.value })}
-            className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
+            className="w-full mt-2"
             required
           />
         </div>
 
         <div>
-          <Label htmlFor="imageUrl" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="imageUrl" className={`text-sm font-medium ${
+            theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+          }`}>
             Image URL (Optional)
           </Label>
           <Input
             id="imageUrl"
             value={formData.imageUrl}
             onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-            className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
+            className={`w-full mt-2 focus:ring-2 focus:ring-blue-500 ${
+              theme === 'dark'
+                ? 'bg-gray-700 border-gray-600 text-white'
+                : 'border-gray-300'
+            }`}
             placeholder="Enter image URL (e.g., http://example.com/image.png)"
           />
         </div>
 
         <div>
-          <Label htmlFor="createdBy" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="createdBy" className={`text-sm font-medium ${
+            theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+          }`}>
             Created By
           </Label>
           <Input
             id="createdBy"
             value={formData.createdBy}
             onChange={(e) => setFormData({ ...formData, createdBy: e.target.value })}
-            className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
+            className={`w-full mt-2 focus:ring-2 focus:ring-blue-500 ${
+              theme === 'dark'
+                ? 'bg-gray-700 border-gray-600 text-white'
+                : 'border-gray-300'
+            }`}
             placeholder="Enter creator name"
             required
           />
         </div>
 
         <div>
-          <Label htmlFor="company" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="company" className={`text-sm font-medium ${
+            theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+          }`}>
             Company
           </Label>
           <Input
             id="company"
             value={formData.company}
             onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-            className="w-full mt-2 border-gray-300 focus:ring-2 focus:ring-blue-500"
+            className={`w-full mt-2 focus:ring-2 focus:ring-blue-500 ${
+              theme === 'dark'
+                ? 'bg-gray-700 border-gray-600 text-white'
+                : 'border-gray-300'
+            }`}
             placeholder="Enter company name"
             required
           />
@@ -241,14 +299,22 @@ const AddQueuedMessageForm: React.FC<AddQueuedMessageFormProps> = ({
           <Button
             type="button"
             variant="outline"
-            className="px-6 py-2 border-gray-300 text-gray-800"
+            className={`px-6 py-2 ${
+              theme === 'dark'
+                ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                : 'border-gray-300 text-gray-800'
+            }`}
             onClick={onCancel}
           >
             Cancel
           </Button>
           <Button
             type="submit"
-            className="px-6 py-2 bg-blue-600 text-white hover:bg-blue-800"
+            className={`px-6 py-2 ${
+              theme === 'dark'
+                ? 'bg-blue-600 hover:bg-blue-700'
+                : 'bg-blue-600 hover:bg-blue-700'
+            } text-white`}
           >
             Save
           </Button>

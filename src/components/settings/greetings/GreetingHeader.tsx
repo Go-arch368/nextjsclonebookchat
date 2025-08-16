@@ -1,13 +1,12 @@
 "use client";
 
 import React, { useState } from 'react';
-import axios from 'axios';
 import { Plus, Pencil, Trash2, ArrowUp, ArrowDown, Search } from 'lucide-react';
 import { Input } from '@/ui/input';
 import { Button } from '@/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table';
 import { Skeleton } from '@/ui/skeleton';
 import { toast } from 'react-toastify';
+import axios from 'axios';
 
 interface Greeting {
   id?: number;
@@ -114,112 +113,124 @@ const GreetingHeader: React.FC<GreetingHeaderProps> = ({
   };
 
   return (
-    <div className="p-8 bg-white rounded-xl shadow-lg border border-gray-200">
-      <div className="flex justify-between items-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-800">Greetings</h2>
-        <div className="flex gap-6">
-          <div className="relative w-[350px]">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" />
+    <div className="space-y-4 p-6">
+      <header className="space-y-4">
+        <h1 className="text-3xl font-bold">Greetings</h1>
+        <div className="flex items-center gap-4">
+          <div className="relative w-full">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
             <Input
-              placeholder="Search greetings..."
-              className="pl-10 py-2 w-full text-black focus:outline-none rounded-md border border-gray-300"
+              className="pl-10 w-full"
+              placeholder="Search greetings by title or message..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button
-            className="px-6 py-3 bg-blue-500 text-white hover:bg-blue-600 flex items-center gap-3 rounded-lg"
+          <Button 
+            className="bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600"
             onClick={onAddClick}
           >
-            <Plus className="h-5 w-5" />
+            <Plus className="mr-2 h-4 w-4" />
             Add Greeting
           </Button>
-          <Button
-            className="px-6 py-3 bg-red-500 text-white hover:bg-red-600 flex items-center gap-3 rounded-lg"
+          <Button 
+            className="bg-destructive text-white hover:bg-destructive/90"
             onClick={handleClearAll}
             disabled={greetings.length === 0}
           >
-            <Trash2 className="h-5 w-5" />
+            <Trash2 className="mr-2 h-4 w-4" />
             Clear All
           </Button>
         </div>
-      </div>
+      </header>
 
-      {isLoading ? (
-        <div className="space-y-2">
-          {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} className="h-12 w-full" />
-          ))}
-        </div>
-      ) : filteredGreetings.length === 0 ? (
-        <div className="flex justify-center items-center h-64">
-          <Button onClick={onAddClick}>
-            <Plus className="mr-2 h-4 w-4" />
-            Create your first greeting
-          </Button>
-        </div>
-      ) : (
-        <>
-          <Table className="border border-gray-200 w-full">
-            <TableHeader>
-              <TableRow>
-                {['title', 'greeting', 'type', 'visible'].map((key) => (
-                  <TableHead key={key} className="px-4 py-4 hover:bg-gray-100 text-center">
-                    <Button
-                      variant="ghost"
-                      onClick={() => requestSort(key as keyof Greeting)}
-                      className="p-0 w-full flex items-center justify-center"
-                    >
-                      {key.charAt(0).toUpperCase() + key.slice(1)}
-                      {getSortIcon(key as keyof Greeting)}
-                    </Button>
-                  </TableHead>
-                ))}
-                <TableHead className="px-4 py-4 hover:bg-gray-100 text-center">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {currentGreetings.map((greeting) => (
-                <TableRow key={greeting.id} className="hover:bg-gray-100">
-                  <TableCell className="px-4 py-3 truncate text-center">{greeting.title}</TableCell>
-                  <TableCell className="px-4 py-3 truncate text-center">{greeting.greeting}</TableCell>
-                  <TableCell className="px-4 py-3 truncate text-center">{greeting.type}</TableCell>
-                  <TableCell className="px-4 py-3 truncate text-center">{greeting.visible ? 'Yes' : 'No'}</TableCell>
-                  <TableCell className="px-4 py-3 truncate text-center">
-                    <div className="flex justify-center gap-2">
+      <div className="w-full overflow-x-auto">
+        <table className="w-full border border-gray-200">
+          <thead>
+            <tr className="border-b hover:bg-gray-100">
+              {['title', 'greeting', 'type', 'visible'].map((key) => (
+                <th 
+                  key={key} 
+                  className="p-2 text-center hover:bg-gray-100 w-1/5"
+                >
+                  <Button
+                    variant="ghost"
+                    onClick={() => requestSort(key as keyof Greeting)}
+                    className="w-full justify-center"
+                  >
+                    {key.charAt(0).toUpperCase() + key.slice(1).replace('_', ' ')}
+                    {getSortIcon(key as keyof Greeting)}
+                  </Button>
+                </th>
+              ))}
+              <th className="p-2 text-center hover:bg-gray-100 w-1/5">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading ? (
+              <tr>
+                <td colSpan={5} className="p-4 text-center">
+                  <Skeleton className="h-8 w-full" />
+                </td>
+              </tr>
+            ) : filteredGreetings.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="p-4 text-center">
+                  <Button onClick={onAddClick}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create your first greeting
+                  </Button>
+                </td>
+              </tr>
+            ) : (
+              currentGreetings.map((greeting) => (
+                <tr key={greeting.id} className="border-b hover:bg-gray-100">
+                  <td className="p-2 text-center truncate">{greeting.title}</td>
+                  <td className="p-2 text-center truncate">{greeting.greeting}</td>
+                  <td className="p-2 text-center truncate">{greeting.type.replace('_', ' ')}</td>
+                  <td className="p-2 text-center truncate">{greeting.visible ? 'Yes' : 'No'}</td>
+                  <td className="p-2 text-center">
+                    <div className="flex justify-center space-x-2">
                       <Button
                         variant="ghost"
-                        className="bg-white p-1 rounded"
+                        className="p-1 bg-white rounded"
                         onClick={() => onEditClick(greeting)}
                       >
                         <Pencil className="h-4 w-4 text-blue-500" />
                       </Button>
                       <Button
                         variant="ghost"
-                        className="bg-white p-1 rounded"
+                        className="p-1 bg-white rounded"
                         onClick={() => greeting.id && onDelete(greeting.id)}
                       >
                         <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <div className="flex justify-center mt-4">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <Button
-                key={page}
-                variant={currentPage === page ? 'default' : 'outline'}
-                onClick={() => paginate(page)}
-                className="mx-1"
-              >
-                {page}
-              </Button>
-            ))}
-          </div>
-        </>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-4">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            <Button
+              key={page}
+              variant={currentPage === page ? "default" : "outline"}
+              className={`mx-1 h-9 px-4 py-2 ${
+                currentPage === page 
+                  ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600"
+                  : "bg-white text-gray-800 hover:bg-gray-100"
+              }`}
+              onClick={() => paginate(page)}
+            >
+              {page}
+            </Button>
+          ))}
+        </div>
       )}
     </div>
   );

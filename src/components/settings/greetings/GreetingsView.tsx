@@ -168,9 +168,9 @@ const GreetingsView: React.FC = () => {
   };
 
   return (
-    <div className="greetings-container">
+    <div className="container mx-auto">
       {error && (
-        <div className="error-message p-4 mb-4 bg-red-100 text-red-700 rounded">
+        <div className="p-4 mb-4 bg-red-100 text-red-700 rounded">
           {error}
         </div>
       )}
