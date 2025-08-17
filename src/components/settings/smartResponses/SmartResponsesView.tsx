@@ -33,12 +33,24 @@ const SmartResponsesView: React.FC = () => {
       setIsLoading(true);
       setError(null);
       const response = await fetch('/api/v1/settings/smart-responses');
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
-      setSmartResponses(data);
+      // Ensure all responses have proper arrays
+      const validatedData = data.map((item: SmartResponse) => ({
+        ...item,
+        shortcuts: item.shortcuts || [],
+        websites: item.websites || []
+      }));
+      setSmartResponses(validatedData);
     } catch (error: any) {
       setError(error.message || 'Failed to fetch smart responses');
       console.error('Fetch error:', error);
-      toast.error('Failed to fetch smart responses', {
+      toast.error(error.message || 'Failed to fetch smart responses', {
         theme: resolvedTheme === 'dark' ? 'dark' : 'light',
       });
     } finally {
@@ -76,7 +88,11 @@ const SmartResponsesView: React.FC = () => {
       const apiResponse = await fetch(endpoint, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(response),
+        body: JSON.stringify({
+          ...response,
+          shortcuts: response.shortcuts || [],
+          websites: response.websites || []
+        }),
       });
 
       if (!apiResponse.ok) {
@@ -87,8 +103,16 @@ const SmartResponsesView: React.FC = () => {
       const savedResponse = await apiResponse.json();
       setSmartResponses(prev => 
         response.id
-          ? prev.map(r => r.id === response.id ? savedResponse : r)
-          : [...prev, savedResponse]
+          ? prev.map(r => r.id === response.id ? {
+              ...savedResponse,
+              shortcuts: savedResponse.shortcuts || [],
+              websites: savedResponse.websites || []
+            } : r)
+          : [...prev, {
+              ...savedResponse,
+              shortcuts: savedResponse.shortcuts || [],
+              websites: savedResponse.websites || []
+            }]
       );
       
       setShowAddForm(false);

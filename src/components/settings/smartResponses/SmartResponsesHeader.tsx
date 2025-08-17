@@ -52,13 +52,11 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
   const sortedResponses = React.useMemo(() => {
     const sortableItems = [...smartResponses];
     if (sortConfig !== null) {
-      sortableItems.sort((a, b) => {
-        const aValue = Array.isArray(a[sortConfig.key])
-          ? (a[sortConfig.key] || [])
-          : (a[sortConfig.key] ?? '');
-        const bValue = Array.isArray(b[sortConfig.key])
-          ? (b[sortConfig.key] || [])
-          : (b[sortConfig.key] ?? '');
+     sortableItems.sort((a, b) => {
+
+         const aValue = a[sortConfig.key] || '';
+        const bValue = b[sortConfig.key] || '';
+        
 
         if (aValue < bValue) {
           return sortConfig.direction === 'asc' ? -1 : 1;
@@ -72,12 +70,17 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
     return sortableItems;
   }, [smartResponses, sortConfig]);
 
-  const filteredResponses = sortedResponses.filter(response =>
-    response.response.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    response.shortcuts.some(s => s.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    response.createdBy.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    response.company.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredResponses = sortedResponses.filter(response => {
+    const shortcuts = response.shortcuts || [];
+    const websites = response.websites || [];
+    return (
+      response.response?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      shortcuts.some(s => s?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      response.createdBy?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      response.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      websites.some(w => w?.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+  });
 
   const paginatedResponses = filteredResponses.slice(
     (currentPage - 1) * itemsPerPage,
@@ -118,7 +121,7 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
       )}
 
       <div className="flex justify-between items-center mb-8">
-        <h2 className={`text-2xl font-semibold text-gray-800 dark:text-white ${
+        <h2 className={`text-2xl font-semibold ${
           theme === 'dark' ? 'text-white' : 'text-gray-800'
         }`}>
           Smart Responses
@@ -142,19 +145,17 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
               }}
             />
           </div>
-          {/* Add New Button */}
-<Button 
-  onClick={onAddClick} 
-  className={`flex items-center gap-2 px-3 py-1.5 border text-sm rounded-md ${
-    theme === 'dark'
-      ? 'bg-blue-600 hover:bg-blue-700'
-      : 'bg-blue-600 hover:bg-blue-700'
-  } text-white`}
->
-  <Plus className="w-4 h-4" />
-  Add New
-</Button>
-        
+          <Button 
+            onClick={onAddClick} 
+            className={`flex items-center gap-2 px-3 py-1.5 border text-sm rounded-md ${
+              theme === 'dark'
+                ? 'bg-blue-600 hover:bg-blue-700'
+                : 'bg-blue-600 hover:bg-blue-700'
+            } text-white`}
+          >
+            <Plus className="w-4 h-4" />
+            Add New
+          </Button>
         </div>
       </div>
 
@@ -211,7 +212,7 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
                 <TableRow key={response.id} className={theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}>
                   <TableCell className="px-4 py-3">
                     <div className="flex flex-wrap gap-1">
-                      {response.shortcuts.map((shortcut) => (
+                      {(response.shortcuts || []).map((shortcut) => (
                         <span key={shortcut} className={`px-2 py-1 rounded text-xs ${
                           theme === 'dark'
                             ? 'bg-gray-700 text-gray-200'
