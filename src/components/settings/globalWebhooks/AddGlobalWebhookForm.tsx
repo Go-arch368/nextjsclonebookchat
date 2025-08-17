@@ -152,7 +152,7 @@ const AddGlobalWebhookForm: React.FC<AddGlobalWebhookFormProps> = ({
 
   return (
     <div className={`p-10 rounded-xl shadow-lg border ${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
-      <h1 className={`text-4xl font-bold mb-10 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+      <h1 className={`text-2xl font-semibold text-gray-800 dark:text-white mb-10 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
         {editingWebhook ? 'Edit Global Webhook' : 'Add a new global webhook'}
       </h1>
       

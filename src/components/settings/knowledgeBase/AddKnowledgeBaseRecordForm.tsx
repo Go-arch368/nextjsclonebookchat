@@ -124,7 +124,7 @@ const AddKnowledgeBaseRecordForm: React.FC<AddKnowledgeBaseRecordFormProps> = ({
     <div className={`p-10 rounded-xl shadow-lg border ${
       theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'
     }`}>
-      <h1 className={`text-4xl font-bold mb-10 ${
+      <h1 className={`text-2xl font-semibold text-gray-800 dark:text-white mb-10 ${
         theme === 'dark' ? 'text-white' : 'text-gray-800'
       }`}>
         {initialRecord ? 'Edit Knowledge Base Record' : 'Add New Record'}
@@ -238,17 +238,24 @@ const AddKnowledgeBaseRecordForm: React.FC<AddKnowledgeBaseRecordFormProps> = ({
         </div>
 
         <div className="flex justify-end gap-3 mt-8">
-          <Button
-            type="button"
-            variant="outline"
-            className={theme === 'dark' ? 'border-gray-600' : ''}
-            onClick={onCancel}
-          >
-            Cancel
-          </Button>
-          <Button type="submit">
-            {initialRecord ? 'Update' : 'Save'}
-          </Button>
+     <Button
+  type="button"
+  variant="outline"
+  className={`flex items-center gap-2 px-3 py-1.5 border text-sm rounded-lg ${
+    theme === 'dark' ? 'border-gray-600' : 'border-gray-300'
+  }`}
+  onClick={onCancel}
+>
+  Cancel
+</Button>
+
+{/* Save/Update Button - Structure updated, original colors kept */}
+<Button
+  type="submit"
+  className="flex items-center gap-2 px-3 py-1.5 border text-sm rounded-lg bg-blue-600 hover:bg-blue-800 text-white"
+>
+  {initialRecord ? 'Update' : 'Save'}
+</Button>
         </div>
       </form>
     </div>

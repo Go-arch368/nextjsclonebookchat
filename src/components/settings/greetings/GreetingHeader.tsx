@@ -7,6 +7,7 @@ import { Button } from '@/ui/button';
 import { Skeleton } from '@/ui/skeleton';
 import { toast } from 'react-toastify';
 import axios from 'axios';
+import { useTheme } from 'next-themes';
 
 interface Greeting {
   id?: number;
@@ -33,12 +34,15 @@ const GreetingHeader: React.FC<GreetingHeaderProps> = ({
   isLoading,
   setError,
 }) => {
+  const { theme } = useTheme();
   const [sortConfig, setSortConfig] = useState<{ key: keyof Greeting; direction: 'asc' | 'desc' } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
   const API_BASE_URL = '/api/settings/greetings';
+
+  
 
   const sortedGreetings = React.useMemo(() => {
     const sortableItems = [...greetings];
@@ -113,11 +117,19 @@ const GreetingHeader: React.FC<GreetingHeaderProps> = ({
   };
 
   return (
-    <div className="space-y-4 p-6">
-      <header className="space-y-4">
-        <h1 className="text-3xl font-bold">Greetings</h1>
+    <div className={`p-8 rounded-xl shadow-lg border ${
+      theme === 'dark'
+        ? 'bg-gray-800 border-gray-700'
+        : 'bg-white border-gray-200'
+    }`}>
+     <div className="flex items-center justify-between mb-8">
+         <h1 className={`text-2xl font-semibold text-gray-800 dark:text-white ${
+          theme === 'dark' ? 'text-white' : 'text-gray-800'
+        }`}>
+          Greetings
+        </h1>
         <div className="flex items-center gap-4">
-          <div className="relative w-full">
+          <div className="relative w-[350px]">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
             <Input
               className="pl-10 w-full"
@@ -126,23 +138,16 @@ const GreetingHeader: React.FC<GreetingHeaderProps> = ({
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button 
-            className="bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600"
-            onClick={onAddClick}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add Greeting
-          </Button>
-          <Button 
-            className="bg-destructive text-white hover:bg-destructive/90"
-            onClick={handleClearAll}
-            disabled={greetings.length === 0}
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Clear All
-          </Button>
+      <Button 
+  className="flex items-center gap-2 px-3 py-1.5 border text-sm rounded-md bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
+  onClick={onAddClick}
+>
+  <Plus className="h-4 w-4" />
+  <span>Add</span>
+</Button>
+          
         </div>
-      </header>
+      </div>
 
       <div className="w-full overflow-x-auto">
         <table className="w-full border border-gray-200">

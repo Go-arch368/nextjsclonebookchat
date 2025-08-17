@@ -118,7 +118,7 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
       )}
 
       <div className="flex justify-between items-center mb-8">
-        <h2 className={`text-2xl font-bold ${
+        <h2 className={`text-2xl font-semibold text-gray-800 dark:text-white ${
           theme === 'dark' ? 'text-white' : 'text-gray-800'
         }`}>
           Smart Responses
@@ -142,27 +142,19 @@ const SmartResponsesHeader: React.FC<SmartResponsesHeaderProps> = ({
               }}
             />
           </div>
-          <Button 
-            onClick={onAddClick} 
-            className={`flex items-center gap-2 ${
-              theme === 'dark'
-                ? 'bg-blue-600 hover:bg-blue-700'
-                : 'bg-blue-600 hover:bg-blue-700'
-            }`}
-          >
-            <Plus className="h-5 w-5" />
-            Add New
-          </Button>
-          {smartResponses.length > 0 && (
-            <Button 
-              variant="destructive" 
-              onClick={onClearAll}
-              className="flex items-center gap-2"
-            >
-              <Trash2 className="h-5 w-5" />
-              Clear All
-            </Button>
-          )}
+          {/* Add New Button */}
+<Button 
+  onClick={onAddClick} 
+  className={`flex items-center gap-2 px-3 py-1.5 border text-sm rounded-md ${
+    theme === 'dark'
+      ? 'bg-blue-600 hover:bg-blue-700'
+      : 'bg-blue-600 hover:bg-blue-700'
+  } text-white`}
+>
+  <Plus className="w-4 h-4" />
+  Add New
+</Button>
+        
         </div>
       </div>
 

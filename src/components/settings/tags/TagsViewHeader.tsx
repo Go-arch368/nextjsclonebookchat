@@ -125,7 +125,7 @@ const TagsViewHeader: React.FC<TagsViewHeaderProps> = ({
   return (
     <div className={`p-8 rounded-xl shadow-lg border ${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
       <div className="flex items-center justify-between mb-8">
-        <h2 className={`text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>Tags</h2>
+        <h2 className={`text-2xl font-semibold text-gray-800 dark:text-white ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>Tags</h2>
         <div className="flex items-center gap-6">
           <div className="relative w-[350px] mx-auto">
             <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
@@ -138,12 +138,12 @@ const TagsViewHeader: React.FC<TagsViewHeaderProps> = ({
             />
           </div>
           <Button
-            className="px-6 py-3 bg-blue-500 text-white hover:bg-blue-600 flex items-center gap-3 rounded-lg"
-            onClick={onAddClick}
-          >
-            <Plus className="h-5 w-5" />
-            <span>Add</span>
-          </Button>
+  className={`flex items-center gap-2 px-3 py-1.5 border text-sm rounded-md bg-blue-500 hover:bg-blue-600 text-white`}
+  onClick={onAddClick}
+>
+  <Plus className="w-4 h-4" />
+  <span>Add</span>
+</Button>
         </div>
       </div>
 

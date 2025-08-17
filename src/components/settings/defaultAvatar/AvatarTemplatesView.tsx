@@ -174,7 +174,7 @@ export default function AvatarTemplatesView({ onSelectTemplate, newAvatar }: Ava
       theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'
     }`}>
       <div className="flex justify-between items-center mb-6">
-        <h1 className={`text-2xl font-bold ${
+        <h1 className={`text-2xl font-semibold text-gray-800 dark:text-white ${
           theme === 'dark' ? 'text-white' : 'text-gray-800'
         }`}>
           Avatar Templates

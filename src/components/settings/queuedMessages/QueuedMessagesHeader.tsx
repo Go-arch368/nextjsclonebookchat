@@ -100,7 +100,7 @@ const QueuedMessagesHeader: React.FC<QueuedMessagesHeaderProps> = ({
         : 'bg-white border-gray-200'
     }`}>
       <div className="flex items-center justify-between mb-8">
-        <h2 className={`text-4xl font-bold ${
+        <h2 className={`text-2xl font-semibold text-gray-800 dark:text-white ${
           theme === 'dark' ? 'text-white' : 'text-gray-800'
         }`}>
           Queued Messages
@@ -122,17 +122,17 @@ const QueuedMessagesHeader: React.FC<QueuedMessagesHeaderProps> = ({
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Button
-            className={`px-6 py-3 flex items-center gap-3 rounded-lg ${
-              theme === 'dark'
-                ? 'bg-blue-600 hover:bg-blue-700'
-                : 'bg-blue-500 hover:bg-blue-600'
-            } text-white`}
-            onClick={onAddClick}
-          >
-            <Plus className="h-5 w-5" />
-            <span>Add</span>
-          </Button>
+      <Button
+  className={`flex items-center gap-2 px-3 py-1.5 border text-sm rounded-md ${
+    theme === 'dark'
+      ? 'bg-blue-600 hover:bg-blue-700'
+      : 'bg-blue-500 hover:bg-blue-600'
+  } text-white`}
+  onClick={onAddClick}
+>
+  <Plus className="w-4 h-4" />
+  <span>Add</span>
+</Button>
         </div>
       </div>
 

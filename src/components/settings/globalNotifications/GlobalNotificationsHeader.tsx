@@ -7,7 +7,7 @@ import { Input } from '@/ui/input';
 import { Label } from '@/ui/label';
 import { Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
-
+import { useTheme } from 'next-themes';
 interface Notification {
   id: number;
   userId: number;
@@ -32,6 +32,8 @@ const GlobalNotificationsHeader: React.FC = () => {
   });
   const [hasSetting, setHasSetting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+   const { theme } = useTheme();
 
   // Fetch notification setting
   const fetchNotification = async () => {
@@ -146,24 +148,30 @@ const handleSave = async () => {
   return (
     <div className="p-8 bg-white rounded-xl shadow-lg border border-gray-200">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-800">Global Notification Settings</h1>
+        <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">Global Notification Settings</h1>
         <div className="flex gap-3">
           {hasSetting && (
             <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={isLoading}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
-            </Button>
+  variant="destructive"
+  onClick={handleDelete}
+  disabled={isLoading}
+  className="flex items-center gap-2 px-3 py-1.5 border text-sm rounded-md"
+>
+  <Trash2 className="w-4 h-4" />
+  Delete
+</Button>
           )}
-          <Button
-            onClick={handleSave}
-            disabled={isLoading}
-          >
-            {hasSetting ? 'Save Changes' : 'Create Settings'}
-          </Button>
+         <Button
+  onClick={handleSave}
+  disabled={isLoading}
+  className={`flex items-center gap-2 px-3 py-1.5 border text-sm rounded-md ${
+    theme === 'dark'
+      ? 'bg-blue-600 hover:bg-blue-700'
+      : 'bg-blue-600 hover:bg-blue-700'
+  } text-white`}
+>
+  {hasSetting ? 'Save Changes' : 'Create Settings'}
+</Button>
         </div>
       </div>
 

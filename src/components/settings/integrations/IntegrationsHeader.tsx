@@ -164,7 +164,7 @@ const IntegrationsHeader: React.FC<IntegrationsHeaderProps> = ({
       theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'
     }`}>
       <div className="flex items-center justify-between mb-8">
-        <h1 className={`text-3xl font-bold ${
+        <h1 className={`text-2xl font-semibold text-gray-800 dark:text-white ${
           theme === 'dark' ? 'text-white' : 'text-gray-800'
         }`}>
           Integrations
@@ -184,15 +184,17 @@ const IntegrationsHeader: React.FC<IntegrationsHeaderProps> = ({
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Button
-            className={`px-6 py-3 ${
-              theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-700'
-            } text-white flex items-center gap-3 rounded-lg`}
-            onClick={onAddClick}
-          >
-            <Plus className="h-5 w-5" />
-            <span>Add</span>
-          </Button>
+        <Button
+  className={`flex items-center gap-2 px-3 py-1.5 border text-sm rounded-md ${
+    theme === 'dark' 
+      ? 'bg-blue-600 hover:bg-blue-700' 
+      : 'bg-blue-600 hover:bg-blue-700'
+  } text-white`}
+  onClick={onAddClick}
+>
+  <Plus className="w-4 h-4" />
+  <span>Add</span>
+</Button>
         </div>
       </div>
       <hr className={`mt-10 mb-6 ${

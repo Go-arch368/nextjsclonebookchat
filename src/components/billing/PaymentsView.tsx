@@ -184,7 +184,7 @@ export default function PaymentsView() {
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
       <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 mb-4 bg-white dark:bg-gray-800 shadow-sm">
-        <h1 className="text-3xl text-center mb-3 font-bold text-gray-800 dark:text-white">Payments</h1>
+        <h1 className="text-center mb-3 text-2xl font-semibold text-gray-800 dark:text-white">Payments</h1>
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <Input
             placeholder="Search by currency"
@@ -194,34 +194,37 @@ export default function PaymentsView() {
             onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
           />
           <div className="flex gap-2">
-            <Button
-              className="flex items-center gap-2"
-              onClick={() => {
-                setCurrentPayment({
-                  id: 0,
-                  createdAt: new Date().toISOString().slice(0, 19),
-                  updatedAt: new Date().toISOString().slice(0, 19),
-                  amount: 0,
-                  currency: '',
-                  status: 'Completed',
-                  cancellationTime: null,
-                  cancellationReason: null,
-                });
-                setIsCreateOpen(true);
-              }}
-            >
-              <Plus size={16} />
-              Create Payment
-            </Button>
-            <Button
-              variant="destructive"
-              className="flex items-center gap-2"
-              onClick={handleClearAll}
-              disabled={payments.length === 0}
-            >
-              <Trash2 size={16} />
-              Clear All
-            </Button>
+          {/* Create Payment Button */}
+<Button
+  className="flex items-center gap-2 px-3 py-1.5 border text-sm rounded-md bg-blue-600 hover:bg-blue-700 text-white"
+  onClick={() => {
+    setCurrentPayment({
+      id: 0,
+      createdAt: new Date().toISOString().slice(0, 19),
+      updatedAt: new Date().toISOString().slice(0, 19),
+      amount: 0,
+      currency: '',
+      status: 'Completed',
+      cancellationTime: null,
+      cancellationReason: null,
+    });
+    setIsCreateOpen(true);
+  }}
+>
+  <Plus className="w-4 h-4" />
+  <span>Create Payment</span>
+</Button>
+
+{/* Clear All Button */}
+<Button
+  variant="destructive"
+  className="flex items-center gap-2 px-3 py-1.5 border text-sm rounded-md bg-red-600 hover:bg-red-700 text-white"
+  onClick={handleClearAll}
+  disabled={payments.length === 0}
+>
+  <Trash2 className="w-4 h-4" />
+  <span>Clear All</span>
+</Button>
           </div>
         </div>
       </div>

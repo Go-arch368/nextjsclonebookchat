@@ -156,7 +156,7 @@ const InactivityTimeoutsHeader: React.FC = () => {
       theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'
     }`}>
       <div className="flex flex-col gap-4">
-        <h1 className={`text-3xl font-bold ${
+        <h1 className={`text-2xl font-semibold text-gray-800 dark:text-white ${
           theme === 'dark' ? 'text-white' : 'text-gray-800'
         }`}>
           Inactivity Timeouts
@@ -345,9 +345,17 @@ const InactivityTimeoutsHeader: React.FC = () => {
         </div>
 
         <div className="flex justify-end">
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? 'Saving...' : 'Save Settings'}
-          </Button>
+         <Button 
+  onClick={handleSave} 
+  disabled={isSaving}
+  className={`flex items-center gap-2 px-3 py-1.5 border text-sm rounded-md ${
+    theme === 'dark'
+      ? 'bg-blue-600 hover:bg-blue-700'
+      : 'bg-blue-600 hover:bg-blue-700'
+  } text-white`}
+>
+  {isSaving ? 'Saving...' : 'Save Settings'}
+</Button>
         </div>
       </div>
     </div>

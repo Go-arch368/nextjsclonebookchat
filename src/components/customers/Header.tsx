@@ -29,7 +29,7 @@ export default function Header({
   const [isSearching, setIsSearching] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
 
-  const API_BASE_URL = "/api/customers";
+  const API_BASE_URL = "/customers";
 
   const handleFormSubmit = async () => {
     try {
@@ -101,7 +101,7 @@ export default function Header({
 
   return (
     <header className="space-y-4 p-6">
-      <h1 className="text-3xl font-bold">Customers</h1>
+      <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">Customers</h1>
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-4">
           <div className="relative w-full">
@@ -116,20 +116,25 @@ export default function Header({
               disabled={isSearching || isClearing}
             />
           </div>
-          <Button
-            onClick={() => handleSearch(0)}
-            disabled={isSearching || isClearing || !searchTerm.trim()}
-          >
-            {isSearching ? "Searching..." : "Search"}
-          </Button>
-          <Button
-            onClick={handleClear}
-            variant="destructive"
-            disabled={isSearching || isClearing}
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            {isClearing ? "Clearing..." : "Clear All"}
-          </Button>
+       {/* Search Button */}
+<Button
+  onClick={() => handleSearch(0)}
+  disabled={isSearching || isClearing || !searchTerm.trim()}
+  className="flex items-center gap-2 px-3 py-1.5 border text-sm rounded-md"
+>
+  {isSearching ? "Searching..." : "Search"}
+</Button>
+
+{/* Clear All Button */}
+<Button
+  onClick={handleClear}
+  variant="destructive"
+  disabled={isSearching || isClearing}
+  className="flex items-center gap-2 px-3 py-1.5 border text-sm rounded-md"
+>
+  <Trash2 className="h-4 w-4" />
+  {isClearing ? "Clearing..." : "Clear All"}
+</Button>
           <AddCustomerForm
             onSubmit={handleFormSubmit}
             isOpen={isAddFormOpen}

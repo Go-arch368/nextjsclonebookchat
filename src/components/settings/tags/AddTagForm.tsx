@@ -99,13 +99,13 @@ const AddTagForm: React.FC<AddTagFormProps> = ({
 
   return (
     <div className={`p-10 rounded-xl shadow-lg border ${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
-      <h1 className={`text-4xl font-bold mb-10 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+      <h1 className={`text-2xl font-semibold text-gray-800 dark:text-white ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
         {editingTag ? 'Edit Tag' : 'Add a new tag'}
       </h1>
       
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <Label htmlFor="tag" className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+          <Label htmlFor="tag" className={`text-sm font-medium  pb-1 pt-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             Tag Name
           </Label>
           <Input
@@ -158,20 +158,26 @@ const AddTagForm: React.FC<AddTagFormProps> = ({
         </div>
 
         <div className="flex justify-end gap-3 mt-8">
-          <Button
-            type="button"
-            variant="outline"
-            className={`px-6 py-2 ${theme === 'dark' ? 'border-gray-600 text-white hover:bg-gray-800' : 'border-gray-300 text-gray-800'}`}
-            onClick={onCancel}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            className="px-6 py-2 bg-blue-600 text-white hover:bg-blue-800"
-          >
-            {editingTag ? 'Update' : 'Save'}
-          </Button>
+      <Button
+  type="button"
+  variant="outline"
+  className={`flex items-center gap-2 px-3 py-1.5 border text-sm rounded-md ${
+    theme === 'dark' 
+      ? 'border-gray-600 text-white hover:bg-gray-800' 
+      : 'border-gray-300 text-gray-800 hover:bg-gray-100'
+  }`}
+  onClick={onCancel}
+>
+  Cancel
+</Button>
+
+{/* Save/Update Button */}
+<Button
+  type="submit"
+  className={`flex items-center gap-2 px-3 py-1.5 border text-sm rounded-md bg-blue-600 hover:bg-blue-800 text-white`}
+>
+  {editingTag ? 'Update' : 'Save'}
+</Button>
         </div>
       </form>
     </div>

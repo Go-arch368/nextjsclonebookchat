@@ -93,7 +93,7 @@ const AddIPAddressForm: React.FC<AddIPAddressFormProps> = ({
 
   return (
     <div className={`p-10 rounded-xl shadow-lg border ${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
-      <h1 className={`text-4xl font-bold mb-10 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+      <h1 className={`text-2xl font-semibold text-gray-800 dark:text-white mb-10 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
         {ipAddress ? 'Edit IP Address' : 'Add a new IP address'}
       </h1>
       
@@ -118,20 +118,30 @@ const AddIPAddressForm: React.FC<AddIPAddressFormProps> = ({
         </div>
 
         <div className="flex justify-end gap-3 mt-8">
-          <Button
-            type="button"
-            variant="outline"
-            className={`px-6 py-2 ${theme === 'dark' ? 'border-gray-700 text-white hover:bg-gray-800' : 'border-gray-300 text-gray-800'}`}
-            onClick={onCancel}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            className="px-6 py-2 bg-blue-600 text-white hover:bg-blue-800"
-          >
-            {ipAddress ? 'Update' : 'Save'}
-          </Button>
+        <Button
+  type="button"
+  variant="outline"
+  className={`flex items-center gap-2 px-3 py-1.5 border text-sm rounded-md ${
+    theme === 'dark'
+      ? 'border-gray-700 text-white hover:bg-gray-800'
+      : 'border-gray-300 text-gray-800 hover:bg-gray-100'
+  }`}
+  onClick={onCancel}
+>
+  Cancel
+</Button>
+
+{/* Primary Submit Button */}
+<Button
+  type="submit"
+  className={`flex items-center gap-2 px-3 py-1.5 border text-sm rounded-md ${
+    theme === 'dark'
+      ? 'bg-blue-600 hover:bg-blue-800'
+      : 'bg-blue-600 hover:bg-blue-800'
+  } text-white`}
+>
+  {ipAddress ? 'Update' : 'Save'}
+</Button>
         </div>
       </form>
     </div>

@@ -98,19 +98,20 @@ const KnowledgeBaseHeader: React.FC<KnowledgeBaseHeaderProps> = ({
       theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'
     }`}>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <h2 className={`text-3xl font-bold ${
+        <h2 className={`text-2xl font-semibold text-gray-800 dark:text-white ${
           theme === 'dark' ? 'text-white' : 'text-gray-800'
         }`}>
           Knowledge Base
         </h2>
         <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
-          <div className="relative w-full md:w-64">
+          <div className="relative  w-[350px]">
             <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 ${
               theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
             }`} />
             <Input
+            
               placeholder="Search knowledge base"
-              className={`pl-10 w-full ${
+              className={`w-full pl-10 py-2 focus:outline-none rounded-md border ${
                 theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : ''
               }`}
               value={searchQuery}
@@ -118,19 +119,15 @@ const KnowledgeBaseHeader: React.FC<KnowledgeBaseHeaderProps> = ({
             />
           </div>
           <div className="flex gap-4">
-            <Button
-              variant="destructive"
-              onClick={onDeleteAll}
-              disabled={knowledgeBaseRecords.length === 0}
-              className="flex items-center gap-2"
-            >
-              <Trash2 className="h-5 w-5" />
-              <span>Delete All</span>
-            </Button>
-            <Button onClick={onAddClick} className="flex items-center gap-2">
-              <Plus className="h-5 w-5" />
-              <span>Add</span>
-            </Button>
+           
+           {/* Add Button - Structure updated, original blue colors kept */}
+<Button 
+  onClick={onAddClick}
+  className="flex items-center gap-2 px-3 py-1.5 border text-sm rounded-lg bg-blue-500 hover:bg-blue-600 text-white"
+>
+  <Plus className="h-5 w-5" />
+  <span>Add</span>
+</Button>
           </div>
         </div>
       </div>

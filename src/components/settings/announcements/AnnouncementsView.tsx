@@ -167,23 +167,23 @@ const AnnouncementsView = () => {
         : 'bg-white border border-gray-200'
     }`}>
       <div className="flex justify-between items-center mb-6">
-        <h2 className={`text-3xl font-bold ${
+        <h2 className={`text-2xl font-semibold text-gray-800 dark:text-white ${
           resolvedTheme === 'dark' ? 'text-white' : 'text-gray-800'
         }`}>
           Announcements for {pageType} Page
         </h2>
         <div className="flex gap-4">
-          <button
-            onClick={() => saveAnnouncement(form)}
-            className={`px-4 py-2 rounded-full flex items-center gap-2 ${
-              resolvedTheme === 'dark'
-                ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                : 'bg-blue-500 hover:bg-blue-600 text-white'
-            }`}
-          >
-            <Plus className="h-5 w-5" />
-            <span>{editingId[pageType] ? 'Update' : 'Save'}</span>
-          </button>
+       <button
+  onClick={() => saveAnnouncement(form)}
+  className={`flex items-center gap-2 px-3 py-1.5 border text-sm rounded-full ${
+    resolvedTheme === 'dark'
+      ? 'bg-blue-600 hover:bg-blue-700 text-white'
+      : 'bg-blue-500 hover:bg-blue-600 text-white'
+  }`}
+>
+  <Plus className="h-4 w-4" />
+  <span>{editingId[pageType] ? 'Update' : 'Save'}</span>
+</button>
         </div>
       </div>
 

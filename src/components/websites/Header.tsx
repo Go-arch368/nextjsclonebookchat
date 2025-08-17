@@ -103,7 +103,7 @@ export default function Header({ setWebsites, websites }: HeaderProps) {
 
   return (
     <header className="space-y-4 p-6">
-      <h1 className="text-3xl font-bold">Websites</h1>
+      <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">Websites</h1>
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-4">
           <div className="relative w-full">
@@ -118,27 +118,35 @@ export default function Header({ setWebsites, websites }: HeaderProps) {
               disabled={isSearching || isClearing}
             />
           </div>
-          <Button
-            onClick={() => handleSearch(0)}
-            disabled={isSearching || isClearing || !searchTerm.trim()}
-          >
-            {isSearching ? "Searching..." : "Search"}
-          </Button>
-          <Button
-            onClick={() => setIsAddFormOpen(true)}
-            disabled={isSearching || isClearing}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add Website
-          </Button>
-          <Button
-            onClick={handleClear}
-            variant="destructive"
-            disabled={isSearching || isClearing || websites.length === 0}
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            {isClearing ? "Clearing..." : "Clear All"}
-          </Button>
+        {/* Search Button */}
+<Button
+  onClick={() => handleSearch(0)}
+  disabled={isSearching || isClearing || !searchTerm.trim()}
+  className="flex items-center gap-2 px-3 py-1.5 border text-sm rounded-md"
+>
+  {isSearching ? "Searching..." : "Search"}
+</Button>
+
+{/* Add Website Button */}
+<Button
+  onClick={() => setIsAddFormOpen(true)}
+  disabled={isSearching || isClearing}
+  className="flex items-center gap-2 px-3 py-1.5 border text-sm rounded-md"
+>
+  <Plus className="h-4 w-4" />
+  <span>Add Website</span>
+</Button>
+
+{/* Clear All Button */}
+<Button
+  onClick={handleClear}
+  variant="destructive"
+  disabled={isSearching || isClearing || websites.length === 0}
+  className="flex items-center gap-2 px-3 py-1.5 border text-sm rounded-md"
+>
+  <Trash2 className="h-4 w-4" />
+  <span>{isClearing ? "Clearing..." : "Clear All"}</span>
+</Button>
         </div>
         {searchTerm && (
           <div className="flex justify-between items-center">

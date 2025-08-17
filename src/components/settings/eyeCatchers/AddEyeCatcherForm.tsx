@@ -149,7 +149,7 @@ const AddEyeCatcherForm: React.FC<AddEyeCatcherFormProps> = ({
         ? 'bg-gray-800 border-gray-700'
         : 'bg-white border-gray-200'
     }`}>
-      <h1 className={`text-4xl font-bold mb-10 ${
+      <h1 className={`text-2xl font-semibold text-gray-800 dark:text-white ${
         theme === 'dark' ? 'text-white' : 'text-gray-800'
       }`}>
         {isEditMode ? 'Edit Eye Catcher' : 'Add a new eye catcher'}
@@ -316,29 +316,30 @@ const AddEyeCatcherForm: React.FC<AddEyeCatcherFormProps> = ({
 
         {/* Save and Cancel Buttons */}
         <div className="flex justify-end gap-3 mt-8">
-          <Button
-            type="button"
-            variant="outline"
-            className={`px-6 py-2 ${
-              theme === 'dark'
-                ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
-                : 'border-gray-300 text-gray-800'
-            }`}
-            onClick={onCancel}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            className={`px-6 py-2 ${
-              theme === 'dark'
-                ? 'bg-blue-600 hover:bg-blue-700'
-                : 'bg-blue-600 hover:bg-blue-700'
-            } text-white`}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Saving...' : isEditMode ? 'Update' : 'Save'}
-          </Button>
+         <Button
+  type="button"
+  variant="outline"
+  className={`flex items-center gap-2 px-3 py-1.5 border text-sm rounded-md ${
+    theme === 'dark'
+      ? 'bg-zinc-800 border-zinc-600 text-gray-300 hover:bg-zinc-700'
+      : 'bg-white border-gray-300 text-gray-800 hover:bg-gray-100'
+  }`}
+  onClick={onCancel}
+>
+  Cancel
+</Button>
+
+<Button
+  type="submit"
+  className={`flex items-center gap-2 px-3 py-1.5 border text-sm rounded-md ${
+    theme === 'dark'
+      ? 'bg-blue-600 hover:bg-blue-700'
+      : 'bg-blue-600 hover:bg-blue-700'
+  } text-white`}
+  disabled={isSubmitting}
+>
+  {isSubmitting ? 'Saving...' : isEditMode ? 'Update' : 'Save'}
+</Button>
         </div>
       </form>
     </div>

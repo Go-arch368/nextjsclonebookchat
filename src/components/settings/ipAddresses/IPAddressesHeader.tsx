@@ -99,7 +99,7 @@ const IPAddressesHeader: React.FC<IPAddressesHeaderProps> = ({
   return (
     <div className={`p-8 rounded-xl shadow-lg border ${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
       <div className="flex items-center justify-between mb-8">
-        <h2 className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>IP Addresses</h2>
+        <h2 className={`text-2xl font-semibold text-gray-800 dark:text-white ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>IP Addresses</h2>
         <div className="flex items-center gap-6">
           <div className="relative w-[350px] mx-auto">
             <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
@@ -111,21 +111,14 @@ const IPAddressesHeader: React.FC<IPAddressesHeaderProps> = ({
               onChange={handleSearchChange}
             />
           </div>
-          <Button
-            className="px-6 py-3 bg-red-500 text-white hover:bg-red-600 flex items-center gap-3 rounded-lg"
-            onClick={onDeleteAll}
-            disabled={ipAddresses.length === 0}
-          >
-            <Trash2 className="h-5 w-5" />
-            <span>Delete All</span>
-          </Button>
-          <Button
-            className="px-6 py-3 bg-blue-500 text-white hover:bg-blue-600 flex items-center gap-3 rounded-lg"
-            onClick={onAddClick}
-          >
-            <Plus className="h-5 w-5" />
-            <span>Add</span>
-          </Button>
+        
+      <Button
+  className="flex items-center gap-2 px-4 py-2.5 border text-base rounded-md bg-blue-500 hover:bg-blue-600 text-white"
+  onClick={onAddClick}
+>
+  <Plus className="h-5 w-5" />
+  <span>Add</span>
+</Button>
         </div>
       </div>
 

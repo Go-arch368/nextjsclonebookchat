@@ -107,7 +107,7 @@ const WebhooksHeader: React.FC<WebhooksHeaderProps> = ({
       )}
 
       <div className="flex items-center justify-between mb-8">
-        <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>Webhooks</h2>
+        <h2 className={`text-2xl font-semibold text-gray-800 dark:text-white ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>Webhooks</h2>
         <div className="flex items-center gap-4">
           <div className="relative w-[350px]">
             <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
@@ -122,12 +122,12 @@ const WebhooksHeader: React.FC<WebhooksHeaderProps> = ({
             />
           </div>
           <Button 
-            onClick={onAddClick} 
-            className="flex items-center gap-2"
-          >
-            <Plus className="h-5 w-5" />
-            Add New
-          </Button>
+  onClick={onAddClick} 
+  className="flex items-center gap-2 px-3 py-1.5 border text-sm rounded-md bg-blue-600 hover:bg-blue-700 text-white"
+>
+  <Plus className="w-4 h-4" />
+  Add New
+</Button>
         </div>
       </div>
 

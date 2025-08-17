@@ -88,10 +88,10 @@ const MailTemplatesHeader: React.FC<MailTemplatesHeaderProps> = ({
 
   return (
     <div className={`p-12 rounded-xl shadow-lg border ${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
-      <div className="flex flex-col gap-4">
-        <h1 className={`text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>Mail Templates</h1>
-        <div className="flex justify-between items-center gap-4">
-          <div className="relative w-[850px]">
+      <div className="flex  items-center justify-between mb-8">
+        <h1 className={`text-2xl font-semibold text-gray-800 dark:text-white${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>Mail Templates</h1>
+        <div className="flex  items-center gap-6">
+          <div className="relative w-[350px] mx-auto">
             <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
             <Input
               type="text"
@@ -102,22 +102,17 @@ const MailTemplatesHeader: React.FC<MailTemplatesHeaderProps> = ({
             />
           </div>
           <div className="flex gap-2">
-            <Button
-              className="px-6 py-3 bg-red-500 text-white hover:bg-red-600 rounded-lg flex items-center gap-2"
-              onClick={onDeleteAll}
-              disabled={isLoading || templates.length === 0}
-            >
-              <Trash2 className="h-5 w-5" />
-              <span>Delete All</span>
-            </Button>
-            <Button
-              className="px-6 py-3 bg-blue-500 text-white hover:bg-blue-600 rounded-lg flex items-center gap-2"
-              onClick={onAddClick}
-              disabled={isLoading}
-            >
-              <Plus className="h-5 w-5" />
-              <span>Add</span>
-            </Button>
+          
+           <Button
+  className="flex items-center gap-2 px-4 py-2.5 border text-base rounded-md bg-blue-500 hover:bg-blue-600 text-white"
+  onClick={onAddClick}
+  disabled={isLoading}
+>
+  <Plus className="h-5 w-5" />
+  <span>Add</span>
+</Button>
+
+
           </div>
         </div>
       </div>

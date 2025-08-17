@@ -136,7 +136,7 @@ export default function DefaultAvatarView() {
       <div className={`p-6 rounded-lg shadow-md border ${
         theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'
       }`}>
-        <h2 className={`text-3xl font-bold mb-6 ${
+        <h2 className={`text-2xl font-semibold text-gray-800 dark:text-white mb-6 ${
           theme === 'dark' ? 'text-white' : 'text-gray-800'
         }`}>
           Default Avatar for Chat Widgets
@@ -172,7 +172,7 @@ export default function DefaultAvatarView() {
 
             <div className="flex-1 space-y-4">
               <div>
-                <Label className={theme === 'dark' ? 'text-gray-300' : ''}>Name *</Label>
+                <Label className={`pb-2 ${theme === 'dark' ? 'text-gray-300' : ''}`}>Name *</Label>
                 <Input
                   type="text"
                   value={defaultAvatar.name}
@@ -188,7 +188,7 @@ export default function DefaultAvatarView() {
                 />
               </div>
               <div>
-                <Label className={theme === 'dark' ? 'text-gray-300' : ''}>Job Title *</Label>
+                <Label className={`pb-2 ${theme === 'dark' ? 'text-gray-300' : ''}`}>Job Title *</Label>
                 <Input
                   type="text"
                   value={defaultAvatar.jobTitle}
@@ -204,7 +204,7 @@ export default function DefaultAvatarView() {
                 />
               </div>
               <div>
-                <Label className={theme === 'dark' ? 'text-gray-300' : ''}>Image URL *</Label>
+                <Label className={`pb-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : ''}`}>Image URL *</Label>
                 <Input
                   type="text"
                   value={defaultAvatar.avatarImageUrl}
@@ -223,27 +223,40 @@ export default function DefaultAvatarView() {
           </div>
 
           <div className="flex gap-3 w-full lg:w-auto">
-            <Button
-              onClick={handleSave}
-              disabled={
-                isLoading ||
-                !defaultAvatar.name ||
-                !defaultAvatar.jobTitle ||
-                !defaultAvatar.avatarImageUrl
-              }
-            >
-              {isLoading ? "Saving..." : "Save"}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleClear}
-              disabled={
-                isLoading ||
-                (!defaultAvatar.name && !defaultAvatar.jobTitle && !defaultAvatar.avatarImageUrl)
-              }
-            >
-              Clear
-            </Button>
+       {/* Save Button */}
+<Button
+  onClick={handleSave}
+  disabled={
+    isLoading ||
+    !defaultAvatar.name ||
+    !defaultAvatar.jobTitle ||
+    !defaultAvatar.avatarImageUrl
+  }
+  className={`flex items-center gap-2 px-3 py-1.5 border text-sm rounded-md ${
+    theme === 'dark'
+      ? 'bg-blue-600 hover:bg-blue-700 text-white'
+      : 'bg-blue-600 hover:bg-blue-700 text-white'
+  }`}
+>
+  {isLoading ? "Saving..." : "Save"}
+</Button>
+
+{/* Clear Button (Outline) */}
+<Button
+  variant="outline"
+  onClick={handleClear}
+  disabled={
+    isLoading ||
+    (!defaultAvatar.name && !defaultAvatar.jobTitle && !defaultAvatar.avatarImageUrl)
+  }
+  className={`flex items-center gap-2 px-3 py-1.5 border text-sm rounded-md ${
+    theme === 'dark'
+      ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+      : 'border-gray-300 text-gray-800 hover:bg-gray-100'
+  }`}
+>
+  Clear
+</Button>
           </div>
         </div>
       </div>

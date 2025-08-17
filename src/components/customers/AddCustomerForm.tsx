@@ -118,10 +118,10 @@ export default function AddCustomerForm({ onSubmit, isOpen, setIsOpen }: AddCust
     <>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add
-          </Button>
+         <Button className="flex items-center gap-2 px-3 py-1.5 border text-sm rounded-md">
+  <Plus className="h-4 w-4" />
+  <span>Add</span>
+</Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>

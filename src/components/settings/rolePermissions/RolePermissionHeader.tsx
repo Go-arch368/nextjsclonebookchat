@@ -96,7 +96,7 @@ const RolePermissionHeader: React.FC<RolePermissionHeaderProps> = ({
       theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'
     }`}>
       <div className="flex items-center justify-between mb-8">
-        <h2 className={`text-2xl font-bold ${
+        <h2 className={`text-2xl font-semibold text-gray-800 dark:text-white${
           theme === 'dark' ? 'text-white' : 'text-gray-800'
         }`}>
           Role Permissions
@@ -118,19 +118,14 @@ const RolePermissionHeader: React.FC<RolePermissionHeaderProps> = ({
               onChange={handleSearchChange}
             />
           </div>
-          <Button
-            variant="destructive"
-            onClick={onDeleteAll}
-            disabled={rolePermissions.length === 0}
-            className="flex items-center gap-3"
-          >
-            <Trash2 className="h-5 w-5" />
-            <span>Delete All</span>
-          </Button>
-          <Button onClick={onAddClick} className="flex items-center gap-3">
-            <Plus className="h-5 w-5" />
-            <span>Add</span>
-          </Button>
+          
+    <Button 
+  onClick={onAddClick} 
+  className="flex items-center gap-2 px-3 py-1.5 border text-sm rounded-md bg-blue-600 hover:bg-blue-700 text-white"
+>
+  <Plus className="h-4 w-4" />
+  <span>Add</span>
+</Button>
         </div>
       </div>
 

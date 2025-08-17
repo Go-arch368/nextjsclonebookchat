@@ -114,7 +114,7 @@ const AddIntegrationForm: React.FC<AddIntegrationFormProps> = ({
     <div className={`p-10 rounded-xl shadow-lg border ${
       theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'
     }`}>
-      <h1 className={`text-4xl font-bold ${
+      <h1 className={`text-2xl font-semibold text-gray-800 dark:text-white ${
         theme === 'dark' ? 'text-white' : 'text-gray-800'
       } mb-10`}>
         {editingIntegration ? 'Edit Integration' : 'Add a new integration'}
