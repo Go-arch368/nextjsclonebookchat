@@ -30,7 +30,8 @@ import {
   Users,
   Briefcase,
   UserLock,
-  Settings
+  Settings,
+  FileText
 } from 'lucide-react';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -68,6 +69,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     { href: '/chats', icon: MessageCircle, label: 'Active Chats' },
     { href: '/engage', icon: Send, label: 'Engage' },
     { href: '/ai-agent', icon: Bot, label: 'AI Agent' },
+    {href:"/conversions",icon:FileText , label:"Conversions"},
     { href: '/modifier', icon: Settings2, label: 'Chat Widget' },
     { href: '/archived-chats', icon: MessageCircle, label: 'Archived Chats' },
     { href: '/billing', icon: BadgeDollarSign, label: 'Billing' },
@@ -92,11 +94,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       'Websites',
       'Users',
       'Settings',
+      "Conversions"
     ],
     agent: [
       'Dashboard',
       'Active Chats',
       'Archived Chats',
+      "Conversions"
     ],
     manager: [
       'Dashboard',
@@ -105,6 +109,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       'AI Agent',
       'Chat Widget',
       'Archived Chats',
+      "Conversions"
     ],
   };
 

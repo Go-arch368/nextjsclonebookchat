@@ -1,9 +1,9 @@
 import React from 'react'
-
+import DashboardView from '@/components/dashboard/DashboardView'
 function page() {
   return (
     <div>
-      Hello world
+     <DashboardView/>
     </div>
   )
 }
