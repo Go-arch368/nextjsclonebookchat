@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
         throw new Error(`Backend responded with status ${res.status}`);
       }
       const data = await res.json();
-      return NextResponse.json(data);
+    return NextResponse.json(Array.isArray(data) ? data : data?.data || []);
     } catch (error: any) {
       console.error('Error in GET /list:', error.message, error.stack);
       return NextResponse.json({ message: error.message || 'Failed to fetch customers' }, { status: 500 });

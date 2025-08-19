@@ -32,16 +32,20 @@ const WebhooksView: React.FC = () => {
       setIsLoading(true);
       setError(null);
       const response = await fetch('/api/v1/settings/webhooks');
+      
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Failed to fetch webhooks' }));
-        throw new Error(errorData.message || 'Failed to fetch webhooks');
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to fetch webhooks');
       }
+      
       const data: Webhook[] = await response.json();
+      console.log('Fetched webhooks:', data);
       setWebhooks(data);
+      
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Failed to fetch webhooks';
       setError(message);
-      toast.error(message);
+      console.error('Fetch error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -74,29 +78,45 @@ const WebhooksView: React.FC = () => {
       const method = webhook.id ? 'PUT' : 'POST';
       const endpoint = '/api/v1/settings/webhooks';
 
+      console.log('Saving webhook:', webhook);
+
       const response = await fetch(endpoint, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...webhook,
           userId: webhook.userId || 1,
+          dataTypes: webhook.dataTypes || [],
           createdAt: webhook.id ? webhook.createdAt : new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Failed to save webhook' }));
-        throw new Error(errorData.message || 'Failed to save webhook');
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to save webhook');
       }
 
+      const savedWebhook = await response.json();
+      console.log('Saved webhook response:', savedWebhook);
+
+      // Refresh the list
       await fetchWebhooks();
+      
       setShowAddForm(false);
-      toast.success(webhook.id ? 'Webhook updated successfully!' : 'Webhook created successfully!');
+      setEditingWebhook(null);
+      
+      toast.success(webhook.id ? 'Webhook updated successfully!' : 'Webhook created successfully!', {
+        theme: theme === 'dark' ? 'dark' : 'light',
+      });
+
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Failed to save webhook';
       setError(message);
-      toast.error(message);
+      toast.error(message, {
+        theme: theme === 'dark' ? 'dark' : 'light',
+      });
+      console.error('Save error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -109,20 +129,26 @@ const WebhooksView: React.FC = () => {
 
       const response = await fetch(`/api/v1/settings/webhooks?id=${id}`, {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Failed to delete webhook' }));
-        throw new Error(errorData.message || 'Failed to delete webhook');
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to delete webhook');
       }
 
-      setWebhooks((prev) => prev.filter((w) => w.id !== id));
-      toast.success('Webhook deleted successfully!');
+      // Update local state immediately
+      setWebhooks(prev => prev.filter(w => w.id !== id));
+      
+      toast.success('Webhook deleted successfully!', {
+        theme: theme === 'dark' ? 'dark' : 'light',
+      });
+
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Failed to delete webhook';
       setError(message);
-      toast.error(message);
+      toast.error(message, {
+        theme: theme === 'dark' ? 'dark' : 'light',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -149,6 +175,7 @@ const WebhooksView: React.FC = () => {
           webhooks={webhooks}
           isLoading={isLoading}
           error={error}
+    
         />
       )}
     </div>

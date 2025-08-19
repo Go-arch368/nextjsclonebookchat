@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI
   ? `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/smart-responses`
-  : 'https://your-backend-url.com/api/v1/settings/smart-responses';
+  :  `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/smart-responses`
 
 export async function GET(req: NextRequest) {
   try {
@@ -13,23 +13,33 @@ export async function GET(req: NextRequest) {
 
     let url;
     if (keyword) {
+      // Try search endpoint if keyword provided
       url = `${BACKEND_BASE_URL}/search?keyword=${encodeURIComponent(keyword)}&page=${page}&size=${size}`;
     } else {
-      url = `${BACKEND_BASE_URL}/all?page=${page}&size=${size}`;
+      // Try the base endpoint instead of /all
+      url = `${BACKEND_BASE_URL}?page=${page}&size=${size}`;
     }
 
-    const res = await fetch(url, { headers: { 'Content-Type': 'application/json' } });
+    console.log('Fetching from:', url); // Add logging
+
+    const res = await fetch(url, { 
+      headers: { 'Content-Type': 'application/json' } 
+    });
     
+    const responseText = await res.text();
+    console.log('GET response status:', res.status);
+    console.log('GET response text:', responseText);
+
     if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`Backend responded with status ${res.status}: ${errorText}`);
+      throw new Error(`Backend responded with status ${res.status}: ${responseText}`);
     }
 
-    const data = await res.json();
+    // Parse response
+    const data = JSON.parse(responseText);
     return NextResponse.json(data);
 
   } catch (error: any) {
-    console.error('Error in GET smart responses:', error);
+    console.error('Error in GET smart responses:', error.message);
     return NextResponse.json(
       { message: error.message || 'Failed to fetch smart responses' },
       { status: 500 }
@@ -40,22 +50,43 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    
+    console.log('Sending to backend:', `${BACKEND_BASE_URL}/save`);
+    console.log('Request body:', JSON.stringify(body, null, 2));
+
     const res = await fetch(`${BACKEND_BASE_URL}/save`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
 
+    const responseText = await res.text();
+    console.log('Backend response status:', res.status);
+    console.log('Backend response text:', responseText);
+
     if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`Backend responded with status ${res.status}: ${errorText}`);
+      // Try to parse as JSON, but fallback to text
+      let errorMessage = responseText;
+      try {
+        const errorData = JSON.parse(responseText);
+        errorMessage = errorData.message || responseText;
+      } catch (e) {
+        // Not JSON, use text as is
+      }
+      
+      throw new Error(`Backend responded with status ${res.status}: ${errorMessage}`);
     }
 
-    const data = await res.json();
-    return NextResponse.json(data);
+    // Try to parse successful response as JSON
+    try {
+      const data = JSON.parse(responseText);
+      return NextResponse.json(data);
+    } catch (e) {
+      return NextResponse.json({ message: responseText });
+    }
 
   } catch (error: any) {
-    console.error('Error in POST smart response:', error);
+    console.error('Error in POST smart response:', error.message);
     return NextResponse.json(
       { message: error.message || 'Failed to create smart response' },
       { status: 500 }

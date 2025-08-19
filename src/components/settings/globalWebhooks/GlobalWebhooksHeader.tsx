@@ -44,27 +44,26 @@ const GlobalWebhooksHeader: React.FC<GlobalWebhooksHeaderProps> = ({
   const itemsPerPage = 5;
 
   useEffect(() => {
-    const fetchWebhooks = async () => {
-      try {
-        setIsLoading(true);
-        const url = searchQuery 
-          ? `/api/v1/settings/global-webhooks/search?keyword=${encodeURIComponent(searchQuery)}&page=${currentPage - 1}&size=${itemsPerPage}`
-          : `/api/v1/settings/global-webhooks?page=${currentPage - 1}&size=${itemsPerPage}`;
+  const fetchWebhooks = async () => {
+    try {
+      setIsLoading(true);
+      // Remove the search parameter from URL - we'll handle search locally
+      const url = `/api/v1/settings/global-webhooks?page=${currentPage - 1}&size=${itemsPerPage}`;
+      
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch webhooks');
+      const data = await response.json();
+      setWebhooks(data);
+    } catch (error) {
+      toast.error('Failed to fetch global webhooks');
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Failed to fetch webhooks');
-        const data = await response.json();
-        setWebhooks(data);
-      } catch (error) {
-        toast.error('Failed to fetch global webhooks');
-        console.error(error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchWebhooks();
-  }, [searchQuery, currentPage]);
+  fetchWebhooks();
+}, [currentPage]); // Remove searchQuery from dependencies
 
   const handleDelete = async (id: number) => {
     try {
@@ -101,20 +100,25 @@ const GlobalWebhooksHeader: React.FC<GlobalWebhooksHeaderProps> = ({
     return sortableItems;
   }, [webhooks, sortConfig]);
 
-  const filteredWebhooks = sortedWebhooks.filter(webhook =>
-    webhook.event.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    webhook.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    webhook.targetUrl.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    webhook.createdBy.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    webhook.company.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredWebhooks = React.useMemo(() => {
+  if (!searchQuery) return webhooks;
+  
+  return webhooks.filter(webhook =>
+    webhook.event?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    webhook.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    webhook.targetUrl?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    webhook.createdBy?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    webhook.company?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+}, [webhooks, searchQuery]);
 
-  const paginatedWebhooks = filteredWebhooks.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+// Update pagination to use filteredWebhooks
+const paginatedWebhooks = filteredWebhooks.slice(
+  (currentPage - 1) * itemsPerPage,
+  currentPage * itemsPerPage
+);
 
-  const totalPages = Math.ceil(filteredWebhooks.length / itemsPerPage);
+const totalPages = Math.ceil(filteredWebhooks.length / itemsPerPage);
 
   const requestSort = (key: keyof GlobalWebhook) => {
     let direction: 'asc' | 'desc' = 'asc';

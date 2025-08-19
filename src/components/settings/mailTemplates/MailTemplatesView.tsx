@@ -74,6 +74,8 @@ const MailTemplatesView: React.FC = () => {
         createdAt: new Date().toISOString().slice(0, 19),
         modifiedAt: new Date().toISOString().slice(0, 19),
       });
+      console.log(response);
+      
       await fetchTemplates();
       setShowAddForm(false);
       toast.success('Template added successfully');

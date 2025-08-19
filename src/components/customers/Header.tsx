@@ -29,7 +29,7 @@ export default function Header({
   const [isSearching, setIsSearching] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
 
-  const API_BASE_URL = "/customers";
+  const API_BASE_URL = "/api/customers";
 
   const handleFormSubmit = async () => {
     try {

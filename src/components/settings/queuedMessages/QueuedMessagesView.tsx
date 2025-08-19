@@ -64,35 +64,64 @@ const QueuedMessagesView: React.FC = () => {
     setEditingMessage(null);
   };
 
-  const handleSave = async (message: QueuedMessage) => {
-    try {
-      const method = editingMessage ? 'PUT' : 'POST';
-      const response = await fetch('/api/v1/settings/queued-messages', {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(message),
-      });
-      
-      if (!response.ok) throw new Error('Failed to save message');
-      
-      fetchMessages();
-      setShowAddForm(false);
-      toast.success('Message saved successfully', {
-        position: 'top-right',
-        autoClose: 3000,
-        theme: resolvedTheme === 'dark' ? 'dark' : 'light',
-      });
-    } catch (error) {
-      console.error('Error saving message:', error);
-      toast.error('Failed to save message', {
-        position: 'top-right',
-        autoClose: 3000,
-        theme: resolvedTheme === 'dark' ? 'dark' : 'light',
-      });
+const handleSave = async (message: QueuedMessage) => {
+  try {
+    const isEditing = !!editingMessage;
+    
+    // Use the same endpoint but different HTTP methods
+    const url = '/api/v1/settings/queued-messages';
+    
+    // Use POST for create, PUT for update
+    const method = isEditing ? 'PUT' : 'POST';
+    
+    // For new messages, remove the ID to avoid confusion
+    const payload = isEditing ? message : { ...message, id: undefined };
+    
+    console.log(`Sending ${method} request:`, payload);
+
+    const response = await fetch(url, {
+      method: method,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || `Failed to ${isEditing ? 'update' : 'create'} message`);
     }
-  };
+
+    // Success handling
+    fetchMessages(); // Refresh the list
+    setShowAddForm(false);
+    setEditingMessage(null);
+    
+    toast.success(result.message || `Message ${isEditing ? 'updated' : 'created'} successfully`, {
+      position: 'top-right',
+      autoClose: 3000,
+      theme: resolvedTheme === 'dark' ? 'dark' : 'light',
+    });
+
+  } catch (error: any) {
+    console.error('Save error:', error);
+    
+    let errorMessage = error.message || 'Failed to save message';
+    
+    // Handle concurrency errors specifically
+    if (error.message.includes('another transaction') || error.message.includes('unsaved-value')) {
+      errorMessage = 'This message was modified by another process. Please refresh and try again.';
+      fetchMessages(); // Force refresh
+    }
+    
+    toast.error(errorMessage, {
+      position: 'top-right',
+      autoClose: 5000, // Longer timeout for error messages
+      theme: resolvedTheme === 'dark' ? 'dark' : 'light',
+    });
+  }
+};
 
   const handleDelete = async (id: number) => {
     try {
