@@ -30,6 +30,21 @@ interface AddGlobalWebhookFormProps {
   editingWebhook: GlobalWebhook | null;
 }
 
+// Define payload interface with optional id
+interface WebhookPayload {
+  id?: number;
+  userId: number;
+  event: string;
+  dataTypeEnabled: boolean;
+  destination: 'TARGET_URL' | 'EMAIL' | 'BOTH';
+  email: string;
+  targetUrl: string;
+  createdBy: string;
+  company: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 const AddGlobalWebhookForm: React.FC<AddGlobalWebhookFormProps> = ({ 
   onSave, 
   onCancel, 
@@ -102,56 +117,56 @@ const AddGlobalWebhookForm: React.FC<AddGlobalWebhookFormProps> = ({
     return null;
   };
 
- const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  const validationError = validateForm();
-  if (validationError) {
-    toast.error(validationError);
-    return;
-  }
-
-  // REMOVE ID generation - let backend handle it
-  const payload = {
-    // id: editingWebhook?.id || Date.now(), // REMOVE THIS LINE
-    userId: 1,
-    event: formData.event,
-    dataTypeEnabled: formData.dataTypeEnabled,
-    destination: formData.destination as 'TARGET_URL' | 'EMAIL' | 'BOTH',
-    email: formData.email,
-    targetUrl: formData.targetUrl,
-    createdBy: formData.createdBy,
-    company: formData.company,
-    createdAt: editingWebhook?.createdAt || new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-
-  // For updates, include the ID from editingWebhook
-  if (editingWebhook?.id) {
-    payload.id = editingWebhook.id;
-  }
-
-  try {
-    const method = editingWebhook ? 'PUT' : 'POST';
-    const url = '/api/v1/settings/global-webhooks'; // Use same endpoint for both
-
-    const response = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || 'Failed to save webhook');
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const validationError = validateForm();
+    if (validationError) {
+      toast.error(validationError);
+      return;
     }
 
-    toast.success(`Webhook ${editingWebhook ? 'updated' : 'created'} successfully`);
-    onSave();
-  } catch (error) {
-    toast.error('Failed to save webhook');
-    console.error(error);
-  }
-};
+    // Create payload with proper typing
+    const payload: WebhookPayload = {
+      userId: 1,
+      event: formData.event,
+      dataTypeEnabled: formData.dataTypeEnabled,
+      destination: formData.destination as 'TARGET_URL' | 'EMAIL' | 'BOTH',
+      email: formData.email,
+      targetUrl: formData.targetUrl,
+      createdBy: formData.createdBy,
+      company: formData.company,
+      createdAt: editingWebhook?.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Add id only if editing an existing webhook
+    if (editingWebhook?.id) {
+      payload.id = editingWebhook.id;
+    }
+
+    try {
+      const method = editingWebhook ? 'PUT' : 'POST';
+      const url = '/api/v1/settings/global-webhooks';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to save webhook');
+      }
+
+      toast.success(`Webhook ${editingWebhook ? 'updated' : 'created'} successfully`);
+      onSave();
+    } catch (error) {
+      toast.error('Failed to save webhook');
+      console.error(error);
+    }
+  };
+
   const formatEventName = (event: string) => {
     return event.replace('_', ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
   };
