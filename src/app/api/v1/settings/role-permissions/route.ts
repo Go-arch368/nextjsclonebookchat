@@ -44,13 +44,17 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const now = new Date().toISOString();
+
+    const {id,...payloadwithoutId} = body
     
     const payload = {
-      ...body,
+      ...payloadwithoutId,
       createdAt: now,
       updatedAt: now,
       userId: body.userId || 1, // Default user ID
     };
+
+    
 
     const res = await fetch(`${BACKEND_BASE_URL}/save`, {
       method: 'POST',

@@ -54,12 +54,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // ↓↓↓ CRITICAL CHANGE: Remove ID from payload ↓↓↓
+    const { id, ...payloadWithoutId } = body;
+
     const payload = {
-      ...body,
+      ...payloadWithoutId, // ← Use the payload WITHOUT ID
       createdAt: now,
       updatedAt: now,
       userId: body.userId || 1, // Default user ID
     };
+
+    console.log('Creating IP address:', payload); // ← Added logging
 
     const res = await fetch(`${BACKEND_BASE_URL}/save`, {
       method: 'POST',
@@ -67,17 +72,23 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify(payload),
     });
 
+    const responseText = await res.text(); // ← Get raw response first
+    console.log('Backend response:', responseText); // ← Added logging
+
     if (!res.ok) {
-      const errorText = await res.text();
-      console.error(`Backend responded with status ${res.status}: ${errorText}`);
-      throw new Error(`Backend responded with status ${res.status}`);
+      throw new Error(`Backend responded with status ${res.status}: ${responseText}`);
     }
 
-    const data = await res.json();
-    return NextResponse.json(data);
+    // ↓↓↓ Better response handling ↓↓↓
+    try {
+      const data = JSON.parse(responseText);
+      return NextResponse.json(data);
+    } catch (e) {
+      return NextResponse.json({ message: responseText });
+    }
 
   } catch (error: any) {
-    console.error('Error in POST IP address:', error.message, error.stack);
+    console.error('Error in POST IP address:', error.message);
     return NextResponse.json(
       { message: error.message || 'Failed to create IP address' },
       { status: 500 }
@@ -164,3 +175,5 @@ export async function DELETE(req: NextRequest) {
     );
   }
 }
+
+

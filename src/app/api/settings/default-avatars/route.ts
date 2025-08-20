@@ -61,13 +61,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Prepare payload with timestamps
+    // Prepare payload with timestamps - REMOVE ID for new records
     const payload = {
       ...body,
+      // Remove ID for new records to prevent concurrency issues
+      id: body.id && body.id === "0" ? undefined : body.id, // Only keep ID if it's not the default "0"
       createdAt: body.createdAt || new Date().toISOString(),
       updatedAt: body.updatedAt || new Date().toISOString(),
-      // Remove temporary ID if it exists
-      id: body.id && body.id.startsWith('temp-') ? undefined : body.id
     };
 
     console.log('Sending payload to backend:', payload);

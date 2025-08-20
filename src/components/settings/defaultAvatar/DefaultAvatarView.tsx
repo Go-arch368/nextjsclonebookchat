@@ -66,39 +66,43 @@ export default function DefaultAvatarView() {
     }
   };
 
-  const handleSave = async () => {
-    if (!defaultAvatar.name || !defaultAvatar.jobTitle || !defaultAvatar.avatarImageUrl) {
-      toast.error("Please fill all required fields");
-      return;
-    }
+ const handleSave = async () => {
+  if (!defaultAvatar.name || !defaultAvatar.jobTitle || !defaultAvatar.avatarImageUrl) {
+    toast.error("Please fill all required fields");
+    return;
+  }
 
-    try {
-      setIsLoading(true);
-      const response = await fetchWithRetry('/api/settings/default-avatars', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...defaultAvatar,
-          id: "1" // Using 1 as the default avatar ID
-        })
-      });
+  try {
+    setIsLoading(true);
+    
+    // REMOVE the hardcoded ID - let backend handle it
+    const payload = {
+      ...defaultAvatar,
+      // id: "1" // ← REMOVE THIS LINE
+    };
 
-      setNewAvatar(response);
-      setDefaultAvatar({
-        id: "0",
-        userId: 1,
-        name: "",
-        jobTitle: "",
-        avatarImageUrl: "",
-      });
-      toast.success("Default avatar saved successfully!");
-    } catch (error: any) {
-      console.error("Error saving default avatar:", error);
-      toast.error(error.message || "Failed to save default avatar");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    const response = await fetchWithRetry('/api/settings/default-avatars', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    setNewAvatar(response);
+    setDefaultAvatar({
+      id: "0",
+      userId: 1,
+      name: "",
+      jobTitle: "",
+      avatarImageUrl: "",
+    });
+    toast.success("Default avatar saved successfully!");
+  } catch (error: any) {
+    console.error("Error saving default avatar:", error);
+    toast.error(error.message || "Failed to save default avatar");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleClear = async () => {
     try {

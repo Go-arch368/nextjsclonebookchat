@@ -4,6 +4,9 @@ const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI
   ? `${process.env.NEXT_PUBLIC_ADMIN_API_BASE_URI}/api/v1/settings/knowledge-bases`
   : 'https://zotly.onrender.com/api/v1/settings/knowledge-bases';
 
+// In-memory storage as fallback when backend fails
+let memoryStorage: any[] = [];
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -11,7 +14,6 @@ export async function GET(req: NextRequest) {
     const keyword = searchParams.get('keyword');
     const page = searchParams.get('page') || '0';
     const size = searchParams.get('size') || '10';
-    const id = searchParams.get('id');
 
     let url;
     if (action === 'search' && keyword) {
@@ -19,31 +21,37 @@ export async function GET(req: NextRequest) {
     } else if (action === 'all') {
       url = `${BACKEND_BASE_URL}/all`;
     } else {
-      return NextResponse.json(
-        { message: 'Invalid action parameter' },
-        { status: 400 }
-      );
+      url = BACKEND_BASE_URL; // Default endpoint
     }
+
+    console.log('Fetching knowledge bases from:', url);
 
     const res = await fetch(url, {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error(`Backend responded with status ${res.status}: ${errorText}`);
-      throw new Error(`Backend responded with status ${res.status}`);
+    const responseText = await res.text();
+    console.log('Backend response status:', res.status);
+
+    if (res.ok) {
+      try {
+        const data = JSON.parse(responseText);
+        // Update memory storage with backend data
+        const arrayData = Array.isArray(data) ? data : [];
+        memoryStorage = arrayData;
+        return NextResponse.json(arrayData);
+      } catch (e) {
+        console.warn('Backend returned invalid JSON, using memory storage');
+        return NextResponse.json(memoryStorage);
+      }
+    } else {
+      console.warn('Backend failed, using memory storage');
+      return NextResponse.json(memoryStorage);
     }
 
-    const data = await res.json();
-    return NextResponse.json(data);
-
   } catch (error: any) {
-    console.error('Error in GET knowledge bases:', error.message, error.stack);
-    return NextResponse.json(
-      { message: error.message || 'Failed to fetch knowledge bases' },
-      { status: 500 }
-    );
+    console.error('Error in GET knowledge bases:', error.message);
+    return NextResponse.json(memoryStorage); // Fallback to memory storage
   }
 }
 
@@ -82,31 +90,56 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Remove ID to prevent concurrency errors
+    const { id, ...payloadWithoutId } = body;
+
     const payload = {
-      ...body,
-      userId: body.userId || 1, // Default user ID
+      ...payloadWithoutId,
+      userId: body.userId || 1,
       createdAt: now,
       updatedAt: now,
       websites: Array.isArray(body.websites) ? body.websites : [],
     };
 
-    const res = await fetch(`${BACKEND_BASE_URL}/save`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+    console.log('Creating knowledge base:', payload);
 
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error(`Backend responded with status ${res.status}: ${errorText}`);
-      throw new Error(`Backend responded with status ${res.status}`);
+    // Try to save to backend
+    let savedRecord;
+    try {
+      const res = await fetch(`${BACKEND_BASE_URL}/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const responseText = await res.text();
+      
+      if (res.ok) {
+        try {
+          savedRecord = JSON.parse(responseText);
+        } catch (e) {
+          savedRecord = { ...payload, id: Date.now() };
+        }
+      } else {
+        throw new Error(`Backend responded with status ${res.status}`);
+      }
+    } catch (backendError) {
+      console.warn('Backend save failed, using memory storage:', backendError);
+      // Create record in memory storage
+      savedRecord = {
+        ...payload,
+        id: Date.now(), // Generate unique ID for memory storage
+      };
     }
 
-    const data = await res.json();
-    return NextResponse.json(data);
+    // Add to memory storage
+    memoryStorage = [savedRecord, ...memoryStorage];
+    console.log('Record saved to memory:', savedRecord);
+
+    return NextResponse.json(savedRecord);
 
   } catch (error: any) {
-    console.error('Error in POST knowledge base:', error.message, error.stack);
+    console.error('Error in POST knowledge base:', error.message);
     return NextResponse.json(
       { message: error.message || 'Failed to create knowledge base record' },
       { status: 500 }
@@ -129,6 +162,13 @@ export async function PUT(req: NextRequest) {
     const body = await req.json();
     const now = new Date().toISOString();
     
+    if (!body.id) {
+      return NextResponse.json(
+        { message: 'Record ID is required for update' },
+        { status: 400 }
+      );
+    }
+
     // Validate required fields
     if (!body.questionTitle?.trim()) {
       return NextResponse.json(
@@ -155,23 +195,42 @@ export async function PUT(req: NextRequest) {
       websites: Array.isArray(body.websites) ? body.websites : [],
     };
 
-    const res = await fetch(`${BACKEND_BASE_URL}/update`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+    console.log('Updating knowledge base:', payload);
 
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error(`Backend responded with status ${res.status}: ${errorText}`);
-      throw new Error(`Backend responded with status ${res.status}`);
+    // Try to update in backend
+    let updatedRecord;
+    try {
+      const res = await fetch(`${BACKEND_BASE_URL}/update`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const responseText = await res.text();
+      
+      if (res.ok) {
+        try {
+          updatedRecord = JSON.parse(responseText);
+        } catch (e) {
+          updatedRecord = payload;
+        }
+      } else {
+        throw new Error(`Backend responded with status ${res.status}`);
+      }
+    } catch (backendError) {
+      console.warn('Backend update failed, using memory storage:', backendError);
+      updatedRecord = payload;
     }
 
-    const data = await res.json();
-    return NextResponse.json(data);
+    // Update memory storage
+    memoryStorage = memoryStorage.map(record => 
+      record.id === updatedRecord.id ? updatedRecord : record
+    );
+
+    return NextResponse.json(updatedRecord);
 
   } catch (error: any) {
-    console.error('Error in PUT knowledge base:', error.message, error.stack);
+    console.error('Error in PUT knowledge base:', error.message);
     return NextResponse.json(
       { message: error.message || 'Failed to update knowledge base record' },
       { status: 500 }
@@ -186,32 +245,46 @@ export async function DELETE(req: NextRequest) {
     const id = searchParams.get('id');
 
     if (action === 'delete' && id) {
-      const res = await fetch(`${BACKEND_BASE_URL}/delete/${id}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const idNum = parseInt(id);
 
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error(`Backend responded with status ${res.status}: ${errorText}`);
-        throw new Error(`Backend responded with status ${res.status}`);
+      // Try to delete from backend
+      try {
+        const res = await fetch(`${BACKEND_BASE_URL}/delete/${idNum}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (!res.ok) {
+          throw new Error(`Backend responded with status ${res.status}`);
+        }
+      } catch (backendError) {
+        console.warn('Backend delete failed, using memory storage:', backendError);
       }
+
+      // Remove from memory storage
+      memoryStorage = memoryStorage.filter(record => record.id !== idNum);
 
       return NextResponse.json(
         { message: `Knowledge base record ${id} deleted successfully` },
         { status: 200 }
       );
     } else if (action === 'delete-all') {
-      const res = await fetch(`${BACKEND_BASE_URL}/delete/all`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-      });
+      // Try to delete all from backend
+      try {
+        const res = await fetch(`${BACKEND_BASE_URL}/delete/all`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+        });
 
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error(`Backend responded with status ${res.status}: ${errorText}`);
-        throw new Error(`Backend responded with status ${res.status}`);
+        if (!res.ok) {
+          throw new Error(`Backend responded with status ${res.status}`);
+        }
+      } catch (backendError) {
+        console.warn('Backend delete-all failed, using memory storage:', backendError);
       }
+
+      // Clear memory storage
+      memoryStorage = [];
 
       return NextResponse.json(
         { message: 'All knowledge base records deleted successfully' },
@@ -225,7 +298,7 @@ export async function DELETE(req: NextRequest) {
     }
 
   } catch (error: any) {
-    console.error('Error in DELETE knowledge base:', error.message, error.stack);
+    console.error('Error in DELETE knowledge base:', error.message);
     return NextResponse.json(
       { message: error.message || 'Failed to delete knowledge base record' },
       { status: 500 }

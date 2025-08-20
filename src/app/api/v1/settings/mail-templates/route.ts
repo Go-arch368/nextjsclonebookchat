@@ -42,15 +42,33 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    const {id,...payload} = body
+    console.log("Creating Mail template", payload);
+    
     const res = await fetch(`${BACKEND_BASE_URL}/save`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      body: JSON.stringify(payload),
     });
+
+    const responseText = await res.text()
+    console.log("Backend response", responseText)
 
     if (!res.ok) {
       const errorText = await res.text();
       throw new Error(`Backend responded with status ${res.status}: ${errorText}`);
+    }
+
+    try{
+      const data = JSON.parse(responseText)
+      return  NextResponse.json(data)
+    }
+    catch(error:any){
+      console.error('Error in POST mail template:', error.message);
+    return NextResponse.json(
+      { message: error.message || 'Failed to create mail template' },
+      { status: 500 }
+    );
     }
 
     const data = await res.json();
