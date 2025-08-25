@@ -97,6 +97,8 @@ export async function POST(req: NextRequest) {
     }
     const contentType = res.headers.get('content-type');
     const text = await res.text();
+    console.log(text)
+    
     let data;
     if (text && contentType?.includes('application/json')) {
       try {

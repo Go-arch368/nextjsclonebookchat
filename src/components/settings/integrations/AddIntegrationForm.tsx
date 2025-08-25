@@ -9,7 +9,7 @@ import { Label } from '@/ui/label';
 import { Checkbox } from '@/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select';
 import { toast } from 'react-toastify';
-
+import { useUserStore } from '@/stores/useUserStore';
 interface Integration {
   id: number;
   userId: number;
@@ -32,6 +32,7 @@ const AddIntegrationForm: React.FC<AddIntegrationFormProps> = ({
   onCancel, 
   editingIntegration 
 }) => {
+  const {user} = useUserStore()
   const { theme } = useTheme();
   const [formData, setFormData] = useState({
     service: '' as 'ZAPIER' | 'DRIFT' | '',
@@ -76,7 +77,7 @@ const AddIntegrationForm: React.FC<AddIntegrationFormProps> = ({
 
     const now = new Date().toISOString();
     const payload = {
-      userId: 1,
+      userId: user?.id ?? 0,
       service: formData.service as 'ZAPIER' | 'DRIFT',
       website: formData.website,
       apiKey: formData.apiKey,
@@ -90,10 +91,13 @@ const AddIntegrationForm: React.FC<AddIntegrationFormProps> = ({
         await axios.put('/api/v1/settings/integrations', {
           ...payload,
           id: editingIntegration.id,
+          userId:user?.id ?? 0,
           createdAt: editingIntegration.createdAt,
         });
         toast.success('Integration updated successfully!');
       } else {
+        console.log(payload);
+        
         await axios.post('/api/v1/settings/integrations', payload);
         toast.success('Integration created successfully!');
       }

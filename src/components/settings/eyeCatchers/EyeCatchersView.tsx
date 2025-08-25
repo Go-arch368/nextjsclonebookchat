@@ -6,7 +6,7 @@ import { toast } from 'react-toastify';
 import AddEyeCatcherForm from './AddEyeCatcherForm';
 import EyeCatcherHeader from './EyeCatherHeader';
 import { useTheme } from 'next-themes';
-
+import { useUserStore } from '@/stores/useUserStore';
 interface EyeCatcher {
   id: number;
   userId: number;
@@ -22,6 +22,7 @@ interface EyeCatcher {
 }
 
 const EyeCatchersView: React.FC = () => {
+  const {user} = useUserStore()
   const { resolvedTheme } = useTheme();
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -89,7 +90,7 @@ const EyeCatchersView: React.FC = () => {
       setIsLoading(true);
       setError(null);
       const payload = {
-        userId: eyeCatcher.userId || 1,
+        userId: user?.id ?? 0,
         title: eyeCatcher.title.trim(),
         text: eyeCatcher.text.trim(),
         backgroundColor: eyeCatcher.backgroundColor || '#ffffff',
@@ -147,7 +148,7 @@ const EyeCatchersView: React.FC = () => {
       setError(null);
       const response = await axios.put(`${API_BASE_URL}`, {
         id: eyeCatcher.id,
-        userId: eyeCatcher.userId || 1,
+        userId: user?.id ?? 0,
         title: eyeCatcher.title.trim(),
         text: eyeCatcher.text.trim(),
         backgroundColor: eyeCatcher.backgroundColor,

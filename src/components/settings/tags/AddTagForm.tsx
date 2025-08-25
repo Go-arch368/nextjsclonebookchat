@@ -7,6 +7,7 @@ import { Label } from '@/ui/label';
 import { Checkbox } from '@/ui/checkbox';
 import { toast } from 'react-toastify';
 import { useTheme } from 'next-themes';
+import { useUserStore } from '@/stores/useUserStore';
 
 interface Tag {
   id: number;
@@ -30,7 +31,9 @@ const AddTagForm: React.FC<AddTagFormProps> = ({
   onCancel, 
   editingTag 
 }) => {
+   const {user} = useUserStore()
   const [formData, setFormData] = useState({
+    userId:user?.id ?? 0,
     tag: '',
     isDefault: false,
     createdBy: '',
@@ -38,10 +41,12 @@ const AddTagForm: React.FC<AddTagFormProps> = ({
   });
   const [isLoading, setIsLoading] = useState(false);
   const { theme } = useTheme();
+  
 
   useEffect(() => {
     if (editingTag) {
       setFormData({
+        userId:user?.id ?? 0,
         tag: editingTag.tag,
         isDefault: editingTag.isDefault,
         createdBy: editingTag.createdBy,
@@ -49,6 +54,7 @@ const AddTagForm: React.FC<AddTagFormProps> = ({
       });
     } else {
       setFormData({
+        userId:user?.id ?? 0,
         tag: '',
         isDefault: false,
         createdBy: '',
@@ -76,7 +82,7 @@ const AddTagForm: React.FC<AddTagFormProps> = ({
         ? { 
             ...formData, 
             id: editingTag.id,
-            userId: editingTag.userId,
+            userId: user?.id ?? 0,
             createdAt: editingTag.createdAt // Preserve original createdAt
           }
         : formData;

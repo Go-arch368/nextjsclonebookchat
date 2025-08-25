@@ -60,7 +60,6 @@ export async function POST(req: NextRequest) {
     // Add required fields according to schema
     const payload = {
       ...body,
-      userId: 1, // Default user ID
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };

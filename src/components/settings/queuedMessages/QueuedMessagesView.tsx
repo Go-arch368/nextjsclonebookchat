@@ -6,7 +6,7 @@ import AddQueuedMessageForm from './AddQueuedMessageForm';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useTheme } from 'next-themes';
-
+import { useUserStore } from '@/stores/useUserStore';
 interface QueuedMessage {
   id: number;
   userId: number;
@@ -21,6 +21,7 @@ interface QueuedMessage {
 }
 
 const QueuedMessagesView: React.FC = () => {
+    const {user} = useUserStore()
   const { resolvedTheme } = useTheme();
   const [showAddForm, setShowAddForm] = useState(false);
   const [queuedMessages, setQueuedMessages] = useState<QueuedMessage[]>([]);
@@ -75,7 +76,7 @@ const handleSave = async (message: QueuedMessage) => {
     const method = isEditing ? 'PUT' : 'POST';
     
     // For new messages, remove the ID to avoid confusion
-    const payload = isEditing ? message : { ...message, id: undefined };
+    const payload = isEditing ? {...message,userId:user?.id ?? 0} : { ...message, userId:user?.id ?? 0,id:undefined};
     
     console.log(`Sending ${method} request:`, payload);
 

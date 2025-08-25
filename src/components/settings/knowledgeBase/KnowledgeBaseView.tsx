@@ -6,7 +6,7 @@ import KnowledgeBaseHeader from './KnowledgeBaseHeader';
 import AddKnowledgeBaseRecordForm from './AddKnowledgeBaseRecordForm';
 import { toast } from 'sonner';
 import { RefreshCw } from 'lucide-react';
-
+import { useUserStore } from '@/stores/useUserStore';
 interface KnowledgeBaseRecord {
   id?: number;
   userId?: number;
@@ -19,6 +19,9 @@ interface KnowledgeBaseRecord {
 }
 
 const KnowledgeBaseView: React.FC = () => {
+  const {user} = useUserStore()
+  console.log(user);
+  
   const { theme } = useTheme();
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingRecord, setEditingRecord] = useState<KnowledgeBaseRecord | null>(null);
@@ -57,11 +60,15 @@ const fetchKnowledgeBaseRecords = async () => {
       const url = '/api/v1/settings/knowledge-bases';
       const method = editingRecord ? 'PUT' : 'POST';
       const action = editingRecord ? 'update' : 'save';
+
+      const payload = {
+        ...record,userId:user?.id ?? 0
+      }
       
       const response = await fetch(`${url}?action=${action}`, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(record),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {

@@ -9,6 +9,7 @@ import { Input } from '@/ui/input';
 import { Button } from '@/ui/button';
 import { toast } from 'sonner';
 import { Skeleton } from '@/ui/skeleton';
+import { useUserStore } from '@/stores/useUserStore';
 
 interface InactivityTimeout {
   id?: number;
@@ -27,6 +28,7 @@ interface InactivityTimeout {
 }
 
 const InactivityTimeoutsHeader: React.FC = () => {
+  const {user} = useUserStore()
   const { theme } = useTheme();
   const [isCheckedAgent, setIsCheckedAgent] = useState(false);
   const [isCheckedArchive, setIsCheckedArchive] = useState(false);
@@ -87,7 +89,7 @@ const InactivityTimeoutsHeader: React.FC = () => {
     setIsSaving(true);
     try {
       const payload = {
-        userId: 1,
+        userId: user?.id ?? 0,
         agentNotRespondingEnabled: isCheckedAgent,
         agentNotRespondingMinutes: parseInt(agentMinutes) || 0,
         agentNotRespondingSeconds: parseInt(agentSeconds) || 0,

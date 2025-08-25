@@ -7,7 +7,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { toast } from 'react-toastify';
 import { useTheme } from 'next-themes';
-
+import { useUserStore } from '@/stores/useUserStore';
 interface SmartResponse {
   id: number;
   userId: number;
@@ -21,6 +21,7 @@ interface SmartResponse {
 }
 
 const SmartResponsesView: React.FC = () => {
+    const {user} = useUserStore()
   const { resolvedTheme } = useTheme();
   const [showAddForm, setShowAddForm] = useState(false);
   const [smartResponses, setSmartResponses] = useState<SmartResponse[]>([]);
@@ -40,7 +41,7 @@ const fetchSmartResponses = async () => {
       const mockData = [
         {
           id: 1,
-          userId: 1,
+          userId: user?.id ?? 0,
           response: "+Website Domain",
           shortcuts: ["#hey"],
           websites: ["https://drift.com"],
@@ -101,7 +102,7 @@ const fetchSmartResponses = async () => {
       websites: response.websites || [],
       createdBy: response.createdBy || 'Admin',
       company: response.company || 'Default Company',
-      userId: response.userId || 1,
+      userId: user?.id ?? 0,
        createdAt: new Date().toISOString(),
        updatedAt: new Date().toISOString(),
     

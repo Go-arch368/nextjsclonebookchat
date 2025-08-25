@@ -6,7 +6,7 @@ import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
 import { Label } from '@/ui/label';
 import { toast } from 'sonner';
-
+import { useUserStore } from '@/stores/useUserStore';
 interface RolePermission {
   id: number;
   userId: number;
@@ -26,6 +26,7 @@ const AddRolePermissionForm: React.FC<AddRolePermissionFormProps> = ({
   onCancel, 
   rolePermission 
 }) => {
+  const {user} = useUserStore()
   const { theme } = useTheme();
   const [formData, setFormData] = useState<Omit<RolePermission, 'id' | 'userId' | 'createdAt' | 'updatedAt'> & { 
     id?: number;
@@ -76,7 +77,7 @@ const AddRolePermissionForm: React.FC<AddRolePermissionFormProps> = ({
     const now = new Date().toISOString();
     const payload: RolePermission = {
       id: formData.id || Date.now(),
-      userId: 1,
+      userId: user?.id ?? 0,
       userRole: formData.userRole,
       createdAt: rolePermission?.createdAt || now,
       updatedAt: now,

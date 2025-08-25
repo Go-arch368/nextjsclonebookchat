@@ -8,6 +8,7 @@ import { Textarea } from '@/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select';
 import { MessageSquare, X } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { useUserStore } from '@/stores/useUserStore';
 
 interface Greeting {
   id?: number;
@@ -27,6 +28,7 @@ interface AddGreetingFormProps {
 }
 
 const AddGreetingForm: React.FC<AddGreetingFormProps> = ({ onSave, onCancel, initialGreeting }) => {
+  const {user} = useUserStore()
   const [formData, setFormData] = useState<Greeting>({
     title: initialGreeting?.title || '',
     greeting: initialGreeting?.greeting || '',
@@ -91,7 +93,7 @@ const AddGreetingForm: React.FC<AddGreetingFormProps> = ({ onSave, onCancel, ini
     try {
       await onSave({
         id: initialGreeting?.id,
-        userId: 1,
+        userId: user?.id ?? 0,
         title: formData.title,
         greeting: formData.greeting,
         type: formData.type,

@@ -53,39 +53,47 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const payload = {
-      userId: 1,
-      service: body.service,
-      website: body.website,
-      apiKey: body.apiKey,
-      isConfigured: body.isConfigured || false,
+       const { id, ...payloadWithoutId } = body;
+
+ const payload = {
+      ...payloadWithoutId, // ← Use the payload WITHOUT ID
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      userId: body.userId || 1, // Default user ID
     };
 
-    const res = await fetch(BACKEND_BASE_URL, {
+    console.log('Creating IP address:', payload); // ← Added logging
+
+    const res = await fetch(`${BACKEND_BASE_URL}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
+    const responseText = await res.text(); // ← Get raw response first
+    console.log('Backend response:', responseText); // ← Added logging
+
     if (!res.ok) {
-      const errorText = await res.text();
-      console.error(`Backend responded with status ${res.status}: ${errorText}`);
-      throw new Error(`Backend responded with status ${res.status}`);
+      throw new Error(`Backend responded with status ${res.status}: ${responseText}`);
     }
 
-    const data = await res.json();
-    return NextResponse.json(data);
+    // ↓↓↓ Better response handling ↓↓↓
+    try {
+      const data = JSON.parse(responseText);
+      return NextResponse.json(data);
+    } catch (e) {
+      return NextResponse.json({ message: responseText });
+    }
 
   } catch (error: any) {
-    console.error('Error in POST integration:', error.message, error.stack);
+    console.error('Error in POST IP address:', error.message);
     return NextResponse.json(
-      { message: error.message || 'Failed to create integration' },
+      { message: error.message || 'Failed to create IP address' },
       { status: 500 }
     );
   }
 }
+
 
 export async function PUT(req: NextRequest) {
   try {

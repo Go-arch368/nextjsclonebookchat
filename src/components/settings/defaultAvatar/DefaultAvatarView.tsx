@@ -9,6 +9,7 @@ import { Button } from "@/ui/button";
 import { Input } from "@/ui/input";
 import { Label } from "@/ui/label";
 import { Skeleton } from "@/ui/skeleton";
+import { useUserStore } from "@/stores/useUserStore";
 
 const fetchWithRetry = async (url: string, options: RequestInit = {}, retries = 3) => {
   try {
@@ -23,10 +24,12 @@ const fetchWithRetry = async (url: string, options: RequestInit = {}, retries = 
 };
 
 export default function DefaultAvatarView() {
+  const { user } = useUserStore();
+  console.log(user)
   const { theme } = useTheme();
   const [defaultAvatar, setDefaultAvatar] = useState<Avatar>({
     id: "0",
-    userId: 1,
+   userId: user?.id ?? 0,
     name: "",
     jobTitle: "",
     avatarImageUrl: "",
@@ -46,7 +49,7 @@ export default function DefaultAvatarView() {
       if (data && data.avatarImageUrl !== undefined) {
         setDefaultAvatar({
           id: data.id || "0",
-          userId: data.userId || 1,
+         userId: user?.id ?? 0,
           name: data.name || "",
           jobTitle: data.jobTitle || "",
           avatarImageUrl: data.avatarImageUrl || ""
@@ -78,6 +81,7 @@ export default function DefaultAvatarView() {
     // REMOVE the hardcoded ID - let backend handle it
     const payload = {
       ...defaultAvatar,
+     userId: user?.id ?? 0,
       // id: "1" // ← REMOVE THIS LINE
     };
 

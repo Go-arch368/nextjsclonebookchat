@@ -6,7 +6,7 @@ import AddWebhookForm from './AddWebhookForm';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useTheme } from 'next-themes';
-
+import { useUserStore } from '@/stores/useUserStore';
 interface Webhook {
   id?: number;
   userId?: number;
@@ -20,6 +20,7 @@ interface Webhook {
 }
 
 const WebhooksView: React.FC = () => {
+  const {user} = useUserStore()
   const [showAddForm, setShowAddForm] = useState(false);
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
   const [editingWebhook, setEditingWebhook] = useState<Webhook | null>(null);
@@ -85,7 +86,7 @@ const WebhooksView: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...webhook,
-          userId: webhook.userId || 1,
+          userId: user?.id ?? 0,
           dataTypes: webhook.dataTypes || [],
           createdAt: webhook.id ? webhook.createdAt : new Date().toISOString(),
           updatedAt: new Date().toISOString(),

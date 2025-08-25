@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import MailTemplatesHeader from './MailTemplatesHeader';
 import AddMailTemplateForm from './AddMailTemplateForm';
 import { useTheme } from 'next-themes';
-
+import { useUserStore } from '@/stores/useUserStore';
 interface MailTemplate {
   id: number;
   userId: number;
@@ -21,6 +21,8 @@ interface MailTemplate {
 }
 
 const MailTemplatesView: React.FC = () => {
+
+  const {user} = useUserStore()
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [templates, setTemplates] = useState<MailTemplate[]>([]);
@@ -70,7 +72,7 @@ const MailTemplatesView: React.FC = () => {
     try {
       const response = await axios.post<MailTemplate>(BASE_URL, {
         ...template,
-        userId: template.userId || 1,
+        userId: user?.id ?? 0,
         createdAt: new Date().toISOString().slice(0, 19),
         modifiedAt: new Date().toISOString().slice(0, 19),
       });
@@ -88,7 +90,7 @@ const MailTemplatesView: React.FC = () => {
   const handleUpdate = async (template: MailTemplate) => {
     try {
       const response = await axios.put<MailTemplate>(BASE_URL, {
-        ...template,
+        ...template,userId:user?.id ?? 0,
         modifiedAt: new Date().toISOString().slice(0, 19),
       });
       await fetchTemplates();

@@ -9,6 +9,7 @@ import { RadioGroup, RadioGroupItem } from '@/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select';
 import { toast } from 'react-toastify';
 import { useTheme } from 'next-themes';
+import { useUserStore } from '@/stores/useUserStore';
 
 interface GlobalWebhook {
   id: number;
@@ -50,6 +51,10 @@ const AddGlobalWebhookForm: React.FC<AddGlobalWebhookFormProps> = ({
   onCancel, 
   editingWebhook 
 }) => {
+
+
+  const {user} = useUserStore()
+
   const [formData, setFormData] = useState({
     event: '',
     dataTypeEnabled: false,
@@ -127,7 +132,7 @@ const AddGlobalWebhookForm: React.FC<AddGlobalWebhookFormProps> = ({
 
     // Create payload with proper typing
     const payload: WebhookPayload = {
-      userId: 1,
+      userId: user?.id ?? 0,
       event: formData.event,
       dataTypeEnabled: formData.dataTypeEnabled,
       destination: formData.destination as 'TARGET_URL' | 'EMAIL' | 'BOTH',

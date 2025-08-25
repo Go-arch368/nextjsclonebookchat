@@ -6,7 +6,7 @@ import { Input } from '@/ui/input';
 import { Label } from '@/ui/label';
 import { toast } from 'react-toastify';
 import { useTheme } from 'next-themes';
-
+import { useUserStore } from '@/stores/useUserStore';
 interface Template {
   id: number;
   userId: number;
@@ -29,9 +29,11 @@ const AddTemplateForm: React.FC<AddTemplateFormProps> = ({
   onCancel, 
   editingTemplate 
 }) => {
-  const [formData, setFormData] = useState<Omit<Template, 'id' | 'userId' | 'createdAt' | 'updatedAt'> & { 
+    const {user} = useUserStore()
+  const [formData, setFormData] = useState<Omit<Template, 'id'  | 'createdAt' | 'updatedAt'> & { 
     id?: number;
   }>({
+    userId:user?.id ?? 0,
     businessCategory: '',
     businessSubcategory: '',
     createdBy: 'Admin',
@@ -43,6 +45,7 @@ const AddTemplateForm: React.FC<AddTemplateFormProps> = ({
     if (editingTemplate) {
       setFormData({
         id: editingTemplate.id,
+        userId:user?.id ?? 0,
         businessCategory: editingTemplate.businessCategory,
         businessSubcategory: editingTemplate.businessSubcategory,
         createdBy: editingTemplate.createdBy,
@@ -50,6 +53,7 @@ const AddTemplateForm: React.FC<AddTemplateFormProps> = ({
       });
     } else {
       setFormData({
+        userId:user?.id ?? 0,
         businessCategory: '',
         businessSubcategory: '',
         createdBy: 'Admin',
@@ -75,7 +79,7 @@ const AddTemplateForm: React.FC<AddTemplateFormProps> = ({
       const now = new Date().toISOString();
       const payload = {
         ...formData,
-        userId: 1, // Default user ID
+        userId: user?.id ?? 0,
         createdAt: now,
         updatedAt: now,
       };

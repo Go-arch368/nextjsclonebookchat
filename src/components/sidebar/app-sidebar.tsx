@@ -33,17 +33,22 @@ import {
   Settings,
   FileText
 } from 'lucide-react';
+import { useUserStore } from '@/stores/useUserStore';
+// const { user } = useUserStore();
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const { acceptChats } = useUserStatus();
-
+  const {user} = useUserStore()
+  console.log(user);
   
-  const user = {
+ 
+  
+  const users = {
     name: 'zoey',
     email: 'zoey@example.com',
     avatar: '/avatars/shadcn.jpg',
-    role: 'admin',
+    role: user?.role ?? "admin",
   };
 
   const teams = [
@@ -115,7 +120,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   // Get allowed labels for the current role (fallback to empty array)
   const allowedLabels =
-    roleAccess[user.role as keyof typeof roleAccess] || [];
+    roleAccess[users.role as keyof typeof roleAccess] || [];
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -146,7 +151,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={user} isOnline={acceptChats} />
+        <NavUser user={users} isOnline={acceptChats} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

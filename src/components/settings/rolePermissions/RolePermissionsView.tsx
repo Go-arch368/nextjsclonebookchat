@@ -5,7 +5,7 @@ import { useTheme } from 'next-themes';
 import RolePermissionHeader from './RolePermissionHeader';
 import AddRolePermissionForm from './AddRolePermissionForm';
 import { toast } from 'sonner';
-
+import { useUserStore } from '@/stores/useUserStore';
 interface RolePermission {
   id: number;
   userId: number;
@@ -15,6 +15,7 @@ interface RolePermission {
 }
 
 const RolePermissionsView: React.FC = () => {
+  const {user} = useUserStore()
   const { theme } = useTheme();
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingRolePermission, setEditingRolePermission] = useState<RolePermission | null>(null);
@@ -38,12 +39,17 @@ const RolePermissionsView: React.FC = () => {
 
   const handleSave = async (rolePermission: RolePermission) => {
     try {
+
+    const payload = {
+      ...rolePermission,userId:user?.id ?? 0
+    }
+
       const url = '/api/v1/settings/role-permissions';
       const method = editingRolePermission ? 'PUT' : 'POST';
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(rolePermission),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) throw new Error(

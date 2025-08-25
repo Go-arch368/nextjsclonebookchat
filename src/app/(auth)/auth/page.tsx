@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/ui/button";
 import clsx from "clsx";
 import Image from "next/image";
+import { useUserStore } from "@/stores/useUserStore";
 
 const AuthPage: React.FC = () => {
   const [isSignIn, setIsSignIn] = useState<boolean>(false);
@@ -35,12 +36,30 @@ const AuthPage: React.FC = () => {
     console.log("Signup:", { name, email, password, agreeToTerms });
   };
 
-  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    localStorage.setItem("login", "true");
-    console.log("Login:", { email, password, rememberMe });
-    router.push("/dashboard");
+
+
+
+
+const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+
+ 
+  const mockUser = {
+    id: 18,
+    role: "admin" as const,
+    email,
+    name: "John Doe",
   };
+
+  
+  useUserStore.getState().setUser(mockUser);
+
+  
+  localStorage.setItem("login", "true");
+
+  router.push("/dashboard");
+};
+
 
   return (
     <main className="h-screen w-screen bg-gray-100 dark:bg-gray-900 overflow-x-hidden">

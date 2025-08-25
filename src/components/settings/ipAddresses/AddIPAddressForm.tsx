@@ -6,7 +6,7 @@ import { Input } from '@/ui/input';
 import { Label } from '@/ui/label';
 import { toast } from 'sonner';
 import { useTheme } from 'next-themes';
-
+import { useUserStore } from '@/stores/useUserStore';
 interface IPAddress {
   id: number;
   userId: number;
@@ -26,6 +26,7 @@ const AddIPAddressForm: React.FC<AddIPAddressFormProps> = ({
   onCancel, 
   ipAddress 
 }) => {
+  const {user} = useUserStore()
   const [formData, setFormData] = useState<Omit<IPAddress, 'id' | 'userId' | 'createdAt' | 'updatedAt'> & { 
     id?: number;
   }>({
@@ -82,7 +83,7 @@ const AddIPAddressForm: React.FC<AddIPAddressFormProps> = ({
     const now = new Date().toISOString();
     const payload: IPAddress = {
       id: formData.id || Date.now(),
-      userId: 1,
+      userId:user?.id ?? 0,
       ipAddress: formData.ipAddress,
       createdAt: ipAddress?.createdAt || now,
       updatedAt: now,

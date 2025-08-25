@@ -8,6 +8,8 @@ import { Label } from '@/ui/label';
 import { Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useTheme } from 'next-themes';
+import { userAgent } from 'next/server';
+import { useUserStore } from '@/stores/useUserStore';
 interface Notification {
   id: number;
   userId: number;
@@ -20,9 +22,10 @@ interface Notification {
 }
 
 const GlobalNotificationsHeader: React.FC = () => {
+  const {user} = useUserStore()
   const [formData, setFormData] = useState<Notification>({
     id: 0,
-    userId: 1,
+    userId: user?.id ?? 0,
     useSameEmail: true,
     notificationsEmail: '',
     notifyLead: false,
@@ -84,6 +87,7 @@ const handleSave = async () => {
     const currentTimestamp = new Date().toISOString();
     const payload = {
       ...formData,
+      userId:user?.id ?? 0,
       notificationsEmail: formData.useSameEmail ? formData.notificationsEmail : '',
       createdAt: hasSetting ? formData.createdAt : currentTimestamp,
       updatedAt: currentTimestamp
@@ -130,7 +134,7 @@ const handleSave = async () => {
 
       setFormData({
         id: 0,
-        userId: 1,
+        userId: user?.id ?? 0,
         useSameEmail: true,
         notificationsEmail: '',
         notifyLead: false,

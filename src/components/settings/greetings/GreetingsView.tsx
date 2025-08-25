@@ -5,7 +5,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import GreetingHeader from './GreetingHeader';
 import AddGreetingForm from './AddGreetingForm';
-
+import { useUserStore } from '@/stores/useUserStore';
 interface Greeting {
   id?: number;
   userId?: number;
@@ -18,6 +18,7 @@ interface Greeting {
 }
 
 const GreetingsView: React.FC = () => {
+  const {user} = useUserStore()
   const [showAddForm, setShowAddForm] = useState(false);
   const [greetings, setGreetings] = useState<Greeting[]>([]);
   const [editingGreeting, setEditingGreeting] = useState<Greeting | null>(null);
@@ -87,7 +88,7 @@ const GreetingsView: React.FC = () => {
         url,
         data: {
           ...greeting,
-          userId: 1,
+          userId: user?.id ?? 0,
           updatedAt: new Date().toISOString(),
           ...(!greeting.id && { createdAt: new Date().toISOString() })
         },

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit2 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
-
+import { useUserStore } from '@/stores/useUserStore';
 interface Announcement {
   id?: number;
   userId: number;
@@ -15,17 +15,18 @@ interface Announcement {
 }
 
 const AnnouncementsView = () => {
+  const {user} = useUserStore()
   const { resolvedTheme } = useTheme();
   const [loginAnnouncements, setLoginAnnouncements] = useState<Announcement[]>([]);
   const [dashboardAnnouncements, setDashboardAnnouncements] = useState<Announcement[]>([]);
   const [loginForm, setLoginForm] = useState<Announcement>({
-    userId: 1,
+    userId: user?.id ?? 0,
     pageType: 'Login',
     title: '',
     text: '',
   });
   const [dashboardForm, setDashboardForm] = useState<Announcement>({
-    userId: 1,
+    userId: user?.id ?? 0,
     pageType: 'Dashboard',
     title: '',
     text: '',
@@ -153,14 +154,14 @@ const AnnouncementsView = () => {
       // Reset form for this page type
       if (pageType === 'Login') {
         setLoginForm({
-          userId: 1,
+          userId: user?.id ?? 0,
           pageType: 'Login',
           title: '',
           text: '',
         });
       } else {
         setDashboardForm({
-          userId: 1,
+          userId: user?.id ?? 0,
           pageType: 'Dashboard',
           title: '',
           text: '',
