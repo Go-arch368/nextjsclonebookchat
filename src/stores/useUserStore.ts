@@ -22,8 +22,8 @@ export const useUserStore = create<UserStore>()(
       setUser: (user) => set({ user }),
     }),
     {
-      name: "user-storage", // localStorage key
-      partialize: (state) => ({ user: state.user }), // store only user
+      name: "user-storage", 
+      partialize: (state) => ({ user: state.user }), 
     }
   )
 );

@@ -141,3 +141,4 @@ const RolePermissionsView: React.FC = () => {
 };
 
 export default RolePermissionsView;
+

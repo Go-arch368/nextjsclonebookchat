@@ -5,6 +5,7 @@ import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
 import { Label } from '@/ui/label';
 import { toast } from 'react-toastify';
+import { useUserStore } from '@/stores/useUserStore';
 
 interface QueuedMessage {
   id: number;
@@ -32,6 +33,7 @@ const AddQueuedMessageForm: React.FC<AddQueuedMessageFormProps> = ({
   editingMessage,
   theme = 'light'
 }) => {
+  const {user} = useUserStore()
   const [formData, setFormData] = useState<Omit<QueuedMessage, 'id' | 'userId' | 'createdAt' | 'updatedAt'> & { 
     id?: number;
     imageUrl: string;
@@ -93,7 +95,7 @@ const AddQueuedMessageForm: React.FC<AddQueuedMessageFormProps> = ({
     
     const payload: QueuedMessage = {
       id: formData.id || Date.now(),
-      userId: 1,
+      userId: user?.id??0,
       message: formData.message,
       backgroundColor: formData.backgroundColor,
       textColor: formData.textColor,

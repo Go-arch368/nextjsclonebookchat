@@ -48,15 +48,11 @@ const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
     id: 18,
     role: "admin" as const,
     email,
-    name: "John Doe",
+    name: email.split("@")[0],
   };
 
-  
   useUserStore.getState().setUser(mockUser);
-
-  
   localStorage.setItem("login", "true");
-
   router.push("/dashboard");
 };
 
