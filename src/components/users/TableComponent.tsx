@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/ui/table";
+import { useTheme } from 'next-themes';
 import { Button } from "@/ui/button";
 import { Edit, Trash2, CircleUser } from "lucide-react";
 import { Skeleton } from "@/ui/skeleton";
@@ -39,6 +40,7 @@ interface TableComponentProps {
 const ROLES = ["ADMIN", "MANAGER", "SUPERVISOR", "AGENT"];
 
 const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
+  const { resolvedTheme } = useTheme();
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdateOpen, setIsUpdateOpen] = useState(false);
@@ -247,7 +249,7 @@ const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
             </TableHeader>
             <TableBody>
               {currentData.map((user) => (
-                <TableRow key={user.id} className="hover:bg-gray-50">
+                <TableRow key={user.id} className={`hover:bg-gray-50 ${resolvedTheme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
                   <TableCell className="py-4 text-center flex items-center justify-center">
                     <CircleUser size={18} className="mr-2" />
                     {user.firstName || "N/A"}

@@ -24,7 +24,7 @@ import { Label } from "@/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
 import axios from "axios";
 import { Website } from "@/types/website";
-
+import { useTheme } from "next-themes";
 interface TableComponentProps {
   websites: Website[];
   setWebsites: React.Dispatch<React.SetStateAction<Website[]>>;
@@ -35,7 +35,7 @@ export default function TableComponent({ websites, setWebsites }: TableComponent
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdateOpen, setIsUpdateOpen] = useState(false);
   const [currentWebsite, setCurrentWebsite] = useState<Website | null>(null);
-
+ const { resolvedTheme } = useTheme();
   const API_BASE_URL = "/api/websites";
   const itemsPerPage = 5;
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -176,7 +176,7 @@ export default function TableComponent({ websites, setWebsites }: TableComponent
             </TableHeader>
             <TableBody>
               {currentData.map((item) => (
-                <TableRow key={item.id} className="hover:bg-gray-100">
+                <TableRow key={item.id} className={`hover:bg-gray-50 ${resolvedTheme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
                   <TableCell className="px-2 py-5 w-2/5 truncate text-center">
                     {`${item.protocol.toLowerCase()}://${item.domain}`}
                   </TableCell>

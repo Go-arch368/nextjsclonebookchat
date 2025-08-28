@@ -6,7 +6,7 @@ import React from "react";
 
 const WelcomeBanner = () => {
   return (
-    <Card className="bg-slate-800">
+    <Card className="bg-slate-800 rounded-1xl">
       <div className="flex flex-col w-full max-w-screen-xl mx-auto px-6 sm:px-8">
         <div className="flex flex-col sm:flex-row flex-auto sm:items-center min-w-0 my-8 sm:my-8">
           <div className="flex flex-auto items-center min-w-0">

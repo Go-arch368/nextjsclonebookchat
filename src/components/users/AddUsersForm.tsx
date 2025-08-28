@@ -117,6 +117,8 @@ export default function AddUsersForm({ onSubmit, isOpen, setIsOpen }: AddUsersFo
         headers: { 'Content-Type': 'application/json' },
       });
 
+      console.log("POST /save response:", response.data);
+
       await onSubmit();
 
       setFormData({

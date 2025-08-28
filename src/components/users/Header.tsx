@@ -31,6 +31,8 @@ const Header: React.FC<HeaderProps> = ({ setUsers, users }) => {
         throw new Error('Invalid response format: Expected an array');
       }
       setUsers(response.data);
+      console.log(response.data);
+      
       toast.success("User list refreshed successfully!");
     } catch (error: any) {
       const errorMessage =

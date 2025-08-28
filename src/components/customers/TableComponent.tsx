@@ -32,6 +32,8 @@ import {
 } from "@/ui/select";
 import { Customer } from "@/types/customer";
 
+import { useTheme } from "next-themes";
+
 interface TableComponentProps {
   customers: Customer[];
   setCustomers: React.Dispatch<React.SetStateAction<Customer[]>>;
@@ -58,7 +60,7 @@ export default function TableComponent({
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdateOpen, setIsUpdateOpen] = useState(false);
   const [currentCustomer, setCurrentCustomer] = useState<Customer | null>(null);
-
+  const { resolvedTheme } = useTheme();
   const API_BASE_URL = "/api/customers";
 
   setTimeout(() => setIsLoading(false), 1000);
@@ -251,7 +253,7 @@ export default function TableComponent({
             </TableHeader>
             <TableBody>
               {currentData.map((item, index) => (
-                <TableRow key={item.id || index} className="hover:bg-gray-100">
+                <TableRow key={item.id || index} className={`hover:bg-gray-100 ${resolvedTheme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
                   <TableCell className="px-2 py-3 w-1/7 truncate text-center">
                     {item.name}
                   </TableCell>
