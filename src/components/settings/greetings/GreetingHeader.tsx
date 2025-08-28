@@ -150,9 +150,11 @@ const GreetingHeader: React.FC<GreetingHeaderProps> = ({
       </div>
 
       <div className="w-full overflow-x-auto">
-        <table className="w-full border border-gray-200">
+        <table className={`w-full border ${
+          theme === 'dark' ? 'text-white' : 'text-gray-800'
+        }`}>
           <thead>
-            <tr className="border-b hover:bg-gray-100">
+            <tr className={`border-b ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
               {['title', 'greeting', 'type', 'visible'].map((key) => (
                 <th 
                   key={key} 
@@ -189,7 +191,7 @@ const GreetingHeader: React.FC<GreetingHeaderProps> = ({
               </tr>
             ) : (
               currentGreetings.map((greeting) => (
-                <tr key={greeting.id} className="border-b hover:bg-gray-100">
+                <tr key={greeting.id} className={`border-b ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
                   <td className="p-2 text-center truncate">{greeting.title}</td>
                   <td className="p-2 text-center truncate">{greeting.greeting}</td>
                   <td className="p-2 text-center truncate">{greeting.type.replace('_', ' ')}</td>

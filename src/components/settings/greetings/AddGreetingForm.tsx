@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { MessageSquare, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useUserStore } from '@/stores/useUserStore';
+import { useTheme } from 'next-themes'; // Import useTheme
 
 interface Greeting {
   id?: number;
@@ -28,7 +29,8 @@ interface AddGreetingFormProps {
 }
 
 const AddGreetingForm: React.FC<AddGreetingFormProps> = ({ onSave, onCancel, initialGreeting }) => {
-  const {user} = useUserStore()
+  const { user } = useUserStore();
+  const { theme } = useTheme(); // Use the useTheme hook
   const [formData, setFormData] = useState<Greeting>({
     title: initialGreeting?.title || '',
     greeting: initialGreeting?.greeting || '',
@@ -130,21 +132,35 @@ const AddGreetingForm: React.FC<AddGreetingFormProps> = ({ onSave, onCancel, ini
   };
 
   return (
-    <div className="p-6 bg-white rounded-lg border border-gray-200">
+    <div className={`p-6 rounded-lg border ${
+      theme === 'dark'
+        ? 'bg-gray-800 border-gray-700'
+        : 'bg-white border-gray-200'
+    }`}>
       <div className="space-y-4">
-        <h1 className="text-3xl font-bold">
+        <h1 className={`text-3xl font-bold ${
+          theme === 'dark' ? 'text-white' : 'text-gray-900'
+        }`}>
           {initialGreeting ? 'Edit Greeting' : 'Add New Greeting'}
         </h1>
         
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Title */}
           <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
+            <Label htmlFor="title" className={theme === 'dark' ? 'text-gray-300' : ''}>
+              Title
+            </Label>
             <div className="relative">
-              <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+              <MessageSquare className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${
+                theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+              }`} />
               <Input
                 id="title"
-                className={`pl-10 ${errors.title ? 'border-red-500' : ''}`}
+                className={`pl-10 ${errors.title ? 'border-red-500' : ''} ${
+                  theme === 'dark' 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
                 value={formData.title}
                 onChange={(e) => {
                   setFormData({ ...formData, title: e.target.value });
@@ -158,15 +174,21 @@ const AddGreetingForm: React.FC<AddGreetingFormProps> = ({ onSave, onCancel, ini
 
           {/* Greeting Type */}
           <div className="space-y-2">
-            <Label>Greeting Type</Label>
+            <Label className={theme === 'dark' ? 'text-gray-300' : ''}>
+              Greeting Type
+            </Label>
             <Select
               value={formData.type}
               onValueChange={(value) => setFormData({ ...formData, type: value })}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger className={`w-full ${
+                theme === 'dark' 
+                  ? 'bg-gray-700 border-gray-600 text-white' 
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}>
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : ''}>
                 <SelectItem value="All_Visitors">All Visitors</SelectItem>
                 <SelectItem value="Returning_Visitors">Returning Visitors</SelectItem>
                 <SelectItem value="First_Time_Visitors">First Time Visitors</SelectItem>
@@ -176,14 +198,20 @@ const AddGreetingForm: React.FC<AddGreetingFormProps> = ({ onSave, onCancel, ini
 
           {/* Greeting Message */}
           <div className="space-y-2">
-            <Label>Greeting Message</Label>
+            <Label className={theme === 'dark' ? 'text-gray-300' : ''}>
+              Greeting Message
+            </Label>
             <div className="flex flex-wrap gap-2">
               {variables.map((variable) => (
                 <Button
                   key={variable}
                   type="button"
                   variant="outline"
-                  className="h-8 px-3 text-xs"
+                  className={`h-8 px-3 text-xs ${
+                    theme === 'dark' 
+                      ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
+                      : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                  }`}
                   onClick={() => insertVariable(variable)}
                 >
                   {variable}
@@ -192,7 +220,11 @@ const AddGreetingForm: React.FC<AddGreetingFormProps> = ({ onSave, onCancel, ini
             </div>
             <Textarea
               ref={textareaRef}
-              className={`min-h-[150px] ${errors.greeting ? 'border-red-500' : ''}`}
+              className={`min-h-[150px] ${errors.greeting ? 'border-red-500' : ''} ${
+                theme === 'dark' 
+                  ? 'bg-gray-700 border-gray-600 text-white' 
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
               value={formData.greeting}
               onChange={(e) => {
                 setFormData({ ...formData, greeting: e.target.value });
@@ -201,7 +233,9 @@ const AddGreetingForm: React.FC<AddGreetingFormProps> = ({ onSave, onCancel, ini
               placeholder="Enter greeting message"
             />
             {errors.greeting && <p className="text-red-500 text-sm">{errors.greeting}</p>}
-            <p className="text-sm text-gray-500">
+            <p className={`text-sm ${
+              theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+            }`}>
               Set the default greeting message. Use variables to personalize the greeting.
             </p>
           </div>
@@ -215,7 +249,9 @@ const AddGreetingForm: React.FC<AddGreetingFormProps> = ({ onSave, onCancel, ini
               onChange={(e) => setFormData({ ...formData, visible: e.target.checked })}
               className="h-4 w-4"
             />
-            <Label htmlFor="visible">Make this greeting visible</Label>
+            <Label htmlFor="visible" className={theme === 'dark' ? 'text-gray-300' : ''}>
+              Make this greeting visible
+            </Label>
           </div>
 
           {/* Buttons */}
@@ -224,12 +260,13 @@ const AddGreetingForm: React.FC<AddGreetingFormProps> = ({ onSave, onCancel, ini
               type="button"
               variant="outline"
               onClick={onCancel}
+              className={theme === 'dark' ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : ''}
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
+              className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
               disabled={isSubmitting || !onSave}
             >
               {isSubmitting ? 'Saving...' : 'Save Greeting'}

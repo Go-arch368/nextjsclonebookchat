@@ -1,9 +1,10 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
 import { useUserStore } from '@/stores/useUserStore';
+
 interface Announcement {
   id?: number;
   userId: number;
@@ -14,8 +15,10 @@ interface Announcement {
   updatedAt?: string;
 }
 
+type PageType = 'Login' | 'Dashboard';
+
 const AnnouncementsView = () => {
-  const {user} = useUserStore()
+  const { user } = useUserStore();
   const { resolvedTheme } = useTheme();
   const [loginAnnouncements, setLoginAnnouncements] = useState<Announcement[]>([]);
   const [dashboardAnnouncements, setDashboardAnnouncements] = useState<Announcement[]>([]);
@@ -31,12 +34,16 @@ const AnnouncementsView = () => {
     title: '',
     text: '',
   });
-  const [editingId, setEditingId] = useState<{ [key: string]: number | null }>({
+  const [editingId, setEditingId] = useState<{ [key in PageType]: number | null }>({
     Login: null,
     Dashboard: null,
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  // Separate saving states for each section with proper typing
+  const [isSaving, setIsSaving] = useState<{ [key in PageType]: boolean }>({
+    Login: false,
+    Dashboard: false
+  });
 
   useEffect(() => {
     fetchAnnouncements();
@@ -52,7 +59,6 @@ const AnnouncementsView = () => {
       }
       
       const data: Announcement[] = await response.json();
-       console.log(data);
        
       // Ensure data is always an array
       const announcements = Array.isArray(data) ? data : [];
@@ -92,9 +98,10 @@ const AnnouncementsView = () => {
     }
   };
 
-  const saveAnnouncement = async (form: Announcement, pageType: string) => {
+  const saveAnnouncement = async (form: Announcement, pageType: PageType) => {
     try {
-      setIsSaving(true);
+      // Set saving state only for this specific page type
+      setIsSaving(prev => ({ ...prev, [pageType]: true }));
       
       if (!form.title || !form.text) {
         throw new Error('Title and text are required');
@@ -127,11 +134,12 @@ const AnnouncementsView = () => {
       console.error('Save error:', error);
       toast.error(error.message || 'Failed to save announcement');
     } finally {
-      setIsSaving(false);
+      // Reset saving state only for this specific page type
+      setIsSaving(prev => ({ ...prev, [pageType]: false }));
     }
   };
 
-  const deleteAnnouncement = async (id: number | null, pageType: string) => {
+  const deleteAnnouncement = async (id: number | null, pageType: PageType) => {
     if (!id) return;
     
     if (!confirm('Are you sure you want to delete this announcement?')) {
@@ -179,12 +187,8 @@ const AnnouncementsView = () => {
     }
   };
 
-  const startEditing = (pageType: string) => {
-    // This function is no longer needed since we're always in edit mode
-  };
-
   const renderAnnouncementSection = (
-    pageType: string,
+    pageType: PageType,
     announcements: Announcement[],
     form: Announcement,
     setForm: React.Dispatch<React.SetStateAction<Announcement>>,
@@ -203,7 +207,7 @@ const AnnouncementsView = () => {
         <div className="flex gap-4">
           <button
             onClick={() => saveAnnouncement(form, pageType)}
-            disabled={isSaving || isLoading}
+            disabled={isSaving[pageType] || isLoading}
             className={`flex items-center gap-2 px-3 py-1.5 border text-sm rounded-full ${
               resolvedTheme === 'dark'
                 ? 'bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-600'
@@ -211,7 +215,7 @@ const AnnouncementsView = () => {
             }`}
           >
             <Plus className="h-4 w-4" />
-            <span>{isSaving ? 'Saving...' : editingId[pageType] ? 'Update' : 'Save'}</span>
+            <span>{isSaving[pageType] ? 'Saving...' : editingId[pageType] ? 'Update' : 'Save'}</span>
           </button>
         </div>
       </div>
@@ -229,7 +233,7 @@ const AnnouncementsView = () => {
               id={`${pageType}-title`}
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
-              disabled={isSaving || isLoading}
+              disabled={isSaving[pageType] || isLoading}
               className={`flex-grow p-2 rounded-md focus:outline-none focus:ring-2 ${
                 resolvedTheme === 'dark'
                   ? 'bg-gray-700 border border-gray-600 text-white focus:ring-blue-500 disabled:bg-gray-600'
@@ -241,13 +245,13 @@ const AnnouncementsView = () => {
               {editingId[pageType] && (
                 <button 
                   onClick={() => deleteAnnouncement(editingId[pageType], pageType)}
-                  disabled={isSaving || isLoading}
+                  disabled={isSaving[pageType] || isLoading}
                   aria-label={`Delete ${pageType} announcement`}
                   className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30"
                 >
                   <Trash2 className={`h-5 w-5 ${
                     resolvedTheme === 'dark' ? 'text-red-400' : 'text-red-600'
-                  } ${isSaving || isLoading ? 'opacity-50' : ''}`} />
+                  } ${isSaving[pageType] || isLoading ? 'opacity-50' : ''}`} />
                 </button>
               )}
             </div>
@@ -263,7 +267,7 @@ const AnnouncementsView = () => {
             id={`${pageType}-text`}
             value={form.text}
             onChange={(e) => setForm({ ...form, text: e.target.value })}
-            disabled={isSaving || isLoading}
+            disabled={isSaving[pageType] || isLoading}
             className={`w-full p-2 rounded-md focus:outline-none focus:ring-2 h-32 ${
               resolvedTheme === 'dark'
                 ? 'bg-gray-700 border border-gray-600 text-white focus:ring-blue-500 disabled:bg-gray-600'
