@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useUserStore } from "@/stores/useUserStore";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -28,6 +29,7 @@ const statusOptions = [
 
 export const UserDropdown = () => {
     const { resolvedTheme } = useTheme();
+    const {user} = useUserStore()
     const isDark = resolvedTheme === "dark";
     if (!resolvedTheme) return null;
 
@@ -91,7 +93,7 @@ export const UserDropdown = () => {
                                     isDark ? "text-gray-400" : "text-gray-500"
                                 )}
                             >
-                                zoey@example.com
+                                {user?.email??"zoey@example.com"}
                             </span>
                         </div>
                     </div>

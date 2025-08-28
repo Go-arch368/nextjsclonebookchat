@@ -37,7 +37,7 @@ import { useUserStore } from '@/stores/useUserStore';
 // const { user } = useUserStore();
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const pathname = usePathname();
+  const pathname = usePathname(); 
   const { acceptChats } = useUserStatus();
   const {user} = useUserStore()
   console.log(user);
@@ -151,7 +151,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={users} isOnline={acceptChats} />
+        <NavUser users={users} isOnline={acceptChats} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

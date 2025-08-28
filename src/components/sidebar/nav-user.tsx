@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useUserStatus } from "@/stores/useUserStatus";
+import { useUserStore } from '@/stores/useUserStore';
 import { useTheme } from 'next-themes';
 import {
   DropdownMenu,
@@ -36,7 +37,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
 type NavUserProps = {
-  user: {
+  users: {
     name: string;
     email: string;
     avatar: string;
@@ -60,10 +61,11 @@ const StatusIndicator = ({
   />
 );
 
-export function NavUser({ user, isOnline }: NavUserProps) {
+export function NavUser({ users, isOnline }: NavUserProps) {
   const { isMobile } = useSidebar();
   const { theme, setTheme } = useTheme();
   const { acceptChats, toggleAcceptChats } = useUserStatus();
+  const { user } = useUserStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -103,8 +105,8 @@ export function NavUser({ user, isOnline }: NavUserProps) {
               />
             </div>
             <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-medium">{user.name}</span>
-              <span className="truncate text-xs">{user.email}</span>
+              <span className="truncate font-medium">{user?.name??"zoey"}</span>
+              <span className="truncate text-xs">{user?.email??"zoey@example.com"}</span>
             </div>
             <ChevronsUpDown className="ml-auto size-4" />
           </SidebarMenuButton>
@@ -129,8 +131,8 @@ export function NavUser({ user, isOnline }: NavUserProps) {
                 <StatusIndicator isOnline={isOnline} borderClass={borderClass} />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
-                <span className="truncate text-xs">{user.email}</span>
+              <span className="truncate font-medium">{user?.name??"zoey"}</span>
+              <span className="truncate text-xs">{user?.email??"zoey@example.com"}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -150,8 +152,8 @@ export function NavUser({ user, isOnline }: NavUserProps) {
                 <StatusIndicator isOnline={isOnline} borderClass={borderClass} />
               </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
-                  <span className="truncate text-xs">{user.email}</span>
+                  <span className="truncate font-medium">{user?.name??"zoey"}</span>
+              <span className="truncate text-xs">{user?.email??"zoey@example.com"}</span>
                 </div>
               </div>
             </DropdownMenuLabel>

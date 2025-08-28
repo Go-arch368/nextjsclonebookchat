@@ -56,7 +56,12 @@ const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentData = users.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(users.length / itemsPerPage);
-
+  // console.log("Users",users)
+  // localStorage.setItem("users", JSON.stringify(users));
+  // const savedUsers =  JSON.parse(localStorage.getItem("users") || "[]");
+  // const firstUsers = savedUsers.length>0?savedUsers[0]:null;
+  // console.log(firstUsers);
+  
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -65,6 +70,7 @@ const TableComponent: React.FC<TableComponentProps> = ({ users, setUsers }) => {
           throw new Error('Invalid response format: Expected an array');
         }
         setUsers(response.data);
+        console.log("response", response.data)
       } catch (error: any) {
         const errorMessage =
           error.response?.data?.message || error.message || "Failed to load users";
